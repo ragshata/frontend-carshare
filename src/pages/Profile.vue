@@ -107,6 +107,7 @@ function formatDate(dt: string | null) {
   padding: 16px;
   margin-bottom: 24px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  justify-content: center; /* Центрируем весь блок */
 }
 .avatar {
   width: 80px;
@@ -119,8 +120,11 @@ function formatDate(dt: string | null) {
   flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;    /* Вот это добавь! */
   gap: 7px;
+  text-align: center;     /* Центрируем текст */
 }
+
 .profile-name {
   font-size: 20px;
   font-weight: bold;
