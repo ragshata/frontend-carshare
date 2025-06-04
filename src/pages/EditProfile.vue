@@ -14,10 +14,6 @@
         <label>Телефон</label>
         <input v-model="form.phone" />
       </div>
-      <div class="input-group">
-        <label>Описание</label>
-        <textarea v-model="form.description" />
-      </div>
       <button class="btn" type="submit">Сохранить</button>
       <button class="btn btn-outline" type="button" @click="router.push('/profile')">Отмена</button>
     </form>
@@ -26,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { reactive, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { patchProfile } from '@/api/auth'; // функция запроса PATCH /me
@@ -40,8 +36,23 @@ const form = ref({
   first_name: auth.user.first_name,
   last_name: auth.user.last_name || '',
   phone: auth.user.phone || '',
-  description: auth.user.description || '',
 });
+
+onMounted(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => {
+      router.back(); // или router.back()
+    });
+  }
+});
+onBeforeUnmount(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  tg?.BackButton?.hide();
+  tg?.BackButton?.offClick?.();
+});
+
 
 async function submit() {
   try {

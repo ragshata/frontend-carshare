@@ -30,11 +30,6 @@ export async function searchTrips(params: {
   return res.data;
 }
 
-// Получить подробную инфу о поездке
-export async function getTrip(id: number): Promise<Trip> {
-  const res = await axios.get(`${API_BASE}/trips/${id}`);
-  return res.data;
-}
 
 // Создать новую поездку (для OfferTrip)
 export async function createTrip(payload: Record<string, any>): Promise<Trip> {
@@ -60,4 +55,22 @@ export async function deleteTrip(id: number): Promise<void> {
 // Опубликовать поездку из черновика (пример, уточни эндпоинт)
 export async function publishTrip(id: number): Promise<void> {
   await axios.patch(`${API_BASE}/trips/${id}/publish`);
+}
+
+
+export async function getTrip(id: number) {
+  const res = await axios.get(`${API_BASE}/trips/${id}`);
+  return res.data;
+}
+
+export async function updateTrip(payload: {
+  id: number;
+  from_: string;
+  to: string;
+  date: string;
+  time: string;
+  seats: number;
+  price: number;
+}) {
+  return axios.patch(`${API_BASE}/trips/${payload.id}`, payload);
 }

@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { getDriverReviews } from "@/api/reviews";
@@ -59,14 +59,20 @@ const user = auth.user;
 const reviews = ref<any[]>([]);
 const avgRating = ref(0);
 
-onMounted(async () => {
-  // owner_id — id водителя
-  reviews.value = await getDriverReviews(user.id);
-  if (reviews.value.length) {
-    avgRating.value =
-      reviews.value.reduce((sum, r) => sum + (r.rating || 0), 0) /
-      reviews.value.length;
+
+onMounted(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => {
+      router.back(); // или router.back()
+    });
   }
+});
+onBeforeUnmount(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  tg?.BackButton?.hide();
+  tg?.BackButton?.offClick?.();
 });
 
 function formatDate(dt: string | null) {

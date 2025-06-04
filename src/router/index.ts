@@ -3,7 +3,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 const routes: Array<RouteRecordRaw> = [
   { path: '/',      name: 'Home',     component: () => import('@/pages/MainScreen.vue') },
   { path: '/find-trip', name: 'FindTrip', component: () => import('@/pages/FindTrip.vue'), },  
-  { path: '/offer-trip', name: 'OfferTrip', component: () => import('@/pages/EditTrip.vue'), },
+  { path: '/offer-trip', name: 'OfferTrip', component: () => import('@/pages/OfferTrip.vue'), },
   { path: "/trip/:id/passengers", name: "TripPassengers", component: () => import("@/pages/TripPassengers.vue")},
   { path: '/profile',    name: 'Profile',   component: () => import('@/pages/Profile.vue') },
   { path: '/help',       name: 'Help',      component: () => import('@/pages/Help.vue') },

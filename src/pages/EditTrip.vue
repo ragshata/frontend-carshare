@@ -1,19 +1,25 @@
 <template>
-  <div class="edit-profile-page">
+  <div class="edit-trip-page">
     <button class="back-button" @click="router.back()">← Назад</button>
-    <h2 class="title">Редактировать профиль</h2>
+    <h2 class="title">Редактировать поездку</h2>
     <form class="form" @submit.prevent="save">
-      <label>Имя</label>
-      <input v-model="first_name" type="text" required maxlength="40" />
+      <label>Откуда</label>
+      <input v-model="from_" type="text" required maxlength="40" />
 
-      <label>Фамилия</label>
-      <input v-model="last_name" type="text" maxlength="40" />
+      <label>Куда</label>
+      <input v-model="to" type="text" required maxlength="40" />
 
-      <label>Телефон</label>
-      <input v-model="phone" type="tel" maxlength="20" />
+      <label>Дата</label>
+      <input v-model="date" type="date" required />
 
-      <label>Город проживания</label>
-      <input v-model="city" type="text" required maxlength="40" placeholder="Ваш город" />
+      <label>Время</label>
+      <input v-model="time" type="time" required />
+
+      <label>Свободных мест</label>
+      <input v-model.number="seats" type="number" min="1" required />
+
+      <label>Цена</label>
+      <input v-model.number="price" type="number" min="0" required />
 
       <button class="btn" type="submit" :disabled="loading">Сохранить</button>
     </form>
@@ -22,44 +28,61 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { useAuthStore } from "@/store/auth";
-import { updateProfileById } from "@/api/users";
+import { ref, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { getTrip, updateTrip } from "@/api/trips";
 import Toast from "@/components/Toast.vue";
 
 const router = useRouter();
-const auth = useAuthStore();
+const route = useRoute();
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
-const first_name = ref(auth.user.first_name || "");
-const last_name = ref(auth.user.last_name || "");
-const phone = ref(auth.user.phone || "");
-const city = ref(auth.user.city || "");
 const loading = ref(false);
 
-async function save() {
-  if (!first_name.value || !city.value) {
-    toastRef.value?.show("Заполните все обязательные поля");
+// Все поля поездки
+const from_ = ref("");
+const to = ref("");
+const date = ref("");
+const time = ref("");
+const seats = ref(1);
+const price = ref(0);
+
+onMounted(async () => {
+  const tripId = Number(route.params.id);
+  if (!tripId) {
+    toastRef.value?.show("Ошибка: не найдена поездка!");
+    router.back();
     return;
   }
+  try {
+    const trip = await getTrip(tripId);
+    from_.value = trip.from_ || "";
+    to.value = trip.to || "";
+    date.value = trip.date || "";
+    time.value = trip.time || "";
+    seats.value = trip.seats || 1;
+    price.value = trip.price || 0;
+  } catch {
+    toastRef.value?.show("Ошибка загрузки поездки");
+    router.back();
+  }
+});
+
+async function save() {
   loading.value = true;
   try {
-    await updateProfileById({
-      id: auth.user.id,
-      first_name: first_name.value,
-      last_name: last_name.value,
-      phone: phone.value,
-      city: city.value
+    await updateTrip({
+      id: Number(route.params.id),
+      from_: from_.value,
+      to: to.value,
+      date: date.value,
+      time: time.value,
+      seats: seats.value,
+      price: price.value,
     });
-    toastRef.value?.show("Профиль обновлён!");
-    // Локально обновляем пользователя:
-    auth.user.first_name = first_name.value;
-    auth.user.last_name = last_name.value;
-    auth.user.phone = phone.value;
-    auth.user.city = city.value;
-    setTimeout(() => router.push("/profile"), 700);
-  } catch (e) {
+    toastRef.value?.show("Поездка обновлена!");
+    setTimeout(() => router.push("/manage-trips"), 700);
+  } catch {
     toastRef.value?.show("Ошибка сохранения!");
   }
   loading.value = false;
@@ -67,22 +90,22 @@ async function save() {
 </script>
 
 <style scoped>
-.edit-profile-page {
+.edit-trip-page {
   padding: 16px;
   min-height: 100vh;
-  background: var(--color-background);
+  background: var(--color-background, #fafbfc);
 }
 .title {
   font-size: 20px;
   font-weight: bold;
   margin-bottom: 18px;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, #232323);
   text-align: center;
 }
 .back-button {
   background: transparent;
-  border: 1px solid var(--color-primary);
-  color: var(--color-primary);
+  border: 1px solid var(--color-primary, #007bff);
+  color: var(--color-primary, #007bff);
   border-radius: 6px;
   padding: 6px 12px;
   font-size: 14px;
@@ -105,7 +128,7 @@ input {
   outline: none;
 }
 .btn {
-  background: var(--color-primary);
+  background: var(--color-primary, #007bff);
   color: white;
   border: none;
   padding: 11px 18px;

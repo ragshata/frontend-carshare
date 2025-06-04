@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted,onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { getMyTrips, deleteTrip as apiDeleteTrip, publishTrip as apiPublishTrip } from '@/api/trips';
@@ -98,6 +98,22 @@ async function loadTrips() {
 const filteredTrips = computed(() =>
   allTrips.value.filter(trip => trip.status === statusMap[currentTab.value])
 );
+
+onMounted(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => {
+      router.back(); // или router.back()
+    });
+  }
+});
+onBeforeUnmount(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  tg?.BackButton?.hide();
+  tg?.BackButton?.offClick?.();
+});
+
 
 function handleTabClick(tab: string) {
   currentTab.value = tab;

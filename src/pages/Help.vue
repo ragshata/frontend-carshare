@@ -42,12 +42,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 const tabs = ['Частые вопросы', 'Правила использования'];
 const currentTab = ref(tabs[0]);
+
+onMounted(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => {
+      router.back(); // или router.back()
+    });
+  }
+});
+onBeforeUnmount(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  tg?.BackButton?.hide();
+  tg?.BackButton?.offClick?.();
+});
 </script>
 
 <style scoped>
