@@ -75,7 +75,7 @@
         @click="goToDetails(trip.id)"
         style="cursor: pointer;"
       >
-        <div class="row between bold">{{ trip.from_city }} — {{ trip.to_city }}</div>
+        <div class="row between bold">{{ trip.from_ }} — {{ trip.to_city }}</div>
         <div class="row">🗓 {{ trip.date }} &nbsp;&nbsp; ⏰ {{ trip.time }}</div>
         <div class="row">💺 Мест: {{ trip.seats }} &nbsp;&nbsp; 💰 {{ trip.price }}₽</div>
         <div class="row">📌 Статус: {{ trip.status }}</div>
