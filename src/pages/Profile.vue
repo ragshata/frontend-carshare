@@ -3,9 +3,9 @@
     <h2 class="title">Профиль</h2>
     <div class="profile-card">
       <img
-        v-if="user.photo_url"
+        v-if="auth.user.photo_url"
         class="avatar"
-        :src="user.photo_url"
+        :src="auth.user.photo_url"
         alt="avatar"
       />
       <div class="profile-info">
