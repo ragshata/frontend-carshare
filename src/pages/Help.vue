@@ -1,9 +1,5 @@
 <template>
   <div class="help-page">
-    <!-- 🔙 Кнопка Назад -->
-      <div class="back-button-wrapper">
-        <button class="back-button" @click="router.push('/main')">← Назад</button>
-      </div>
     <h2 class="title">Помощь</h2>
 
     <div class="tabs">

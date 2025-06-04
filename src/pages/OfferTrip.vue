@@ -1,6 +1,5 @@
 <template>
   <div class="offer-trip-page">
-    <button class="back-button" @click="router.back()">← Назад</button>
     <h2 class="title">Создать поездку</h2>
     <form class="form" @submit.prevent="save">
       <label>Откуда</label>

@@ -1,6 +1,5 @@
 <template>
   <div class="profile-page">
-    <button class="back-button" @click="router.push('/main')">← Назад</button>
     <h2 class="title">Профиль</h2>
     <div class="profile-card">
       <img

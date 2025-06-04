@@ -1,6 +1,6 @@
 <template>
   <div class="main-menu-page">
-    <h2>Добро пожаловать в CarShare TJ!</h2>
+    <h2>Добро пожаловать в CarShare TG!</h2>
     <div class="menu-buttons">
       <button class="menu-btn" @click="go('/find-trip')">🚗 Найти поездку</button>
       <button class="menu-btn" @click="go('/manage-trips')">📝 Мои поездки</button>
@@ -8,7 +8,7 @@
       <button class="menu-btn" @click="go('/profile')">👤 Профиль</button>
       <button class="menu-btn" @click="go('/help')">❓ Помощь / FAQ</button>
     </div>
-    <div class="info">Навигация через Telegram кнопку снизу — или этими кнопками 👆</div>
+    <div class="info">💎 Простой поиск попутчиков в телеграм 💎</div>
   </div>
 </template>
 
@@ -23,7 +23,7 @@ function go(path: string) {
   router.push(path);
 }
 
-function setMainButton() {
+/**function setMainButton() {
   const tg = (window as any).Telegram?.WebApp;
   if (!tg) return;
   tg.ready();
@@ -42,7 +42,7 @@ function setMainButton() {
 
 onMounted(() => {
   setMainButton();
-});
+});  */
 
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;

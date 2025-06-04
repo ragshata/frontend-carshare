@@ -1,8 +1,5 @@
 <template>
   <div class="manage-trips-page">
-    <div class="back-button-wrapper">
-      <button class="back-button" @click="router.push('/main')">← Назад</button>
-    </div>
     <h2 class="title">Мои поездки</h2>
 
     <div class="tabs">
