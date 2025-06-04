@@ -1,0 +1,95 @@
+/* global.css */
+
+/* 1. Цвета и типографика */
+:root {
+  --color-primary: #007bff;
+  --color-background: #f4f4f4;
+  --color-surface: #ffffff;
+  --color-text-primary: #333333;
+  --color-text-secondary: #555555;
+  --color-border: #e0e0e0;
+
+  --font-family-base: "Roboto", sans-serif;
+  --font-size-heading: 22px;
+  --font-size-base: 15px;
+  --font-size-small: 13px;
+
+  /* Новые переменные для отступов */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+}
+
+/* 2. Сброс */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+}
+
+/* 3. Контейнер */
+.container {
+  max-width: 360px;
+  margin: 0 auto;
+  padding: var(--space-md);
+}
+
+/* 4. Типографика */
+h1,
+.h1 {
+  font-size: var(--font-size-heading);
+  margin-bottom: var(--space-md);
+}
+
+/* 5. Кнопки и ссылки */
+.card-button {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm) 0;
+  font-size: var(--font-size-base);
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.card-button:hover {
+  background-color: #0069d9;
+  transform: translateY(-2px);
+}
+
+/* 6. Списки */
+.menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* 7. Сетка меню */
+.menu-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+@media (min-width: 640px) {
+  .menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+  }
+}
