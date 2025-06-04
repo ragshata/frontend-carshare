@@ -8,7 +8,7 @@
       <button class="menu-btn" @click="go('/profile')">👤 Профиль</button>
       <button class="menu-btn" @click="go('/help')">❓ Помощь / FAQ</button>
     </div>
-    <div class="info">💎 Простой поиск попутчиков в телеграм 💎</div>
+    <div class="info">Простой поиск попутчиков в телеграм 💎</div>
   </div>
 </template>
 

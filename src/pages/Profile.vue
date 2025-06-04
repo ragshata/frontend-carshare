@@ -19,19 +19,22 @@
         <div class="profile-phone" v-if="user.phone">
           Телефон: {{ user.phone }}
         </div>
+        <!-- Рейтинг в рамке -->
+        <div class="rating-box">
+          <span v-if="avgRating > 0">{{ avgRating.toFixed(1) }}</span>
+          <span v-else>—</span>
+          <span class="star">⭐</span>
+          <span class="reviews-count">({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})</span>
+        </div>
+        <!-- Кнопка редактирования на месте рейтинга -->
         <button class="btn btn-outline" @click="router.push('/edit-profile')">
           ✏️ Редактировать профиль
-        </button>
-        <button class="btn" @click="router.push('/manage-trips')">
-          🚗 Мои поездки
         </button>
       </div>
     </div>
 
     <div class="profile-reviews">
-      <h3>
-        Рейтинг: <b>{{ avgRating > 0 ? avgRating.toFixed(1) : "—" }}</b> ⭐ ({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})
-      </h3>
+      <h3>Отзывы</h3>
       <div v-if="reviews.length === 0" class="empty-text">Нет отзывов</div>
       <div v-for="review in reviews" :key="review.id" class="review-card">
         <div class="review-rating">{{ review.rating }} ⭐</div>
@@ -58,15 +61,17 @@ const user = auth.user;
 const reviews = ref<any[]>([]);
 const avgRating = ref(0);
 
-
+// Загрузка отзывов — добавь свою логику если нужно!
 onMounted(() => {
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      router.back(); // или router.back()
+      router.back();
     });
   }
+  // Подгрузи отзывы/рейтинг (пример):
+  // getDriverReviews(user.id).then(res => { reviews.value = res; avgRating.value = ... });
 });
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
@@ -92,17 +97,6 @@ function formatDate(dt: string | null) {
   margin-bottom: 18px;
   color: var(--color-text-primary);
   text-align: center;
-}
-.back-button {
-  background: transparent;
-  border: 1px solid var(--color-primary);
-  color: var(--color-primary);
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-bottom: 12px;
-  transition: background 0.2s ease;
 }
 .profile-card {
   display: flex;
@@ -140,10 +134,29 @@ function formatDate(dt: string | null) {
   font-size: 15px;
   color: var(--color-text-secondary);
 }
-.profile-desc {
-  font-size: 15px;
-  margin-top: 5px;
-  color: var(--color-text-secondary);
+.rating-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 4px 0;
+  padding: 6px 16px;
+  border: 1.5px solid var(--color-primary, #007bff);
+  border-radius: 13px;
+  font-size: 18px;
+  font-weight: 500;
+  background: #f6f9ff;
+  width: fit-content;
+}
+.rating-box .star {
+  color: #FFD600;
+  font-size: 20px;
+  margin-left: 3px;
+}
+.rating-box .reviews-count {
+  font-size: 14px;
+  color: #888;
+  margin-left: 4px;
+  font-weight: 400;
 }
 .btn {
   background: var(--color-primary);
