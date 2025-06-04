@@ -2,12 +2,17 @@
   <div class="profile-page">
     <h2 class="title">Профиль</h2>
     <div class="profile-card">
-      <img
-        v-if="auth.user.photo_url"
-        class="avatar"
-        :src="auth.user.photo_url"
-        alt="avatar"
-      />
+      <div class="avatar-block">
+        <img
+          v-if="auth.user.photo_url"
+          class="avatar"
+          :src="auth.user.photo_url"
+          alt="avatar"
+        />
+        <div v-else class="avatar avatar-placeholder">
+          {{ getInitials(auth.user) }}
+        </div>
+      </div>
       <div class="profile-info">
         <div class="profile-name">
           {{ user.first_name }}
@@ -26,7 +31,6 @@
           <span class="star">⭐</span>
           <span class="reviews-count">({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})</span>
         </div>
-        <!-- Кнопка редактирования на месте рейтинга -->
         <button class="btn btn-outline" @click="router.push('/edit-profile')">
           ✏️ Редактировать профиль
         </button>
@@ -60,6 +64,13 @@ const user = auth.user;
 
 const reviews = ref<any[]>([]);
 const avgRating = ref(0);
+
+// Получаем инициалы для плейсхолдера
+function getInitials(user: any) {
+  let initials = user.first_name?.charAt(0) || "";
+  if (user.last_name) initials += user.last_name.charAt(0);
+  return initials || "?";
+}
 
 // Загрузка отзывов — добавь свою логику если нужно!
 onMounted(() => {
@@ -107,24 +118,41 @@ function formatDate(dt: string | null) {
   padding: 16px;
   margin-bottom: 24px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  justify-content: center; /* Центрируем весь блок */
+  justify-content: center;
+}
+.avatar-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 12px;
 }
 .avatar {
   width: 80px;
   height: 80px;
   border-radius: 16px;
   object-fit: cover;
-  margin-right: 8px;
+  margin-right: 0;
+  background: #eaeaea;
+}
+.avatar-placeholder {
+  background: #eee;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
 }
 .profile-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;    /* Вот это добавь! */
+  align-items: center;
   gap: 7px;
-  text-align: center;     /* Центрируем текст */
+  text-align: center;
 }
-
 .profile-name {
   font-size: 20px;
   font-weight: bold;
@@ -152,7 +180,7 @@ function formatDate(dt: string | null) {
   width: fit-content;
 }
 .rating-box .star {
-  color: #FFD600;
+  color: #ffdd36;
   font-size: 20px;
   margin-left: 3px;
 }
