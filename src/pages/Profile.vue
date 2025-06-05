@@ -34,19 +34,6 @@
         </button>
       </div>
     </div>
-
-    <div class="profile-reviews">
-      <h3>Отзывы</h3>
-      <div v-if="reviews.length === 0" class="empty-text">Нет отзывов</div>
-      <div v-for="review in reviews" :key="review.id" class="review-card">
-        <div class="review-rating">{{ review.rating }} ⭐</div>
-        <div class="review-text" v-if="review.text">{{ review.text }}</div>
-        <div class="review-meta">
-          Поездка: #{{ review.trip_id }}
-          <span class="review-date">{{ formatDate(review.created_at) }}</span>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -114,7 +101,7 @@ function formatDate(dt: string | null) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 25px;
 }
 
 .avatar {
