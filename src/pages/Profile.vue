@@ -105,8 +105,8 @@ function formatDate(dt: string | null) {
 }
 
 .avatar {
-  width: 80px;
-  height: 80px;
+  width: 180px;
+  height: 180px;
   border-radius: 20px;
   object-fit: cover;
   background: #eaeaea;
