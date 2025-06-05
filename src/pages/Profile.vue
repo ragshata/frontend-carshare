@@ -1,6 +1,5 @@
 <template>
   <div class="profile-page">
-    <h2 class="title">Профиль</h2>
     <div class="profile-card">
       <div class="avatar-block">
         <img

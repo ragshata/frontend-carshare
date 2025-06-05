@@ -10,10 +10,6 @@
         <label>Фамилия</label>
         <input v-model="form.last_name" />
       </div>
-      <div class="input-group">
-        <label>Телефон</label>
-        <input v-model="form.phone" />
-      </div>
       <button class="btn" type="submit">Сохранить</button>
       <button class="btn btn-outline" type="button" @click="router.push('/profile')">Отмена</button>
     </form>
