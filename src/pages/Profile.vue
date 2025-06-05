@@ -24,7 +24,6 @@
         <div class="profile-phone" v-if="user.phone">
           Телефон: {{ user.phone }}
         </div>
-        <!-- Рейтинг в рамке -->
         <div class="rating-box">
           <span v-if="avgRating > 0">{{ avgRating.toFixed(1) }}</span>
           <span v-else>—</span>
@@ -51,6 +50,7 @@
     </div>
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
@@ -97,43 +97,36 @@ function formatDate(dt: string | null) {
 </script>
 
 <style scoped>
-.profile-page {
-  padding: 16px;
-  min-height: 100vh;
-  background: var(--color-background);
-}
-.title {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 18px;
-  color: var(--color-text-primary);
-  text-align: center;
-}
 .profile-card {
   display: flex;
-  align-items: flex-start;
-  gap: 16px;
+  flex-direction: column;
+  align-items: center;
   background: var(--color-surface);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 24px;
+  border-radius: 18px;
+  padding: 22px 16px 18px 16px;
+  margin-bottom: 28px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  justify-content: center;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
 }
+
 .avatar-block {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-right: 12px;
+  margin-bottom: 14px;
 }
+
 .avatar {
   width: 80px;
   height: 80px;
-  border-radius: 16px;
+  border-radius: 20px;
   object-fit: cover;
-  margin-right: 0;
   background: #eaeaea;
+  margin-bottom: 0;
 }
+
 .avatar-placeholder {
   background: #eee;
   color: #888;
@@ -143,16 +136,18 @@ function formatDate(dt: string | null) {
   font-size: 34px;
   width: 80px;
   height: 80px;
-  border-radius: 16px;
+  border-radius: 20px;
 }
+
 .profile-info {
-  flex: 1;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 7px;
   text-align: center;
 }
+
 .profile-name {
   font-size: 20px;
   font-weight: bold;
@@ -180,7 +175,7 @@ function formatDate(dt: string | null) {
   width: fit-content;
 }
 .rating-box .star {
-  color: #ffdd36;
+  color: #FFD600;
   font-size: 20px;
   margin-left: 3px;
 }
@@ -207,44 +202,5 @@ function formatDate(dt: string | null) {
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
 }
-.profile-reviews {
-  margin-top: 30px;
-}
-.profile-reviews h3 {
-  margin-bottom: 14px;
-  font-size: 18px;
-  color: var(--color-text-primary);
-  text-align: center;
-}
-.empty-text {
-  color: var(--color-text-secondary);
-  font-size: 15px;
-  text-align: center;
-  margin-top: 20px;
-}
-.review-card {
-  background: var(--color-surface);
-  border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 10px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-}
-.review-rating {
-  font-size: 16px;
-  font-weight: bold;
-  color: #FFD600;
-  margin-bottom: 2px;
-}
-.review-text {
-  font-size: 15px;
-  color: var(--color-text-primary);
-  margin-bottom: 2px;
-}
-.review-meta {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-.review-date {
-  margin-left: 8px;
-}
+
 </style>
