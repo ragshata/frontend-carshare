@@ -30,10 +30,17 @@ export async function searchTrips(params: {
   return res.data;
 }
 
-
-// Создать новую поездку (для OfferTrip)
-export async function createTrip(payload: Record<string, any>): Promise<Trip> {
-  const res = await axios.post(`${API_BASE}/trips/create/`, payload);
+export async function createTrip(trip: {
+  from_: string;
+  to: string;
+  date: string;
+  time: string;
+  seats: number;
+  price: number;
+  owner_id: number;
+  status?: string;
+}) {
+  const res = await axios.post(`${API_BASE}/trips/`, trip);
   return res.data;
 }
 export async function getTripById(id: number) {

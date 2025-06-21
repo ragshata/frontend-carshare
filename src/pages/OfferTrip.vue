@@ -3,22 +3,22 @@
     <h2 class="title">Создать поездку</h2>
     <form class="form" @submit.prevent="save">
       <label>Откуда</label>
-      <input v-model="from_" type="text" required maxlength="40" />
+      <input v-model="form.from_" type="text" required maxlength="40" />
 
       <label>Куда</label>
-      <input v-model="to" type="text" required maxlength="40" />
+      <input v-model="form.to" type="text" required maxlength="40" />
 
       <label>Дата</label>
-      <input v-model="date" type="date" required />
+      <input v-model="form.date" type="date" required />
 
       <label>Время</label>
-      <input v-model="time" type="time" required />
+      <input v-model="form.time" type="time" required />
 
       <label>Свободных мест</label>
-      <input v-model.number="seats" type="number" min="1" required />
+      <input v-model.number="form.seats" type="number" min="1" required />
 
       <label>Цена</label>
-      <input v-model.number="price" type="number" min="0" required />
+      <input v-model.number="form.price" type="number" min="0" required />
 
       <button class="btn" type="submit" :disabled="loading">Создать</button>
     </form>
@@ -38,20 +38,23 @@ const auth = useAuthStore();
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const loading = ref(false);
 
-// Все поля новой поездки
-const from_ = ref("");
-const to = ref("");
-const date = ref("");
-const time = ref("");
-const seats = ref(1);
-const price = ref(0);
+// Универсальная реактивная форма для новой поездки
+const form = reactive({
+  from_: "",
+  to: "",
+  date: "",
+  time: "",
+  seats: 1,
+  price: 0,
+  status: "active", // Если вдруг понадобится
+});
 
 onMounted(() => {
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      router.back(); // или router.back()
+      router.back();
     });
   }
 });
@@ -62,24 +65,20 @@ onBeforeUnmount(() => {
 });
 
 async function save() {
-  if (!from_.value || !to.value || !date.value || !time.value) {
+  if (!form.from_ || !form.to || !form.date || !form.time) {
     toastRef.value?.show("Заполните все поля!");
     return;
   }
   loading.value = true;
   try {
     await createTrip({
-      from_: from_.value,
-      to: to.value,
-      date: date.value,
-      time: time.value,
-      seats: seats.value,
-      price: price.value,
-      owner_id: auth.user.id, // или ownerId, если поле называется иначе в бэке
+      ...form,
+      owner_id: auth.user.id, // id текущего пользователя-водителя
+      // status: form.status, // Если нужно передавать статус явно
     });
     toastRef.value?.show("Поездка создана!");
     setTimeout(() => router.push("/manage-trips"), 700);
-  } catch {
+  } catch (e) {
     toastRef.value?.show("Ошибка создания поездки!");
   }
   loading.value = false;
@@ -98,17 +97,6 @@ async function save() {
   margin-bottom: 18px;
   color: var(--color-text-primary, #232323);
   text-align: center;
-}
-.back-button {
-  background: transparent;
-  border: 1px solid var(--color-primary, #007bff);
-  color: var(--color-primary, #007bff);
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-bottom: 12px;
-  transition: background 0.2s ease;
 }
 .form {
   display: flex;
