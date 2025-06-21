@@ -20,8 +20,21 @@ export async function authByTelegram(user: {
   return res.data; // { access_token, user }
 }
 
+// Типизация для профиля
+export interface PatchProfilePayload {
+  telegram_id: number;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  city?: string;
+  photo_url?: string;
+}
 
-export async function patchProfile(payload: any) {
-  const res = await axios.patch(`${API_BASE}/me/`, payload, { withCredentials: true });
+export async function patchProfile(payload: PatchProfilePayload) {
+  // Здесь telegram_id обязателен!
+  if (!payload.telegram_id) {
+    throw new Error("telegram_id обязателен для обновления профиля");
+  }
+  const res = await axios.patch(`${API_BASE}/me/`, payload);
   return res.data;
 }

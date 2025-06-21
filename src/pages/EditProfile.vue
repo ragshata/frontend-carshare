@@ -52,7 +52,11 @@ onBeforeUnmount(() => {
 
 async function submit() {
   try {
-    const updated = await patchProfile(form.value);
+    // Добавь telegram_id в объект для запроса!
+    const updated = await patchProfile({
+      ...form.value,
+      telegram_id: auth.user.telegram_id, // или auth.user.id если у тебя именно telegram_id
+    });
     auth.setUser(updated); // обнови пользователя в сторе
     toastRef.value?.show('✅ Профиль обновлен!');
     router.push('/profile');
@@ -60,6 +64,7 @@ async function submit() {
     toastRef.value?.show('❌ Ошибка обновления профиля');
   }
 }
+
 </script>
 
 <style scoped>
