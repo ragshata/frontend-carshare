@@ -48,8 +48,9 @@ export async function getTripById(id: number) {
   return res.data;
 }
 
-export async function getMyTrips(owner_id: number): Promise<Trip[]> {
-  const res = await axios.get(`${API_BASE}/trips`, { params: { owner_id } });
+
+export async function getMyTrips(driver_id: number): Promise<Trip[]> {
+  const res = await axios.get(`${API_BASE}/trips`, { params: { driver_id } });
   return res.data;
 }
 
