@@ -48,11 +48,11 @@ export async function getTripById(id: number) {
   return res.data;
 }
 
-// Получить все поездки водителя
-export async function getMyTrips(driver_id: number): Promise<Trip[]> {
-  const res = await axios.get(`${API_BASE}/trips`, { params: { driver_id } });
+export async function getMyTrips(owner_id: number): Promise<Trip[]> {
+  const res = await axios.get(`${API_BASE}/trips`, { params: { owner_id } });
   return res.data;
 }
+
 
 // Удалить поездку
 export async function deleteTrip(id: number): Promise<void> {
