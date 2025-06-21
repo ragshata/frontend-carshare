@@ -22,6 +22,6 @@ export async function authByTelegram(user: {
 
 
 export async function patchProfile(payload: any) {
-  const res = await axios.patch(`${API_BASE}/me`, payload, { withCredentials: true });
+  const res = await axios.patch(`${API_BASE}/me/`, payload, { withCredentials: true });
   return res.data;
 }

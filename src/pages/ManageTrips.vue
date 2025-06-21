@@ -22,7 +22,7 @@
         class="trip-card"
       >
         <div class="row between bold">
-          {{ trip.from_city }} — {{ trip.to_city }}
+          {{ trip.from_ }} — {{ trip.to }}
           <span>{{ trip.price }}₽</span>
         </div>
         <div class="row">
