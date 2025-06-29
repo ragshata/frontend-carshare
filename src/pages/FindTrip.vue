@@ -117,13 +117,13 @@ function resetFilters() {
 
 function goToResults() {
   if (!validate()) return;
-  // Оставляем только непустые поля для query
   const query: Record<string, string> = {};
   Object.entries(form).forEach(([key, value]) => {
-    if (value !== '') query[key] = value;
+    if (value && value !== '') query[key] = value;
   });
   router.push({ path: '/search-results', query });
 }
+
 </script>
 
 <style scoped>

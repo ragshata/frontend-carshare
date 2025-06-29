@@ -79,6 +79,7 @@ async function book(trip: any) {
     toastRef.value?.show('❌ Ошибка при бронировании');
   }
 }
+
 </script>
 
 <style scoped>
