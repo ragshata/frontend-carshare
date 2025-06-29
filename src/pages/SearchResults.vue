@@ -34,16 +34,24 @@ const auth = useAuthStore();
 
 async function load() {
   loading.value = true;
-  // Получаем параметры из query
-  const params: any = {
-    from_: typeof route.query.from_ === 'string' ? route.query.from_ : '',
-    to: typeof route.query.to === 'string' ? route.query.to : '',
-    date: typeof route.query.date === 'string' ? route.query.date : '',
-    date_from: typeof route.query.date_from === 'string' ? route.query.date_from : '',
-    date_to: typeof route.query.date_to === 'string' ? route.query.date_to : '',
-    status: typeof route.query.status === 'string' ? route.query.status : '',
-    maxPrice: typeof route.query.maxPrice === 'string' ? route.query.maxPrice : ''
+
+  // Получаем параметры из query, undefined если нет
+  const rawParams: any = {
+    from_: typeof route.query.from_ === 'string' ? route.query.from_ : undefined,
+    to: typeof route.query.to === 'string' ? route.query.to : undefined,
+    date: typeof route.query.date === 'string' ? route.query.date : undefined,
+    date_from: typeof route.query.date_from === 'string' ? route.query.date_from : undefined,
+    date_to: typeof route.query.date_to === 'string' ? route.query.date_to : undefined,
+    status: typeof route.query.status === 'string' ? route.query.status : undefined,
+    maxPrice: typeof route.query.maxPrice === 'string' ? route.query.maxPrice : undefined,
   };
+
+  // Только не пустые!
+  const params: any = {};
+  Object.entries(rawParams).forEach(([k, v]) => {
+    if (typeof v === 'string' && v.trim() !== '') params[k] = v;
+  });
+
   try {
     trips.value = await searchTrips(params);
   } catch {
@@ -51,6 +59,7 @@ async function load() {
   }
   loading.value = false;
 }
+
 
 onMounted(() => {
   load(); // <-- вот тут вызываем загрузку поездок!
