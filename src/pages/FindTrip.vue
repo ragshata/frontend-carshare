@@ -1,74 +1,3 @@
-<template>
-  <div class="find-trip-page">
-    <h2 class="title">Поиск поездок</h2>
-    
-    <form class="form" @submit.prevent="goToResults">
-      <AnimatedInput
-        v-model="form.from_"
-        label="Откуда"
-        id="from_"
-        required
-        :error="errors.from_"
-      />
-      <AnimatedInput
-        v-model="form.to"
-        label="Куда"
-        id="to"
-        required
-        :error="errors.to"
-      />
-      <AnimatedInput
-        v-model="form.date"
-        label="Дата"
-        id="date"
-        type="date"
-        required
-        :error="errors.date"
-      />
-
-      <button type="button" class="btn btn-outline" @click="showAdvanced = !showAdvanced">
-        {{ showAdvanced ? 'Скрыть дополнительные фильтры' : 'Показать дополнительные фильтры' }}
-      </button>
-
-      <div v-if="showAdvanced" class="advanced-filters">
-        <AnimatedInput
-          v-model="form.date_from"
-          label="Дата с"
-          id="date_from"
-          type="date"
-        />
-        <AnimatedInput
-          v-model="form.date_to"
-          label="Дата по"
-          id="date_to"
-          type="date"
-        />
-        <div class="select-wrapper">
-          <label for="status">Статус</label>
-          <select id="status" v-model="form.status">
-            <option value="active">Активные</option>
-            <option value="done">Завершённые</option>
-            <option value="cancelled">Отменённые</option>
-          </select>
-        </div>
-        <AnimatedInput
-          v-model="form.maxPrice"
-          label="Максимальная цена"
-          id="maxPrice"
-          type="number"
-        />
-      </div>
-
-      <div class="buttons">
-        <button type="submit" class="btn">Найти поездки</button>
-        <button type="button" class="btn btn-outline" @click="resetFilters">
-          Сбросить фильтры
-        </button>
-      </div>
-    </form>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { reactive, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
@@ -93,11 +22,10 @@ onMounted(() => {
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      router.back(); // Можно заменить на router.push('/main') если надо
+      router.push('/main');
     });
   }
 });
-
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
   tg?.BackButton?.hide();
@@ -118,25 +46,15 @@ function resetFilters() {
 
 function goToResults() {
   if (!validate()) return;
-  // Передаем параметры через query на новую страницу
-  router.push({ path: '/search-results', query: { ...form } });
+  // Оставляем только заполненные поля
+  const query: Record<string, string> = {};
+  Object.entries(form).forEach(([key, value]) => {
+    if (value !== '') query[key] = value;
+  });
+  router.push({ path: '/search-results', query });
 }
-
-onMounted(() => {
-  const tg = (window as any).Telegram?.WebApp;
-  if (tg?.BackButton) {
-    tg.BackButton.show();
-    tg.BackButton.onClick(() => {
-      router.push('/main');
-    });
-  }
-});
-onBeforeUnmount(() => {
-  const tg = (window as any).Telegram?.WebApp;
-  tg?.BackButton?.hide();
-  tg?.BackButton?.offClick?.();
-});
 </script>
+
 
 <style scoped>
 .find-trip-page {
