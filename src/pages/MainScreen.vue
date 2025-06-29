@@ -5,6 +5,7 @@
       <button class="menu-btn" @click="go('/find-trip')">🚗 Найти поездку</button>
       <button class="menu-btn" @click="go('/manage-trips')">📝 Мои поездки</button>
       <button class="menu-btn" @click="go('/offer-trip')">➕ Создать поездку</button>
+      <button class="menu-btn" @click="go('/my-bookings')">🧰 Мои брони</button>
       <button class="menu-btn" @click="go('/profile')">👤 Профиль</button>
       <button class="menu-btn" @click="go('/help')">❓ Помощь / FAQ</button>
     </div>
