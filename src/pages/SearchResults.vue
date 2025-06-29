@@ -1,144 +1,174 @@
 <template>
-    <div class="results-page">
-      <h2 class="title">Найденные поездки</h2>
-  
-      <button class="btn-outline" @click="goBack">Изменить поиск</button>
-  
-      <div v-if="trips.length > 0" class="trip-list">
-        <div class="trip-card" v-for="trip in trips" :key="trip.id">
-          <div class="row between bold">
-            {{ trip.from }} — {{ trip.to }}
-            <span>{{ trip.price }}₽</span>
-          </div>
-  
-          <div class="row">
-            <span>🗓 {{ trip.date }} &nbsp;&nbsp; ⏰ {{ trip.time }}</span>
-          </div>
-          <div class="row">
-            👤 {{ trip.driver }} &nbsp; ⭐ {{ trip.rating }} &nbsp; 👥 {{ trip.seats }} мест
-          </div>
-  
-          <button class="btn-small">Подробнее</button>
-        </div>
+  <div class="search-results-page">
+    <h2 class="title">Результаты поиска</h2>
+    <div v-if="loading" class="empty-text">Загрузка...</div>
+    <div v-else-if="trips.length === 0" class="empty-text">Поездки не найдены</div>
+    <div v-else class="trip-list">
+      <div class="trip-card" v-for="trip in trips" :key="trip.id">
+        <div class="row between bold">{{ trip.from_ }} — {{ trip.to }}</div>
+        <div class="row">🗓 {{ trip.date }} &nbsp; ⏰ {{ trip.time }}</div>
+        <div class="row">💺 Мест: {{ trip.seats }} &nbsp; 💰 {{ trip.price }}₽</div>
+        <div class="row">📌 Статус: {{ trip.status }}</div>
+        <button class="btn" @click="book(trip)">Забронировать</button>
       </div>
-  
-      <div v-else class="no-results">Ничего не найдено</div>
     </div>
-  </template>
-  
-  <script setup lang="ts">
-  import { ref } from 'vue';
-  import { useRouter } from 'vue-router';
-  
-  const router = useRouter();
-  
-  // Пример списка найденных поездок
-  const trips = ref([
-    {
-      id: 1,
-      from: 'Душанбе',
-      to: 'Худжанд',
-      date: '2024-05-15',
-      time: '08:00',
-      price: 300,
-      driver: 'Ахмад',
-      rating: 4.9,
-      seats: 3,
-    },
-    {
-      id: 2,
-      from: 'Душанбе',
-      to: 'Турсунзаде',
-      date: '2024-05-15',
-      time: '10:00',
-      price: 200,
-      driver: 'Фируз',
-      rating: 4.7,
-      seats: 1,
-    },
-  ]);
-  
-  function goBack() {
-    router.push('/find-trip');
+    <Toast ref="toastRef" />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { useRoute } from 'vue-router';
+import { searchTrips } from '@/api/trips';
+import { useAuthStore } from '@/store/auth';
+import { bookTrip } from '@/api/bookings';
+import Toast from '@/components/Toast.vue';
+import { useRouter } from 'vue-router';
+const router = useRouter();
+const trips = ref<any[]>([]);
+const loading = ref(true);
+const toastRef = ref<InstanceType<typeof Toast> | null>(null);
+
+const route = useRoute();
+const auth = useAuthStore();
+
+async function load() {
+  loading.value = true;
+  // Получаем параметры из query
+  const params: any = {
+    from_: typeof route.query.from_ === 'string' ? route.query.from_ : '',
+    to: typeof route.query.to === 'string' ? route.query.to : '',
+    date: typeof route.query.date === 'string' ? route.query.date : '',
+    date_from: typeof route.query.date_from === 'string' ? route.query.date_from : '',
+    date_to: typeof route.query.date_to === 'string' ? route.query.date_to : '',
+    status: typeof route.query.status === 'string' ? route.query.status : '',
+    maxPrice: typeof route.query.maxPrice === 'string' ? route.query.maxPrice : ''
+  };
+  try {
+    trips.value = await searchTrips(params);
+  } catch {
+    trips.value = [];
   }
-  </script>
-  
-  <style scoped>
-  .results-page {
-    padding: 16px;
-    background: var(--color-background);
-    min-height: 100vh;
+  loading.value = false;
+}
+
+onMounted(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => {
+      router.back(); // Можно заменить на router.push('/main') если надо
+    });
   }
-  
-  .title {
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 16px;
-    color: var(--color-text-primary);
-    text-align: center;
+});
+
+onBeforeUnmount(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  tg?.BackButton?.hide();
+  tg?.BackButton?.offClick?.();
+});
+
+async function book(trip: any) {
+  try {
+    await bookTrip(trip.id, auth.user.id);
+    toastRef.value?.show('🚗 Поездка забронирована!');
+  } catch {
+    toastRef.value?.show('❌ Ошибка при бронировании');
   }
-  
-  .trip-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .trip-card {
-    background: var(--color-surface);
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .row {
-    display: flex;
-    flex-wrap: wrap;
-    font-size: 14px;
-    color: var(--color-text-secondary);
-  }
-  
-  .row.between {
-    justify-content: space-between;
-  }
-  
-  .bold {
-    font-weight: bold;
-    font-size: 16px;
-    color: var(--color-text-primary);
-  }
-  
-  .btn-small {
-    margin-top: 8px;
-    align-self: flex-start;
-    padding: 8px 14px;
-    font-size: 14px;
-    background: var(--color-primary);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  
-  .btn-outline {
-    background: transparent;
-    color: var(--color-primary);
-    border: 1px solid var(--color-primary);
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    cursor: pointer;
-    font-size: 15px;
-  }
-  
-  .no-results {
-    text-align: center;
-    color: var(--color-text-secondary);
-    margin-top: 40px;
-    font-size: 16px;
-  }
-  </style>
-  
+}
+</script>
+
+<style scoped>
+.search-results-page {
+  padding: 16px;
+  min-height: 100vh;
+  background: var(--color-background, #fafbfc);
+}
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  color: var(--color-text-primary, #232323);
+  text-align: center;
+}
+.empty-text {
+  color: var(--color-text-secondary, #999);
+  font-size: 16px;
+  text-align: center;
+  margin-top: 32px;
+}
+.trip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.trip-card {
+  background: var(--color-surface, #fff);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.row {
+  font-size: 14px;
+  color: var(--color-text-secondary, #444);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.bold {
+  font-weight: bold;
+  font-size: 16px;
+  color: var(--color-text-primary, #232323);
+  justify-content: space-between;
+}
+.btn {
+  background: var(--color-primary, #007bff);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 8px;
+}
+.btn:disabled {
+  background: #bbb;
+  cursor: not-allowed;
+}
+.btn-outline {
+  background: transparent;
+  color: var(--color-primary, #007bff);
+  border: 1px solid var(--color-primary, #007bff);
+  margin-left: 10px;
+}
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.15);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 30px 26px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.09);
+  min-width: 260px;
+  text-align: center;
+}
+.modal-header {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.modal-body {
+  font-size: 15px;
+}
+</style>
