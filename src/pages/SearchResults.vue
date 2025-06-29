@@ -53,6 +53,8 @@ async function load() {
 }
 
 onMounted(() => {
+  load(); // <-- вот тут вызываем загрузку поездок!
+
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
     tg.BackButton.show();
@@ -61,6 +63,7 @@ onMounted(() => {
     });
   }
 });
+
 
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
