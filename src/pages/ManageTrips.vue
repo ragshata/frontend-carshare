@@ -119,7 +119,7 @@ function handleTabClick(tab: string) {
 // Действия
 function editTrip(trip: any) {
   // Можно передать id через query или store
-  router.push({ path: '/edit-trip', query: { id: trip.id } });
+  router.push({ path: '/user-edit-trip', query: { id: trip.id } });
 }
 
 async function deleteTrip(id: number) {

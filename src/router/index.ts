@@ -15,6 +15,7 @@ const routes: Array<RouteRecordRaw> = [
   { path: '/edit-trip', name: 'EditTrip', component: () => import('@/pages/EditTrip.vue'),},
   { path: '/my-bookings', name: 'MyBookings', component: () => import('@/pages/MyBookings.vue'),},
   { path: "/rate/:id", name: "RateDriver", component: () => import("@/pages/RateDriver.vue") },
+  { path: '/user-edit-trip', name: 'UserEditTrip', component: () => import('@/pages/UserEditTrip.vue')},
   { path: '/:catchAll(.*)', redirect: '/' },
 ];
 
