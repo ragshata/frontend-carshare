@@ -27,7 +27,7 @@
           <div>
             Водитель:
             <span class="bold">
-              {{ drivers[b.trip_id]?.first_name || 'Без имени' }}
+              {{ drivers[b.trip_id]?.first_name || '' }}
               {{ drivers[b.trip_id]?.last_name || '' }}
             </span>
           </div>
