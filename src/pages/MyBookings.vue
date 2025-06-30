@@ -24,13 +24,6 @@
           <span :class="['status', b.status]">{{ ruStatus(b.status) }}</span>
         </div>
         <div v-if="drivers[b.trip_id]" class="driver-info">
-          <div>
-            Водитель:
-            <span class="bold">
-              {{ drivers[b.trip_id]?.first_name || '' }}
-              {{ drivers[b.trip_id]?.last_name || '' }}
-            </span>
-          </div>
           <div v-if="drivers[b.trip_id]?.username">
             Telegram:
             <a :href="'https://t.me/' + drivers[b.trip_id].username" target="_blank">

@@ -35,7 +35,6 @@
           <span v-else>⏳ {{ trip.status }}</span>
         </div>
         <div class="actions">
-          <button class="btn" @click="editTrip(trip)">✏️ Редактировать</button>
           <button class="btn btn-danger" @click="deleteTrip(trip.id)">🗑 Удалить</button>
           <button
             v-if="trip.status === 'draft'"
