@@ -1,19 +1,32 @@
 <template>
   <div class="my-bookings-page">
     <h2 class="title">Мои бронирования</h2>
+
     <div v-if="loading" class="empty-text">Загрузка...</div>
-    <div v-else-if="bookings.length === 0" class="empty-text">Нет бронирований</div>
+    <div v-else-if="bookings.length === 0" class="empty-text">Нет подтверждённых бронирований</div>
     <div v-else class="booking-list">
-      <div class="booking-card" v-for="booking in bookings" :key="booking.id">
+      <div class="booking-card" v-for="b in bookings" :key="b.id">
         <div class="row between bold">
-          <span>
-            {{ booking.trip?.from_ }} — {{ booking.trip?.to }}
-            <span class="small" v-if="booking.trip">({{ booking.trip.date }} {{ booking.trip.time }})</span>
-          </span>
-          <span>{{ booking.trip?.price }}₽</span>
+          {{ b.trip?.from_ }} — {{ b.trip?.to }}
+          <span>{{ b.trip?.price }}₽</span>
         </div>
-        <div class="row">Статус: {{ booking.status }}</div>
-        <button class="btn btn-danger" @click="removeBooking(booking.id)">Отменить</button>
+        <div class="row">
+          🗓 {{ b.trip?.date }} &nbsp; ⏰ {{ b.trip?.time }}
+        </div>
+        <div class="row">
+          <span :class="['status', b.status]">{{ getStatusRu(b.status) }}</span>
+        </div>
+        <div v-if="b.status === 'confirmed' && b.driver" class="driver-block">
+          Водитель:
+          <a
+            v-if="b.driver.username"
+            :href="`https://t.me/${b.driver.username}`"
+            target="_blank"
+          >
+            @{{ b.driver.username }}
+          </a>
+          <span v-else>Нет username</span>
+        </div>
       </div>
     </div>
     <Toast ref="toastRef" />
@@ -22,77 +35,50 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { getMyBookings, deleteBooking } from '@/api/bookings';
-import { getTripById } from '@/api/trips';
 import { useAuthStore } from '@/store/auth';
+import { getMyBookings } from '@/api/bookings';
+import { getTripById } from '@/api/trips';
+import { getUserById } from '@/api/users'; // если такой нет — создай!
 import Toast from '@/components/Toast.vue';
 
-interface Trip {
-  id: number;
-  from_: string;
-  to: string;
-  date: string;
-  time: string;
-  seats: number;
-  price: number;
-  owner_id: number;
-  status: string;
-}
-
-interface Booking {
-  id: number;
-  trip_id: number;
-  user_id: number;
-  status: string;
-  created_at?: string;
-  trip?: Trip | null;
-}
-
 const auth = useAuthStore();
-const bookings = ref<Booking[]>([]);
+const bookings = ref<any[]>([]);
 const loading = ref(true);
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
-async function loadBookings() {
+function getStatusRu(status: string) {
+  switch (status) {
+    case 'pending': return 'Ожидание подтверждения';
+    case 'confirmed': return 'Подтверждено';
+    case 'rejected': return 'Отклонено';
+    default: return status;
+  }
+}
+
+onMounted(async () => {
   loading.value = true;
   try {
-    const items = await getMyBookings(auth.user.id);
-    // Для каждого бронирования подтягиваем инфу о поездке
-    bookings.value = await Promise.all(
-      items.map(async (b: Booking) => {
-        try {
-          b.trip = await getTripById(b.trip_id);
-        } catch {
-          b.trip = null;
-        }
-        return b;
-      })
-    );
-  } catch {
+    const allBookings = await getMyBookings(auth.user.id);
+    // Фильтруем только подтверждённые
+    const confirmed = allBookings.filter((b: any) => b.status === 'confirmed');
+    // Подгружаем поездку и водителя для каждой брони
+    for (const b of confirmed) {
+      try {
+        b.trip = await getTripById(b.trip_id);
+        b.driver = b.trip ? await getUserById(b.trip.owner_id) : null;
+      } catch {
+        b.trip = null;
+        b.driver = null;
+      }
+    }
+    bookings.value = confirmed;
+  } catch (e) {
+    toastRef.value?.show('Ошибка загрузки броней');
     bookings.value = [];
   }
   loading.value = false;
-}
-
-async function removeBooking(id: number) {
-  if (!confirm('Отменить бронирование?')) return;
-  try {
-    await deleteBooking(id);
-    bookings.value = bookings.value.filter(b => b.id !== id);
-    toastRef.value?.show('Бронирование отменено');
-  } catch {
-    toastRef.value?.show('Ошибка при отмене');
-  }
-}
-
-onMounted(() => {
-  loadBookings();
-  const tg = (window as any).Telegram?.WebApp;
-  if (tg?.BackButton) {
-    tg.BackButton.show();
-    tg.BackButton.onClick(() => window.history.back());
-  }
 });
+
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
   tg?.BackButton?.hide();
@@ -103,8 +89,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .my-bookings-page {
   padding: 16px;
-  min-height: 100vh;
   background: var(--color-background, #fafbfc);
+  min-height: 100vh;
 }
 .title {
   font-size: 20px;
@@ -141,29 +127,32 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 10px;
 }
-.row.between {
-  justify-content: space-between;
-}
 .bold {
   font-weight: bold;
   font-size: 16px;
   color: var(--color-text-primary, #232323);
+  justify-content: space-between;
 }
-.small {
-  font-size: 13px;
-  color: #777;
-}
-.btn {
-  background: var(--color-primary, #007bff);
-  color: white;
-  border: none;
-  padding: 8px 15px;
+.status {
+  padding: 2px 10px;
   border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-top: 10px;
+  font-size: 13px;
+  font-weight: bold;
 }
-.btn-danger {
-  background: #e53935;
+.status.confirmed {
+  background: #d2f9e4;
+  color: #217b43;
+}
+.status.pending {
+  background: #fff1bc;
+  color: #ad9700;
+}
+.status.rejected {
+  background: #ffe0e0;
+  color: #a82424;
+}
+.driver-block {
+  margin-top: 8px;
+  font-size: 15px;
 }
 </style>
