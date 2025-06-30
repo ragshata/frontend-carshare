@@ -1,6 +1,5 @@
 <template>
   <div class="trip-passengers-page">
-    <button class="back-button" @click="router.back()">← Назад</button>
     <h2 class="title">Пассажиры поездки</h2>
 
     <div v-if="loading" class="empty-text">Загрузка...</div>
@@ -34,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getBookingsByTrip, confirmBooking, rejectBooking } from "@/api/bookings";
 import Toast from "@/components/Toast.vue";
@@ -53,6 +52,21 @@ const statusMap: Record<string, string> = {
   "rejected": "Отклонён",
   "cancelled": "Отменён"
 };
+onMounted(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => {
+      router.back(); // или router.back()
+    });
+  }
+});
+onBeforeUnmount(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  tg?.BackButton?.hide();
+  tg?.BackButton?.offClick?.();
+});
+
 
 async function loadBookings() {
   loading.value = true;

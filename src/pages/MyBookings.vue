@@ -3,29 +3,40 @@
     <h2 class="title">Мои бронирования</h2>
 
     <div v-if="loading" class="empty-text">Загрузка...</div>
-    <div v-else-if="bookings.length === 0" class="empty-text">Нет подтверждённых бронирований</div>
+    <div v-else-if="confirmedBookings.length === 0" class="empty-text">
+      Нет подтвержденных бронирований
+    </div>
     <div v-else class="booking-list">
-      <div class="booking-card" v-for="b in bookings" :key="b.id">
+      <div
+        class="booking-card"
+        v-for="b in confirmedBookings"
+        :key="b.id"
+      >
         <div class="row between bold">
-          {{ b.trip?.from_ }} — {{ b.trip?.to }}
-          <span>{{ b.trip?.price }}₽</span>
+          {{ tripMap[b.trip_id]?.from_ || '—' }} — {{ tripMap[b.trip_id]?.to || '—' }}
+          <span>{{ tripMap[b.trip_id]?.price ? tripMap[b.trip_id].price + '₽' : '' }}</span>
         </div>
         <div class="row">
-          🗓 {{ b.trip?.date }} &nbsp; ⏰ {{ b.trip?.time }}
+          <span v-if="tripMap[b.trip_id]?.date">🗓 {{ tripMap[b.trip_id].date }}</span>
+          <span v-if="tripMap[b.trip_id]?.time">⏰ {{ tripMap[b.trip_id].time }}</span>
         </div>
         <div class="row">
-          <span :class="['status', b.status]">{{ getStatusRu(b.status) }}</span>
+          <span :class="['status', b.status]">{{ ruStatus(b.status) }}</span>
         </div>
-        <div v-if="b.status === 'confirmed' && b.driver" class="driver-block">
-          Водитель:
-          <a
-            v-if="b.driver.username"
-            :href="`https://t.me/${b.driver.username}`"
-            target="_blank"
-          >
-            @{{ b.driver.username }}
-          </a>
-          <span v-else>Нет username</span>
+        <div v-if="drivers[b.trip_id]" class="driver-info">
+          <div>
+            Водитель:
+            <span class="bold">
+              {{ drivers[b.trip_id]?.first_name || 'Без имени' }}
+              {{ drivers[b.trip_id]?.last_name || '' }}
+            </span>
+          </div>
+          <div v-if="drivers[b.trip_id]?.username">
+            Telegram:
+            <a :href="'https://t.me/' + drivers[b.trip_id].username" target="_blank">
+              @{{ drivers[b.trip_id].username }}
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -34,51 +45,79 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { useAuthStore } from '@/store/auth';
-import { getMyBookings } from '@/api/bookings';
-import { getTripById } from '@/api/trips';
-import { getUserById } from '@/api/users'; // если такой нет — создай!
-import Toast from '@/components/Toast.vue';
+import { ref, onMounted, onBeforeUnmount } from "vue";
+import { useAuthStore } from "@/store/auth";
+import { getMyBookings } from "@/api/bookings";
+import { getTripById } from "@/api/trips";
+import { getUserById } from "@/api/users"; // если путь другой — поправь!
+import Toast from "@/components/Toast.vue";
+import { useRouter } from "vue-router";
 
 const auth = useAuthStore();
-const bookings = ref<any[]>([]);
+const router = useRouter();
+
 const loading = ref(true);
+const confirmedBookings = ref<any[]>([]);
+const tripMap = ref<Record<number, any>>({});
+const drivers = ref<Record<number, any>>({});
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
-function getStatusRu(status: string) {
+// Функция перевода статусов на русский
+function ruStatus(status: string) {
   switch (status) {
-    case 'pending': return 'Ожидание подтверждения';
-    case 'confirmed': return 'Подтверждено';
-    case 'rejected': return 'Отклонено';
-    default: return status;
+    case "confirmed":
+      return "Подтверждено";
+    case "pending":
+      return "Ожидает подтверждения";
+    case "cancelled":
+      return "Отменено";
+    default:
+      return status;
   }
 }
 
 onMounted(async () => {
   loading.value = true;
   try {
-    const allBookings = await getMyBookings(auth.user.id);
-    // Фильтруем только подтверждённые
-    const confirmed = allBookings.filter((b: any) => b.status === 'confirmed');
-    // Подгружаем поездку и водителя для каждой брони
-    for (const b of confirmed) {
-      try {
-        b.trip = await getTripById(b.trip_id);
-        b.driver = b.trip ? await getUserById(b.trip.owner_id) : null;
-      } catch {
-        b.trip = null;
-        b.driver = null;
+    // Получаем только подтвержденные бронирования
+    const all = await getMyBookings(auth.user.id);
+    confirmedBookings.value = all.filter((b: any) => b.status === "confirmed");
+    // Для каждой брони грузим поездку и водителя
+    for (const b of confirmedBookings.value) {
+      if (!tripMap.value[b.trip_id]) {
+        try {
+          const trip = await getTripById(b.trip_id);
+          tripMap.value[b.trip_id] = trip;
+          // Грузим водителя (owner_id — id пользователя)
+          if (trip && trip.owner_id && !drivers.value[b.trip_id]) {
+            try {
+              const driver = await getUserById(trip.owner_id);
+              drivers.value[b.trip_id] = driver;
+            } catch {
+              drivers.value[b.trip_id] = {};
+            }
+          }
+        } catch {
+          tripMap.value[b.trip_id] = {};
+        }
       }
     }
-    bookings.value = confirmed;
-  } catch (e) {
-    toastRef.value?.show('Ошибка загрузки броней');
-    bookings.value = [];
+  } catch {
+    confirmedBookings.value = [];
+    toastRef.value?.show("Ошибка загрузки бронирований");
   }
   loading.value = false;
 });
 
+onMounted(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => {
+      router.back();
+    });
+  }
+});
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
   tg?.BackButton?.hide();
@@ -89,19 +128,19 @@ onBeforeUnmount(() => {
 <style scoped>
 .my-bookings-page {
   padding: 16px;
-  background: var(--color-background, #fafbfc);
   min-height: 100vh;
+  background: var(--color-background, #fafbfc);
 }
 .title {
   font-size: 20px;
   font-weight: bold;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   color: var(--color-text-primary, #232323);
   text-align: center;
 }
 .empty-text {
-  color: var(--color-text-secondary, #999);
-  font-size: 16px;
+  color: var(--color-text-secondary, #888);
+  font-size: 15px;
   text-align: center;
   margin-top: 32px;
 }
@@ -117,42 +156,58 @@ onBeforeUnmount(() => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .row {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--color-text-secondary, #444);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
 }
-.bold {
-  font-weight: bold;
-  font-size: 16px;
-  color: var(--color-text-primary, #232323);
+.row.between {
   justify-content: space-between;
 }
-.status {
-  padding: 2px 10px;
-  border-radius: 8px;
-  font-size: 13px;
+.bold {
   font-weight: bold;
+  font-size: 15px;
+  color: var(--color-text-primary, #232323);
 }
 .status.confirmed {
-  background: #d2f9e4;
-  color: #217b43;
+  background: #c6efd4;
+  color: #168749;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 9px;
+  font-size: 14px;
 }
 .status.pending {
-  background: #fff1bc;
-  color: #ad9700;
+  background: #ffe6a3;
+  color: #b78d03;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 9px;
+  font-size: 14px;
 }
-.status.rejected {
-  background: #ffe0e0;
-  color: #a82424;
+.status.cancelled {
+  background: #ffd6d6;
+  color: #b83030;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 9px;
+  font-size: 14px;
 }
-.driver-block {
-  margin-top: 8px;
+.driver-info {
+  margin-top: 10px;
   font-size: 15px;
+  color: var(--color-text-secondary, #555);
+}
+.driver-info .bold {
+  color: var(--color-text-primary, #232323);
+}
+.driver-info a {
+  color: var(--color-primary, #007bff);
+  text-decoration: underline;
 }
 </style>
