@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import SplashScreen from '@/components/SplashScreen.vue';
 import { useAuthStore } from '@/store/auth';
@@ -21,6 +21,25 @@ const router = useRouter();
 function log(msg: string) {
   logMessage.value = msg;
   setTimeout(() => (logMessage.value = ''), 4000);
+}
+
+// Функция для перехода по роли
+function redirectByRole() {
+  if (!auth.user) return;
+
+  if (typeof auth.user.is_driver !== 'boolean') {
+    if (router.currentRoute.value.path !== '/main-screen')
+      router.replace('/main-screen');
+    return;
+  }
+  if (auth.user.is_driver) {
+    if (router.currentRoute.value.path !== '/driver')
+      router.replace('/driver');
+    return;
+  }
+  if (router.currentRoute.value.path !== '/passenger') {
+    router.replace('/passenger');
+  }
 }
 
 async function onSplashDone() {
@@ -53,48 +72,14 @@ async function onSplashDone() {
   // Авторизация и регистрация на бэкенде
   try {
     await authorizeViaTelegram(telegramUser);
+    redirectByRole();
     log("✅ Авторизация через Telegram прошла успешно!");
     showSplash.value = false;
-    redirectByRole();
   } catch (e: any) {
     log("❌ Ошибка авторизации через Telegram: " + (e?.message || e));
     showSplash.value = false;
   }
 }
-
-// Автоматический редирект по роли пользователя
-function redirectByRole() {
-  // Если не авторизован — ничего не делаем
-  if (!auth.user) return;
-
-  // Если роль не выбрана
-  if (typeof auth.user.is_driver !== 'boolean') {
-    if (router.currentRoute.value.path !== '/main-screen') {
-      router.replace('/main-screen');
-    }
-    return;
-  }
-
-  // Если водитель
-  if (auth.user.is_driver) {
-    if (router.currentRoute.value.path !== '/driver') {
-      router.replace('/driver');
-    }
-    return;
-  }
-
-  // Если пассажир
-  if (router.currentRoute.value.path !== '/passenger') {
-    router.replace('/passenger');
-  }
-}
-
-// Следим за авторизацией/сменой роли
-watchEffect(() => {
-  if (!showSplash.value) {
-    redirectByRole();
-  }
-});
 </script>
 
 <style scoped>

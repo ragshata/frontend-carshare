@@ -47,11 +47,10 @@ export async function patchProfile(payload: PatchProfilePayload) {
 
 export async function updateProfileById(payload: {
   id: number;
-  is_driver?: boolean;
-  first_name?: string;
-  last_name?: string;
-  phone?: string;
-  city?: string;
+  is_driver: boolean;
+  // ... остальные поля если нужны
 }) {
-  return axios.patch(`${API_BASE}/users/${payload.id}`, payload);
+  // возвращаем только data
+  const res = await axios.patch(`${API_BASE}/users/${payload.id}`, payload);
+  return res.data; // <-- так!
 }

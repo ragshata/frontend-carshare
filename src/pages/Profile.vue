@@ -32,30 +32,60 @@
         <button class="btn btn-outline" @click="router.push('/edit-profile')">
           ✏️ Редактировать профиль
         </button>
+        <button class="btn btn-outline" @click="changeRole" :disabled="roleLoading">
+          🔄 {{ user.is_driver ? 'Стать пассажиром' : 'Стать водителем' }}
+        </button>
       </div>
     </div>
+    <Toast ref="toastRef" />
   </div>
 </template>
-
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { getDriverReviews } from "@/api/reviews";
+import { updateProfileById } from "@/api/auth"; // Патч по id!
+import Toast from "@/components/Toast.vue";
 
 const router = useRouter();
 const auth = useAuthStore();
 const user = auth.user;
+const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 const reviews = ref<any[]>([]);
 const avgRating = ref(0);
+const roleLoading = ref(false);
 
 // Получаем инициалы для плейсхолдера
 function getInitials(user: any) {
   let initials = user.first_name?.charAt(0) || "";
   if (user.last_name) initials += user.last_name.charAt(0);
   return initials || "?";
+}
+
+async function changeRole() {
+  if (!user || !user.id) return;
+  roleLoading.value = true;
+  try {
+    // Меняем на противоположную роль
+    const updated = await updateProfileById({
+      id: user.id,
+      is_driver: !user.is_driver,
+    });
+    auth.setUser(updated);
+    toastRef.value?.show("Роль успешно изменена!");
+
+    // Перенаправляем на соответствующий экран
+    setTimeout(() => {
+      if (updated.is_driver) router.replace("/driver");
+      else router.replace("/passenger");
+    }, 500);
+  } catch (e) {
+    toastRef.value?.show("Ошибка при смене роли");
+  }
+  roleLoading.value = false;
 }
 
 // Загрузка отзывов — добавь свою логику если нужно!
@@ -75,14 +105,10 @@ onBeforeUnmount(() => {
   tg?.BackButton?.hide();
   tg?.BackButton?.offClick?.();
 });
-
-function formatDate(dt: string | null) {
-  if (!dt) return '';
-  return new Date(dt).toLocaleDateString('ru-RU');
-}
 </script>
 
 <style scoped>
+/* ... твои стили без изменений ... */
 .profile-card {
   display: flex;
   flex-direction: column;
@@ -188,5 +214,4 @@ function formatDate(dt: string | null) {
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
 }
-
 </style>
