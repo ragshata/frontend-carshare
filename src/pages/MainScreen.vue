@@ -40,7 +40,13 @@ async function selectRole(isDriver: boolean) {
     });
     auth.setUser(updated); // обновить в store
     toastRef.value?.show('✅ Роль успешно выбрана!');
-    setTimeout(() => router.replace('/main'), 600);
+    setTimeout(() => {
+      if (isDriver) {
+        router.replace('/driver');
+      } else {
+        router.replace('/passenger');
+      }
+    }, 600);
   } catch (err) {
     toastRef.value?.show('❌ Ошибка выбора роли');
   }
