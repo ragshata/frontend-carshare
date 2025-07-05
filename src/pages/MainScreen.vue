@@ -1,19 +1,21 @@
 <template>
-  <div class="main-screen">
-    <h1 class="title">Добро пожаловать в CARshare!</h1>
-    <p class="desc">
-      Это мини-приложение для поиска попутчиков и совместных поездок. Выберите, кто вы:
-    </p>
-    <div class="roles">
-      <button class="role-btn driver" @click="selectRole(true)">
-        🚗 Я водитель
-      </button>
-      <button class="role-btn passenger" @click="selectRole(false)">
-        🙋 Я попутчик
-      </button>
+  <div class="main-screen-bg">
+    <div class="main-screen-content">
+      <h1 class="title">Добро пожаловать в CARshare!</h1>
+      <p class="desc">
+        Это мини-приложение для поиска попутчиков и совместных поездок. Выберите, кто вы:
+      </p>
+      <div class="roles">
+        <button class="role-btn driver" @click="selectRole(true)">
+          🚗 Я водитель
+        </button>
+        <button class="role-btn passenger" @click="selectRole(false)">
+          🙋 Я попутчик
+        </button>
+      </div>
+      <div v-if="loading" class="loading">Сохраняем выбор...</div>
+      <Toast ref="toastRef" />
     </div>
-    <div v-if="loading" class="loading">Сохраняем выбор...</div>
-    <Toast ref="toastRef" />
   </div>
 </template>
 
@@ -21,7 +23,6 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { patchProfile } from '@/api/auth';
 import { patchUserRole } from '@/api/auth';
 import Toast from '@/components/Toast.vue';
 
@@ -37,13 +38,9 @@ async function selectRole(isDriver: boolean) {
     const updated = await patchUserRole(auth.user.id, isDriver);
     auth.setUser(updated); // обновить в store
     toastRef.value?.show('✅ Роль успешно выбрана!');
-    // редиректим на нужный экран
     setTimeout(() => {
-      if (isDriver) {
-        router.replace('/driver');
-      } else {
-        router.replace('/passenger');
-      }
+      if (isDriver) router.replace('/driver');
+      else router.replace('/passenger');
     }, 600);
   } catch (err) {
     toastRef.value?.show('❌ Ошибка выбора роли');
@@ -53,35 +50,45 @@ async function selectRole(isDriver: boolean) {
 </script>
 
 <style scoped>
-.main-screen {
+.main-screen-bg {
   min-height: 100vh;
+  width: 100vw;
+  background: url('@/assets/main-bg.jpg') center center/cover no-repeat;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--color-background, #f9fbfc);
-  padding: 18px;
+  position: relative;
 }
-.app-logo {
-  margin-bottom: 12px;
+.main-screen-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(25, 29, 32, 0.32); /* легкий затемняющий фильтр */
+  z-index: 1;
 }
-.logo {
-  width: 70px;
-  height: 70px;
-  margin-bottom: 4px;
+.main-screen-content {
+  z-index: 2;
+  position: relative;
+  background: rgba(255,255,255,0.85);
+  border-radius: 24px;
+  padding: 38px 22px 28px 22px;
+  box-shadow: 0 2px 24px rgba(0,0,0,0.07);
+  max-width: 400px;
+  width: 100%;
+  margin: 24px;
+  text-align: center;
 }
+
 .title {
   font-size: 23px;
   font-weight: bold;
-  text-align: center;
   margin-bottom: 14px;
-  color: var(--color-text-primary, #222);
+  color: #232323;
 }
 .desc {
   font-size: 15px;
-  color: var(--color-text-secondary, #666);
+  color: #666;
   margin-bottom: 24px;
-  text-align: center;
 }
 .roles {
   display: flex;
@@ -96,21 +103,15 @@ async function selectRole(isDriver: boolean) {
   font-weight: 600;
   border: none;
   border-radius: 18px;
-  background: var(--color-surface, #fff);
-  color: var(--color-primary, #007bff);
+  background: #fff;
+  color: #007bff;
   box-shadow: 0 2px 10px rgba(0,0,0,0.09);
   cursor: pointer;
   transition: background 0.16s;
 }
-.role-btn.driver {
-  background: #f1f8ff;
-}
-.role-btn.passenger {
-  background: #f9f4ff;
-}
-.role-btn:hover {
-  background: #e3eeff;
-}
+.role-btn.driver { background: #f1f8ff; }
+.role-btn.passenger { background: #f9f4ff; }
+.role-btn:hover { background: #e3eeff; }
 .loading {
   font-size: 15px;
   color: #666;
