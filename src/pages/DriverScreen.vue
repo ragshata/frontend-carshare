@@ -2,13 +2,13 @@
   <div class="driver-screen">
     <h2 class="title">Экран водителя</h2>
     <div class="actions">
-      <button class="btn" @click="go('/offer-trip')">
+      <button class="btn" @click="router.push('/offer-trip')">
         🚗 Создать поездку
       </button>
-      <button class="btn" @click="go('/manage-trips')">
+      <button class="btn" @click="router.push('/manage-trips')">
         📋 Мои поездки
       </button>
-      <button class="btn" @click="go('/profile')">
+      <button class="btn" @click="router.push('/profile')">
         👤 Профиль
       </button>
     </div>
@@ -18,13 +18,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 const router = useRouter();
-function go(path: string) {
-  router.push(path);
-}
-
 </script>
-
-
 
 <style scoped>
 .driver-screen {
