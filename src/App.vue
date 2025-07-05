@@ -5,9 +5,9 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watchEffect } from 'vue';
+import { useRouter } from 'vue-router';
 import SplashScreen from '@/components/SplashScreen.vue';
 import { useAuthStore } from '@/store/auth';
 import { authorizeViaTelegram } from '@/auth/telegram';
@@ -15,6 +15,7 @@ import { authorizeViaTelegram } from '@/auth/telegram';
 const showSplash = ref(true);
 const logMessage = ref('');
 const auth = useAuthStore();
+const router = useRouter();
 
 function log(msg: string) {
   logMessage.value = msg;
@@ -51,6 +52,12 @@ async function onSplashDone() {
   // Авторизация и регистрация на бэкенде
   try {
     await authorizeViaTelegram(telegramUser);
+
+    // Если роль не выбрана, кидаем на MainScreen
+    if (auth.user && typeof auth.user.is_driver !== 'boolean') {
+      router.replace('/main-screen');
+    }
+
     log("✅ Авторизация через Telegram прошла успешно!");
     showSplash.value = false;
   } catch (e: any) {
@@ -58,6 +65,18 @@ async function onSplashDone() {
     showSplash.value = false;
   }
 }
+
+// ** Watch for changes в user после Splash **
+watchEffect(() => {
+  if (
+    !showSplash.value &&
+    auth.user &&
+    typeof auth.user.is_driver !== 'boolean' &&
+    router.currentRoute.value.path !== '/main-screen'
+  ) {
+    router.replace('/main-screen');
+  }
+});
 </script>
 
 <style scoped>

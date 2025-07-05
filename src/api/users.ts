@@ -24,3 +24,7 @@ export async function updateProfileById(payload: {
 }) {
   return axios.patch(`${API_BASE}/users/${payload.id}`, payload);
 }
+
+export async function updateUserRole(id: number, is_driver: boolean) {
+  return axios.patch(`${API_BASE}/users/${id}`, { is_driver });
+}

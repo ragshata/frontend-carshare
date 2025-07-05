@@ -27,8 +27,9 @@ export interface PatchProfilePayload {
   last_name?: string;
   phone?: string;
   city?: string;
-  photo_url?: string;
+  is_driver?: boolean; // <-- ДОБАВЬ ВОТ ЭТУ СТРОКУ
 }
+
 
 export async function patchProfile(payload: PatchProfilePayload) {
   // Здесь telegram_id обязателен!
@@ -37,4 +38,15 @@ export async function patchProfile(payload: PatchProfilePayload) {
   }
   const res = await axios.patch(`${API_BASE}/me/`, payload);
   return res.data;
+}
+
+export async function updateProfileById(payload: {
+  id: number;
+  is_driver?: boolean;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  city?: string;
+}) {
+  return axios.patch(`${API_BASE}/users/${payload.id}`, payload);
 }

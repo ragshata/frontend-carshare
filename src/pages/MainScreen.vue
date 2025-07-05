@@ -1,104 +1,115 @@
 <template>
-  <div class="main-menu-page">
-    <h2>Добро пожаловать в CarShare TG!</h2>
-    <div class="menu-buttons">
-      <button class="menu-btn" @click="go('/find-trip')">🚗 Найти поездку</button>
-      <button class="menu-btn" @click="go('/manage-trips')">📝 Мои поездки</button>
-      <button class="menu-btn" @click="go('/offer-trip')">➕ Создать поездку</button>
-      <button class="menu-btn" @click="go('/my-bookings')">🧰 Мои брони</button>
-      <button class="menu-btn" @click="go('/profile')">👤 Профиль</button>
-      <button class="menu-btn" @click="go('/help')">❓ Помощь / FAQ</button>
+  <div class="main-screen">
+    <h1 class="title">Добро пожаловать в CARshare!</h1>
+    <p class="desc">
+      Это мини-приложение для поиска попутчиков и совместных поездок. Выберите, кто вы:
+    </p>
+    <div class="roles">
+      <button class="role-btn driver" @click="selectRole(true)">
+        🚗 Я водитель
+      </button>
+      <button class="role-btn passenger" @click="selectRole(false)">
+        🙋 Я попутчик
+      </button>
     </div>
-    <div class="info">Простой поиск попутчиков в телеграм 💎</div>
+    <div v-if="loading" class="loading">Сохраняем выбор...</div>
+    <Toast ref="toastRef" />
   </div>
 </template>
 
-
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from "vue";
-import { useRouter } from "vue-router";
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/store/auth';
+import { patchProfile } from '@/api/auth';
+import Toast from '@/components/Toast.vue';
 
 const router = useRouter();
+const auth = useAuthStore();
+const loading = ref(false);
+const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
-function go(path: string) {
-  router.push(path);
+async function selectRole(isDriver: boolean) {
+  if (!auth.user) return;
+  loading.value = true;
+  try {
+    // Сохраняем роль в бэке
+    const updated = await patchProfile({
+      telegram_id: auth.user.telegram_id,
+      is_driver: isDriver,
+    });
+    auth.setUser(updated); // обновить в store
+    toastRef.value?.show('✅ Роль успешно выбрана!');
+    setTimeout(() => router.replace('/main'), 600);
+  } catch (err) {
+    toastRef.value?.show('❌ Ошибка выбора роли');
+  }
+  loading.value = false;
 }
-
-/**function setMainButton() {
-  const tg = (window as any).Telegram?.WebApp;
-  if (!tg) return;
-  tg.ready();
-  tg.MainButton.setText("🚗 Найти поездку");
-  tg.MainButton.setParams({ color: "#007bff", text_color: "#ffffff" });
-  tg.MainButton.show();
-  tg.MainButton.onClick(() => go("/find-trip"));
-
-  // Поддержка BackButton (шаг назад)
-  tg.BackButton.show();
-  tg.BackButton.onClick(() => {
-    // Вернуть на этот главный экран
-    router.push("/main");
-  });
-}
-
-onMounted(() => {
-  setMainButton();
-});  */
-
-onBeforeUnmount(() => {
-  const tg = (window as any).Telegram?.WebApp;
-  tg?.MainButton?.hide();
-  tg?.MainButton?.offClick?.();
-  tg?.BackButton?.hide?.();
-  tg?.BackButton?.offClick?.();
-});
 </script>
 
 <style scoped>
-.main-menu-page {
-  padding: 16px;
+.main-screen {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: var(--color-background, #f7f7f7);
+  justify-content: center;
+  background: var(--color-background, #f9fbfc);
+  padding: 18px;
 }
-h2 {
-  font-size: 22px;
+.app-logo {
+  margin-bottom: 12px;
+}
+.logo {
+  width: 70px;
+  height: 70px;
+  margin-bottom: 4px;
+}
+.title {
+  font-size: 23px;
   font-weight: bold;
-  margin-top: 48px;
-  margin-bottom: 22px;
-  color: var(--color-text-primary, #232323);
   text-align: center;
+  margin-bottom: 14px;
+  color: var(--color-text-primary, #222);
 }
-.menu-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  max-width: 320px;
-  margin-bottom: 32px;
-}
-.menu-btn {
-  width: 100%;
-  padding: 14px 0;
-  font-size: 18px;
-  font-weight: 500;
-  background: #fff;
-  border: 2px solid var(--color-primary, #007bff);
-  border-radius: 12px;
-  color: var(--color-primary, #007bff);
-  cursor: pointer;
-  transition: background 0.18s;
-}
-.menu-btn:hover {
-  background: var(--color-primary, #007bff);
-  color: #fff;
-}
-.info {
+.desc {
   font-size: 15px;
-  color: var(--color-text-secondary, #888);
+  color: var(--color-text-secondary, #666);
+  margin-bottom: 24px;
   text-align: center;
-  margin-top: 18px;
+}
+.roles {
+  display: flex;
+  gap: 22px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.role-btn {
+  padding: 18px 36px;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  border-radius: 18px;
+  background: var(--color-surface, #fff);
+  color: var(--color-primary, #007bff);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.09);
+  cursor: pointer;
+  transition: background 0.16s;
+}
+.role-btn.driver {
+  background: #f1f8ff;
+}
+.role-btn.passenger {
+  background: #f9f4ff;
+}
+.role-btn:hover {
+  background: #e3eeff;
+}
+.loading {
+  font-size: 15px;
+  color: #666;
+  margin-top: 14px;
 }
 </style>

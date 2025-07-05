@@ -3,22 +3,50 @@
     <h2 class="title">Создать поездку</h2>
     <form class="form" @submit.prevent="save">
       <label>Откуда</label>
-      <input v-model="form.from_" type="text" required maxlength="40" />
+      <select v-model="selectedFrom" class="select">
+        <option value="">Выберите город</option>
+        <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
+        <option value="other">Другое…</option>
+      </select>
+      <input
+        v-if="selectedFrom === 'other'"
+        v-model="form.from_"
+        type="text"
+        placeholder="Введите город"
+        class="input"
+        required
+        maxlength="40"
+      />
+      <input v-else type="hidden" v-model="form.from_" />
 
       <label>Куда</label>
-      <input v-model="form.to" type="text" required maxlength="40" />
+      <select v-model="selectedTo" class="select">
+        <option value="">Выберите город</option>
+        <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
+        <option value="other">Другое…</option>
+      </select>
+      <input
+        v-if="selectedTo === 'other'"
+        v-model="form.to"
+        type="text"
+        placeholder="Введите город"
+        class="input"
+        required
+        maxlength="40"
+      />
+      <input v-else type="hidden" v-model="form.to" />
 
       <label>Дата</label>
-      <input v-model="form.date" type="date" required />
+      <input v-model="form.date" type="date" required class="input" />
 
       <label>Время</label>
-      <input v-model="form.time" type="time" required />
+      <input v-model="form.time" type="time" required class="input" />
 
       <label>Свободных мест</label>
-      <input v-model.number="form.seats" type="number" min="1" required />
+      <input v-model.number="form.seats" type="number" min="1" required class="input" />
 
       <label>Цена</label>
-      <input v-model.number="form.price" type="number" min="0" required />
+      <input v-model.number="form.price" type="number" min="0" required class="input" />
 
       <button class="btn" type="submit" :disabled="loading">Создать</button>
     </form>
@@ -27,16 +55,25 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, onBeforeUnmount } from 'vue';
+import { reactive, ref, onMounted, onBeforeUnmount, watchEffect } from 'vue';
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { createTrip } from "@/api/trips";
 import Toast from "@/components/Toast.vue";
 
+const cities = [
+  "Бохтар", "Бустон", "Вахдат", "Душанбе", "Истаравшан", "Истиклол", "Исфара",
+  "Гиссар", "Гулистон", "Канибадам", "Куляб", "Левакант", "Нурек", "Пенджикент",
+  "Рогун", "Турсунзаде", "Хорог", "Худжанд"
+];
+
 const router = useRouter();
 const auth = useAuthStore();
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const loading = ref(false);
+
+const selectedFrom = ref('');
+const selectedTo = ref('');
 
 // Универсальная реактивная форма для новой поездки
 const form = reactive({
@@ -46,7 +83,15 @@ const form = reactive({
   time: "",
   seats: 1,
   price: 0,
-  status: "active", // Если вдруг понадобится
+  status: "active",
+});
+
+// Синхронизируем select/input
+watchEffect(() => {
+  form.from_ = selectedFrom.value === 'other' ? form.from_ : selectedFrom.value;
+});
+watchEffect(() => {
+  form.to = selectedTo.value === 'other' ? form.to : selectedTo.value;
 });
 
 onMounted(() => {
@@ -73,8 +118,7 @@ async function save() {
   try {
     await createTrip({
       ...form,
-      owner_id: auth.user.id, // id текущего пользователя-водителя
-      // status: form.status, // Если нужно передавать статус явно
+      owner_id: auth.user.id,
     });
     toastRef.value?.show("Поездка создана!");
     setTimeout(() => router.push("/manage-trips"), 700);
@@ -105,12 +149,13 @@ async function save() {
   max-width: 380px;
   margin: 0 auto;
 }
-input {
+.select, .input {
   padding: 9px 12px;
   border-radius: 7px;
   border: 1px solid var(--color-border, #bbb);
   font-size: 16px;
   outline: none;
+  margin-bottom: 6px;
 }
 .btn {
   background: var(--color-primary, #007bff);

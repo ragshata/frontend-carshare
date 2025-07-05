@@ -1,63 +1,47 @@
 <template>
   <div class="find-trip-page">
     <h2 class="title">Поиск поездок</h2>
-    
     <form class="form" @submit.prevent="goToResults">
-      <AnimatedInput
+      <label for="from_">Откуда</label>
+      <select v-model="selectedFrom" id="from_" class="select">
+        <option value="">Выберите город</option>
+        <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
+        <option value="other">Другое…</option>
+      </select>
+      <input
+        v-if="selectedFrom === 'other'"
         v-model="form.from_"
-        label="Откуда"
-        id="from_"
-        required
-        :error="errors.from_"
+        type="text"
+        placeholder="Введите город"
+        class="input"
       />
-      <AnimatedInput
+      <input
+        v-else
+        type="hidden"
+        v-model="form.from_"
+      />
+
+      <label for="to">Куда</label>
+      <select v-model="selectedTo" id="to" class="select">
+        <option value="">Выберите город</option>
+        <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
+        <option value="other">Другое…</option>
+      </select>
+      <input
+        v-if="selectedTo === 'other'"
         v-model="form.to"
-        label="Куда"
-        id="to"
-        required
-        :error="errors.to"
+        type="text"
+        placeholder="Введите город"
+        class="input"
       />
-      <AnimatedInput
-        v-model="form.date"
-        label="Дата"
-        id="date"
-        type="date"
-        required
-        :error="errors.date"
+      <input
+        v-else
+        type="hidden"
+        v-model="form.to"
       />
 
-      <button type="button" class="btn btn-outline" @click="showAdvanced = !showAdvanced">
-        {{ showAdvanced ? 'Скрыть дополнительные фильтры' : 'Показать дополнительные фильтры' }}
-      </button>
-
-      <div v-if="showAdvanced" class="advanced-filters">
-        <AnimatedInput
-          v-model="form.date_from"
-          label="Дата с"
-          id="date_from"
-          type="date"
-        />
-        <AnimatedInput
-          v-model="form.date_to"
-          label="Дата по"
-          id="date_to"
-          type="date"
-        />
-        <div class="select-wrapper">
-          <label for="status">Статус</label>
-          <select id="status" v-model="form.status">
-            <option value="active">Активные</option>
-            <option value="done">Завершённые</option>
-            <option value="cancelled">Отменённые</option>
-          </select>
-        </div>
-        <AnimatedInput
-          v-model="form.maxPrice"
-          label="Максимальная цена"
-          id="maxPrice"
-          type="number"
-        />
-      </div>
+      <label for="date">Дата</label>
+      <input v-model="form.date" id="date" type="date" class="input" />
 
       <div class="buttons">
         <button type="submit" class="btn">Найти поездки</button>
@@ -70,23 +54,32 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, onBeforeUnmount } from 'vue';
+import { reactive, ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
-import AnimatedInput from '@/components/AnimatedInput.vue';
+
+const cities = [
+  "Бохтар", "Бустон", "Вахдат", "Душанбе", "Истаравшан", "Истиклол", "Исфара",
+  "Гиссар", "Гулистон", "Канибадам", "Куляб", "Левакант", "Нурек", "Пенджикент",
+  "Рогун", "Турсунзаде", "Хорог", "Худжанд"
+];
 
 const router = useRouter();
-const showAdvanced = ref(false);
 
 const form = reactive({
   from_: '',
   to: '',
-  date: '',
-  date_from: '',
-  date_to: '',
-  status: 'active',
-  maxPrice: ''
+  date: ''
 });
-const errors = reactive({ from_: false, to: false, date: false });
+const selectedFrom = ref('');
+const selectedTo = ref('');
+
+// Следим за выбором и синхронизируем input/select
+watch(selectedFrom, (val) => {
+  form.from_ = val === 'other' ? '' : val;
+});
+watch(selectedTo, (val) => {
+  form.to = val === 'other' ? '' : val;
+});
 
 onMounted(() => {
   const tg = (window as any).Telegram?.WebApp;
@@ -103,27 +96,24 @@ onBeforeUnmount(() => {
   tg?.BackButton?.offClick?.();
 });
 
-function validate() {
-  let valid = true;
-  (["from_", "to", "date"] as const).forEach((k) => {
-    errors[k] = !form[k];
-    if (!form[k]) valid = false;
-  });
-  return valid;
-}
 function resetFilters() {
-  Object.assign(form, { from_: '', to: '', date: '', date_from: '', date_to: '', status: 'active', maxPrice: '' });
+  selectedFrom.value = '';
+  selectedTo.value = '';
+  Object.assign(form, { from_: '', to: '', date: '' });
 }
 
 function goToResults() {
-  if (!validate()) return;
+  const allEmpty = !form.from_ && !form.to && !form.date;
+  if (allEmpty) {
+    router.push({ path: '/search-results' });
+    return;
+  }
   const query: Record<string, string> = {};
   Object.entries(form).forEach(([key, value]) => {
-    if (value && value !== '') query[key] = value;
+    if (value) query[key] = value;
   });
   router.push({ path: '/search-results', query });
 }
-
 </script>
 
 <style scoped>
@@ -143,32 +133,21 @@ function goToResults() {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  max-width: 380px;
+  margin: 0 auto;
+}
+.select, .input {
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--color-border, #bbb);
+  font-size: 16px;
+  outline: none;
+  margin-bottom: 6px;
 }
 .buttons {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 12px;
-}
-.select-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 14px;
-  color: var(--color-text-primary);
-}
-.select-wrapper select {
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  font-size: 15px;
-  color: var(--color-text-primary);
-}
-.advanced-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
   margin-top: 12px;
 }
 .btn {
