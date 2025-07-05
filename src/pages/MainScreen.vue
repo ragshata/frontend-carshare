@@ -22,6 +22,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { patchProfile } from '@/api/auth';
+import { patchUserRole } from '@/api/auth';
 import Toast from '@/components/Toast.vue';
 
 const router = useRouter();
@@ -33,13 +34,10 @@ async function selectRole(isDriver: boolean) {
   if (!auth.user) return;
   loading.value = true;
   try {
-    // Сохраняем роль в бэке
-    const updated = await patchProfile({
-      telegram_id: auth.user.telegram_id,
-      is_driver: isDriver,
-    });
+    const updated = await patchUserRole(auth.user.id, isDriver);
     auth.setUser(updated); // обновить в store
     toastRef.value?.show('✅ Роль успешно выбрана!');
+    // редиректим на нужный экран
     setTimeout(() => {
       if (isDriver) {
         router.replace('/driver');

@@ -30,6 +30,11 @@ export interface PatchProfilePayload {
   is_driver?: boolean; // <-- ДОБАВЬ ВОТ ЭТУ СТРОКУ
 }
 
+export async function patchUserRole(user_id: number, is_driver: boolean) {
+  const res = await axios.patch(`${API_BASE}/users/${user_id}`, { is_driver });
+  return res.data;
+}
+
 
 export async function patchProfile(payload: PatchProfilePayload) {
   // Здесь telegram_id обязателен!
