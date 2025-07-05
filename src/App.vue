@@ -2,6 +2,7 @@
   <SplashScreen v-if="showSplash" @done="onSplashDone" />
   <div v-else class="container">
     <router-view />
+    <div v-if="logMessage" class="tg-log">{{ logMessage }}</div>
   </div>
 </template>
 
@@ -52,34 +53,55 @@ async function onSplashDone() {
   // Авторизация и регистрация на бэкенде
   try {
     await authorizeViaTelegram(telegramUser);
-
-    // Если роль не выбрана, кидаем на MainScreen
-    if (auth.user && typeof auth.user.is_driver !== 'boolean') {
-      router.replace('/main-screen');
-    }
-
     log("✅ Авторизация через Telegram прошла успешно!");
     showSplash.value = false;
+    redirectByRole();
   } catch (e: any) {
     log("❌ Ошибка авторизации через Telegram: " + (e?.message || e));
     showSplash.value = false;
   }
 }
 
-// ** Watch for changes в user после Splash **
+// Автоматический редирект по роли пользователя
+function redirectByRole() {
+  // Если не авторизован — ничего не делаем
+  if (!auth.user) return;
+
+  // Если роль не выбрана
+  if (typeof auth.user.is_driver !== 'boolean') {
+    if (router.currentRoute.value.path !== '/main-screen') {
+      router.replace('/main-screen');
+    }
+    return;
+  }
+
+  // Если водитель
+  if (auth.user.is_driver) {
+    if (router.currentRoute.value.path !== '/driver') {
+      router.replace('/driver');
+    }
+    return;
+  }
+
+  // Если пассажир
+  if (router.currentRoute.value.path !== '/passenger') {
+    router.replace('/passenger');
+  }
+}
+
+// Следим за авторизацией/сменой роли
 watchEffect(() => {
-  if (
-    !showSplash.value &&
-    auth.user &&
-    typeof auth.user.is_driver !== 'boolean' &&
-    router.currentRoute.value.path !== '/main-screen'
-  ) {
-    router.replace('/main-screen');
+  if (!showSplash.value) {
+    redirectByRole();
   }
 });
 </script>
 
 <style scoped>
+.container {
+  min-height: 100vh;
+  background: var(--color-background, #fafbfc);
+}
 .tg-log {
   position: fixed;
   bottom: 30px;
