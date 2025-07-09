@@ -1,7 +1,9 @@
 <template>
   <div class="admin-wrap">
     <h2 class="title">Админ-панель</h2>
-    <button class="danger-btn" @click="deleteDatabase" style="margin-bottom: 28px;">Удалить всю базу</button>
+    <div class="center-row">
+      <button class="danger-btn" @click="deleteDatabase">Удалить всю базу</button>
+    </div>
 
     <table class="users-table">
       <thead>
@@ -47,14 +49,24 @@
           </p>
           <p>
             <b>Может создавать:</b>
-            <span class="lock-icon" @click="toggleActive(modalUser)">
-              <svg v-if="!!modalUser.active_driver" width="28" height="28" viewBox="0 0 24 24" fill="#21beff" style="vertical-align:middle">
-                <path d="M12 17a1.5 1.5 0 0 0 1.5-1.5V14a1.5 1.5 0 0 0-3 0v1.5A1.5 1.5 0 0 0 12 17zm6-6V9a6 6 0 1 0-12 0h2a4 4 0 1 1 8 0v2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h10zm-10 8h8v-6H8v6z"/>
-              </svg>
-              <svg v-else width="28" height="28" viewBox="0 0 24 24" fill="#B0B7C3" style="vertical-align:middle">
-                <path d="M12 17a1.5 1.5 0 0 0 1.5-1.5V14a1.5 1.5 0 0 0-3 0v1.5A1.5 1.5 0 0 0 12 17zm6-6V9a6 6 0 1 0-12 0h2a4 4 0 1 1 8 0v2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h10zm-10 8h8v-6H8v6z"/>
-              </svg>
-            </span>
+            <label class="lock" style="margin-left: 8px;">
+              <input type="checkbox"
+                     :checked="!!modalUser.active_driver"
+                     @change="toggleActive(modalUser)">
+              <span>
+                <!-- SVG-замок открытый/закрытый -->
+                <svg v-if="!!modalUser.active_driver" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <rect x="2" y="10" width="20" height="10" rx="5" :fill="modalUser.active_driver ? '#21beff' : '#EEE'" />
+                  <circle :cx="modalUser.active_driver ? 17 : 7" cy="15" r="4" fill="#fff" />
+                  <path d="M8,10V8a4,4,0,0,1,8,0" stroke="#21beff" stroke-width="2" fill="none" />
+                </svg>
+                <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <rect x="2" y="10" width="20" height="10" rx="5" :fill="modalUser.active_driver ? '#21beff' : '#EEE'" />
+                  <circle :cx="modalUser.active_driver ? 17 : 7" cy="15" r="4" fill="#fff" />
+                  <path d="M16,10V8a4,4,0,0,0-8,0" stroke="#B0B7C3" stroke-width="2" fill="none" />
+                </svg>
+              </span>
+            </label>
           </p>
         </div>
         <div class="modal-actions">
@@ -63,7 +75,6 @@
         </div>
       </div>
     </div>
-
     <Toast ref="toastRef" />
   </div>
 </template>
@@ -90,7 +101,6 @@ async function setRole(is_driver: boolean) {
   try {
     modalUser.value.is_driver = is_driver;
     await updateUserRole(modalUser.value.id, is_driver);
-    // сразу обновить и в таблице
     const idx = users.value.findIndex(u => u.id === modalUser.value.id);
     if (idx !== -1) users.value[idx].is_driver = is_driver;
     toastRef.value?.show('Роль обновлена');
@@ -103,7 +113,6 @@ async function toggleActive(user: any) {
   try {
     user.active_driver = !user.active_driver;
     await updateUserActiveDriver(user.id, user.active_driver);
-    // сразу обновить и в таблице
     const idx = users.value.findIndex(u => u.id === user.id);
     if (idx !== -1) users.value[idx].active_driver = user.active_driver;
     toastRef.value?.show('Статус обновлен');
@@ -136,7 +145,6 @@ async function deleteDatabase() {
 }
 
 function showDetails(user: any) {
-  // Клонируем чтобы изменения в модалке не влияли сразу на таблицу
   modalUser.value = { ...user };
 }
 
@@ -144,6 +152,11 @@ onMounted(loadUsers);
 </script>
 
 <style scoped>
+body {
+  background:#FCFCFC;
+  color:#222;
+  font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Open Sans,Helvetica Neue,sans-serif;
+}
 .admin-wrap {
   max-width: 900px;
   margin: 36px auto 0 auto;
@@ -151,6 +164,12 @@ onMounted(loadUsers);
   background: #fff;
   border-radius: 22px;
   box-shadow: 0 2px 12px rgba(60,80,120,0.06);
+}
+.center-row {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
 }
 .title {
   font-size: 25px;
@@ -218,15 +237,14 @@ onMounted(loadUsers);
   border-radius: 10px;
   font-size: 15px;
   font-weight: 500;
-  padding: 9px 22px;
-  margin-bottom: 10px;
+  padding: 11px 38px;
   cursor: pointer;
   transition: background 0.17s;
+  margin-bottom: 10px;
 }
 .danger-btn:hover {
   background: #c9302c;
 }
-/* Роль — красивые кнопки */
 .role-select {
   display: inline-flex;
   border-radius: 11px;
@@ -251,18 +269,56 @@ onMounted(loadUsers);
 .role-option:not(.selected):hover {
   background: #e6f8ff;
 }
-.lock-icon {
+
+/* Toggle-lock (в стиле твоего примера) */
+.lock {
+  position:relative;
+  cursor:pointer;
+  height:32px;
+  user-select:none;
   display: inline-block;
-  cursor: pointer;
-  vertical-align: middle;
-  margin-left: 5px;
+  vertical-align:middle;
+  margin-left: 2px;
 }
-.lock-icon svg {
-  transition: filter 0.19s;
-  filter: drop-shadow(0 1px 3px rgba(33,190,255,0.09));
+.lock input {
+  display:none;
 }
-.lock-icon:hover svg {
-  filter: brightness(1.18) drop-shadow(0 2px 6px rgba(33,190,255,0.12));
+.lock span:before,
+.lock span:after{
+  content:"";
+}
+.lock span:before {
+  width:64px;
+  height:32px;
+  margin-right:8px;
+  background:#EEE;
+  border-radius:32px;
+  display:inline-block;
+  vertical-align:middle;
+  transition:all .5s cubic-bezier(.175, .885, .32, 1);
+}
+.lock input:checked + span:before {
+  background-color:#1CC691;
+}
+.lock span:after {
+  margin:2px;
+  width:28px;
+  height:28px;
+  background:#FFF;
+  border-radius:28px;
+  position:absolute;
+  left:0;
+  top:0;
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAB6ElEQVRYR+3XS8gPURjH8c8bkYV7KVslC4US5RJhgWKDQsnCJZcFWcrCJVkqioVsZOG+eDdvLJAkJJKVkr1EIQu3okfnXy/9Z+bMO8O/5OxmznP5nud35pxn+vR49A0hf/gsxHJMSf4vcQP38L1OzLoA83AaswqSPMFuPMyFqAOwBWcwrCL4N2zDuRyIXIDV6EfYf8IJXMDz9G4aNmEPRiQZVmGgCiIHYAxeYBLeYRmi1N3GHNzEaLzCVHwsg8gB2IfjKchmnK9Y1VacTTZ7cbIpQOzs+XiDyQiNy0ZI8BpjcReLmgJ8SCW9jpVVmqb5kGEp3mNcU4DOd30Z6zMBrmFNsi2VuWwySrkEsfIY96v0HAQX+2Zuel6BW/jaDb4IYCLuYHrmiqvMnmFx+op+sS0COIb9VVFrzh/C4d99igCuYF3NBFXmF7ExF+Aq1lZFrDl/CRv+A7RZgUfpdoyYOzG7QpJWJYjk0ZR8SUlH4kFJnxBmrQJsH3ThdBa+KzUrRYX44wDRCZ0qkaFVgMdYgM8p4agkwYy/BRB5nqZNGIfZDpQlb30P1DyDfpq3KsG/D9Dzy+goDgylziU+B3Ek9ygej9uY2RJEtPGdHjGrIQmj4amjndAQ4m3qjrt20zn/BQ3zl7v3HOAHddxjIRWQtfEAAAAASUVORK5CYII=);
+  background-size: 16px 16px;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index:2;
+  transition:all .5s cubic-bezier(.175, .885, .32, 1); 
+}
+.lock input:checked + span:after {
+  left:32px;
+  background-image:none;
 }
 .modal-overlay {
   position: fixed;
