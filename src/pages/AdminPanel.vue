@@ -34,20 +34,33 @@
             <span v-else>—</span>
           </p>
           <p><b>Роль:</b>
-            <select v-model="modalUser.is_driver" @change="changeRole(modalUser)">
-              <option :value="true">Водитель</option>
-              <option :value="false">Пассажир</option>
-            </select>
+            <span class="role-select">
+              <button
+                :class="['role-option', modalUser.is_driver ? 'selected' : '']"
+                @click="setRole(true)"
+              >Водитель</button>
+              <button
+                :class="['role-option', !modalUser.is_driver ? 'selected' : '']"
+                @click="setRole(false)"
+              >Пассажир</button>
+            </span>
           </p>
-          <p><b>Может создавать:</b>
-            <label class="lock">
-              <input type="checkbox" :checked="!!modalUser.active_driver" @change="toggleActive(modalUser)" />
-              <span></span>
-            </label>
+          <p>
+            <b>Может создавать:</b>
+            <span class="lock-icon" @click="toggleActive(modalUser)">
+              <svg v-if="!!modalUser.active_driver" width="28" height="28" viewBox="0 0 24 24" fill="#21beff" style="vertical-align:middle">
+                <path d="M12 17a1.5 1.5 0 0 0 1.5-1.5V14a1.5 1.5 0 0 0-3 0v1.5A1.5 1.5 0 0 0 12 17zm6-6V9a6 6 0 1 0-12 0h2a4 4 0 1 1 8 0v2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h10zm-10 8h8v-6H8v6z"/>
+              </svg>
+              <svg v-else width="28" height="28" viewBox="0 0 24 24" fill="#B0B7C3" style="vertical-align:middle">
+                <path d="M12 17a1.5 1.5 0 0 0 1.5-1.5V14a1.5 1.5 0 0 0-3 0v1.5A1.5 1.5 0 0 0 12 17zm6-6V9a6 6 0 1 0-12 0h2a4 4 0 1 1 8 0v2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h10zm-10 8h8v-6H8v6z"/>
+              </svg>
+            </span>
           </p>
         </div>
-        <button class="delete-btn" @click="deleteUserById(modalUser.id)">Удалить пользователя</button>
-        <button class="btn" @click="modalUser = null" style="margin-top:14px;">Закрыть</button>
+        <div class="modal-actions">
+          <button class="delete-btn" @click="deleteUserById(modalUser.id)">Удалить</button>
+          <button class="btn close-btn" @click="modalUser = null">Закрыть</button>
+        </div>
       </div>
     </div>
 
@@ -72,9 +85,14 @@ async function loadUsers() {
   }
 }
 
-async function changeRole(user: any) {
+async function setRole(is_driver: boolean) {
+  if (!modalUser.value) return;
   try {
-    await updateUserRole(user.id, user.is_driver);
+    modalUser.value.is_driver = is_driver;
+    await updateUserRole(modalUser.value.id, is_driver);
+    // сразу обновить и в таблице
+    const idx = users.value.findIndex(u => u.id === modalUser.value.id);
+    if (idx !== -1) users.value[idx].is_driver = is_driver;
     toastRef.value?.show('Роль обновлена');
   } catch {
     toastRef.value?.show('Ошибка обновления роли!');
@@ -85,6 +103,9 @@ async function toggleActive(user: any) {
   try {
     user.active_driver = !user.active_driver;
     await updateUserActiveDriver(user.id, user.active_driver);
+    // сразу обновить и в таблице
+    const idx = users.value.findIndex(u => u.id === user.id);
+    if (idx !== -1) users.value[idx].active_driver = user.active_driver;
     toastRef.value?.show('Статус обновлен');
   } catch {
     toastRef.value?.show('Ошибка обновления статуса!');
@@ -158,7 +179,7 @@ onMounted(loadUsers);
 .users-table td {
   background: #fff;
 }
-.btn, .delete-btn {
+.btn, .close-btn {
   background: #fff;
   color: #007bff;
   border: 1.5px solid #007bff;
@@ -167,15 +188,25 @@ onMounted(loadUsers);
   padding: 6px 16px;
   cursor: pointer;
   transition: background 0.13s, color 0.13s;
+  margin-right: 8px;
 }
 .btn:hover {
   background: #f1f7ff;
+}
+.close-btn {
+  margin-right: 0;
 }
 .delete-btn {
   background: #e53935;
   color: white;
   border: none;
-  margin-top: 10px;
+  border-radius: 6px;
+  font-size: 15px;
+  padding: 6px 13px;
+  cursor: pointer;
+  margin-right: 8px;
+  min-width: 80px;
+  transition: background 0.13s;
 }
 .delete-btn:hover {
   background: #c62828;
@@ -195,53 +226,43 @@ onMounted(loadUsers);
 .danger-btn:hover {
   background: #c9302c;
 }
-/* Кнопка-замок (switch) */
-.lock {
-  position: relative;
+/* Роль — красивые кнопки */
+.role-select {
+  display: inline-flex;
+  border-radius: 11px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1.5px #21beff inset;
+}
+.role-option {
+  border: none;
+  padding: 6px 18px;
+  font-size: 15px;
+  font-weight: 500;
+  background: #fff;
+  color: #21beff;
   cursor: pointer;
-  height: 32px;
+  transition: background 0.17s, color 0.13s;
+  outline: none;
+}
+.role-option.selected {
+  background: #21beff;
+  color: #fff;
+}
+.role-option:not(.selected):hover {
+  background: #e6f8ff;
+}
+.lock-icon {
   display: inline-block;
+  cursor: pointer;
   vertical-align: middle;
-  user-select: none;
+  margin-left: 5px;
 }
-.lock input {
-  display: none;
+.lock-icon svg {
+  transition: filter 0.19s;
+  filter: drop-shadow(0 1px 3px rgba(33,190,255,0.09));
 }
-.lock span:before,
-.lock span:after {
-  content: "";
-}
-.lock span:before {
-  width: 64px;
-  height: 32px;
-  margin-right: 8px;
-  background: #EEE;
-  border-radius: 32px;
-  display: inline-block;
-  vertical-align: middle;
-  transition: all .5s cubic-bezier(.175, .885, .32, 1);
-}
-.lock span:after {
-  margin: 2px;
-  width: 28px;
-  height: 28px;
-  background: #FFF;
-  border-radius: 28px;
-  position: absolute;
-  left: 0;
-  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAB6ElEQVRYR+3XS8gPURjH8c8bkYV7KVslC4US5RJhgWKDQsnCJZcFWcrCJVkqioVsZOG+eDdvLJAkJJKVkr1EIQu3okfnXy/9Z+bMO8O/5OxmznP5nud35pxn+vR49A0hf/gsxHJMSf4vcQP38L1OzLoA83AaswqSPMFuPMyFqAOwBWcwrCL4N2zDuRyIXIDV6EfYf8IJXMDz9G4aNmEPRiQZVmGgCiIHYAxeYBLeYRmi1N3GHNzEaLzCVHwsg8gB2IfjKchmnK9Y1VacTTZ7cbIpQOzs+XiDyQiNy0ZI8BpjcReLmgJ8SCW9jpVVmqb5kGEp3mNcU4DOd30Z6zMBrmFNsi2VuWwySrkEsfIY96v0HAQX+2Zuel6BW/jaDb4IYCLuYHrmiqvMnmFx+op+sS0COIb9VVFrzh/C4d99igCuYF3NBFXmF7ExF+Aq1lZFrDl/CRv+A7RZgUfpdoyYOzG7QpJWJYjk0ZR8SUlH4kFJnxBmrQJsH3ThdBa+KzUrRYX44wDRCZ0qkaFVgMdYgM8p4agkwYy/BRB5nqZNGIfZDpQlb30P1DyDfpq3KsG/D9Dzy+goDgylziU+B3Ek9ygej9uY2RJEtPGdHjGrIQmj4amjndAQ4m3qjrt20zn/BQ3zl7v3HOAHddxjIRWQtfEAAAAASUVORK5CYII=);
-  background-size: 16px 16px;
-  background-position: center;
-  background-repeat: no-repeat;
-  z-index:2;
-  transition: all .5s cubic-bezier(.175, .885, .32, 1); 
-}
-.lock input:checked + span:after {
-  left: 32px;
-  background-image: none;
-}
-.lock input:checked + span:before {
-  background-color: #1CC691;
+.lock-icon:hover svg {
+  filter: brightness(1.18) drop-shadow(0 2px 6px rgba(33,190,255,0.12));
 }
 .modal-overlay {
   position: fixed;
@@ -263,5 +284,11 @@ onMounted(loadUsers);
 .modal-content p {
   font-size: 15px;
   margin-bottom: 9px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
 }
 </style>
