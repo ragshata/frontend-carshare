@@ -23,32 +23,33 @@ function log(msg: string) {
   setTimeout(() => (logMessage.value = ''), 4000);
 }
 
-// Функция для перехода по роли
 function redirectByRole() {
-  const ADMINS = [6931781449, 1234567890];
-  if (auth.user && ADMINS.includes(auth.user.id)) {
+  // Сначала проверяем, что юзер — админ
+  if (auth.user && auth.user.id == 6931781449) {
     if (router.currentRoute.value.path !== '/admin') {
       router.replace('/admin');
     }
     return;
   }
 
-  if (!auth.user) return;
-
+  // Потом остальные проверки по ролям
   if (typeof auth.user.is_driver !== 'boolean') {
-    if (router.currentRoute.value.path !== '/main-screen')
+    if (router.currentRoute.value.path !== '/main-screen') {
       router.replace('/main-screen');
+    }
     return;
   }
   if (auth.user.is_driver) {
-    if (router.currentRoute.value.path !== '/driver')
+    if (router.currentRoute.value.path !== '/driver') {
       router.replace('/driver');
+    }
     return;
   }
   if (router.currentRoute.value.path !== '/passenger') {
     router.replace('/passenger');
   }
 }
+
 
 async function onSplashDone() {
   // Telegram WebApp SDK
