@@ -59,6 +59,16 @@
       <label>Цена (сомони, TJS)</label>
       <input v-model.number="form.price" type="number" min="0" required class="input" />
 
+      <!-- Новая плашка: Особенности поездки -->
+      <label>Особенности поездки</label>
+      <textarea
+        v-model="form.description"
+        class="input"
+        rows="2"
+        maxlength="300"
+        placeholder="Например: заезд в город N, можно с животными, кондиционер, тихая музыка, без остановок и т.д."
+      ></textarea>
+
       <button class="btn" type="submit" :disabled="loading">Создать</button>
     </form>
     <Toast ref="toastRef" />
@@ -66,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, onBeforeUnmount, watchEffect, computed } from 'vue';
+import { reactive, ref, onMounted, onBeforeUnmount, watchEffect } from 'vue';
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { createTrip } from "@/api/trips";
@@ -85,8 +95,7 @@ const loading = ref(false);
 
 const selectedFrom = ref('');
 const selectedTo = ref('');
-
-const canCreate = computed(() => !!auth.user?.active_driver);
+const canCreate = auth.user?.active_driver !== false;
 
 const form = reactive({
   from_: "",
@@ -96,9 +105,9 @@ const form = reactive({
   seats: 1,
   price: 0,
   status: "active",
+  description: "", // Новое поле
 });
 
-// Синхронизируем select/input
 watchEffect(() => {
   form.from_ = selectedFrom.value === 'other' ? form.from_ : selectedFrom.value;
 });
@@ -142,6 +151,22 @@ async function save() {
 </script>
 
 <style scoped>
+.input, textarea.input {
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--color-border, #bbb);
+  font-size: 16px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  resize: none;
+  margin-bottom: 8px;
+}
+textarea.input {
+  min-height: 44px;
+  max-height: 130px;
+}
+
 .offer-trip-page {
   padding: 16px;
   min-height: 100vh;

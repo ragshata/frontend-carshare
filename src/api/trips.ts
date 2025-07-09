@@ -16,6 +16,7 @@ export interface Trip {
   created_at?: string;
   car_number?: string; // Новый
   car_brand?: string;  // Новый
+  description?: string
   // другие поля по модели
 }
 
@@ -49,6 +50,7 @@ export async function createTrip(trip: {
   price: number;
   owner_id: number;
   status?: string;
+  description?: string;
 }) {
   const res = await axios.post(`${API_BASE}/trips/`, trip);
   return res.data;

@@ -15,6 +15,10 @@
         <div class="row">
           💰 {{ trip.price }} сомони (TJS) &nbsp; 👥 Мест: {{ trip.seats }}
         </div>
+        <div class="trip-desc" v-if="trip.description">
+          <b>Особенности поездки:</b>
+          <div style="margin-top:4px;">{{ trip.description }}</div>
+        </div>
         <!-- Номер и марка машины -->
         <div class="row car-info" v-if="driver && (driver.car_brand || driver.car_number)">
           🚘
@@ -240,6 +244,16 @@ function formatDate(dt: string | null) {
   border-radius: 12px;
   object-fit: cover;
 }
+.input, textarea.input {
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--color-border, #bbb);
+  font-size: 15px;
+  outline: none;
+  width: 100%;
+  resize: vertical;
+}
+
 .driver-name {
   font-size: 17px;
   font-weight: bold;
