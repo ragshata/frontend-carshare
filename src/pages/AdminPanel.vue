@@ -8,9 +8,11 @@
         <tr>
           <th>ID</th>
           <th>Имя</th>
+          <th>Telegram ID</th>
           <th>Telegram</th>
           <th>Роль</th>
           <th>Может создавать</th>
+          <th>Подробнее</th>
           <th>Удалить</th>
         </tr>
       </thead>
@@ -18,7 +20,7 @@
         <tr v-for="user in users" :key="user.id">
           <td>{{ user.id }}</td>
           <td>{{ user.first_name }} <span v-if="user.last_name">{{ user.last_name }}</span></td>
-          <td>{{ user.phone || '—' }}</td>
+          <td>{{ user.telegram_id }}</td>
           <td>
             <a v-if="user.username" :href="`https://t.me/${user.username}`" target="_blank">@{{ user.username }}</a>
             <span v-else>—</span>
@@ -36,11 +38,36 @@
             </label>
           </td>
           <td>
+            <button class="btn" @click="showDetails(user)">Подробнее</button>
+          </td>
+          <td>
             <button class="delete-btn" @click="deleteUserById(user.id)">✖</button>
           </td>
         </tr>
       </tbody>
     </table>
+
+    <!-- Модальное окно с деталями -->
+    <div v-if="modalUser" class="modal-overlay" @click.self="modalUser = null">
+      <div class="modal">
+        <h3>Пользователь #{{ modalUser.id }}</h3>
+        <div class="modal-content">
+          <p><b>Имя:</b> {{ modalUser.first_name }} <span v-if="modalUser.last_name">{{ modalUser.last_name }}</span></p>
+          <p><b>Telegram ID:</b> {{ modalUser.telegram_id }}</p>
+          <p><b>Telegram:</b>
+            <a v-if="modalUser.username" :href="`https://t.me/${modalUser.username}`" target="_blank">@{{ modalUser.username }}</a>
+            <span v-else>—</span>
+          </p>
+          <p><b>Роль:</b> {{ modalUser.is_driver ? "Водитель" : "Пассажир" }}</p>
+          <p><b>Может создавать:</b> {{ modalUser.active_driver ? "Да" : "Нет" }}</p>
+          <p><b>Город:</b> {{ modalUser.city || "—" }}</p>
+          <p><b>Телефон:</b> {{ modalUser.phone || "—" }}</p>
+          <p><b>Дата регистрации:</b> {{ formatDate(modalUser.registered_at) }}</p>
+        </div>
+        <button class="btn" @click="modalUser = null" style="margin-top:18px;">Закрыть</button>
+      </div>
+    </div>
+
     <Toast ref="toastRef" />
   </div>
 </template>
@@ -52,6 +79,12 @@ import Toast from '@/components/Toast.vue';
 
 const users = ref<any[]>([]);
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
+const modalUser = ref<any|null>(null);
+
+function formatDate(dt: string | null) {
+  if (!dt) return '—';
+  return new Date(dt).toLocaleDateString('ru-RU');
+}
 
 async function loadUsers() {
   try {
@@ -94,12 +127,16 @@ async function deleteUserById(id: number) {
 async function deleteDatabase() {
   if (!confirm('ВНИМАНИЕ: Это удалит ВСЕ ДАННЫЕ! Продолжить?')) return;
   try {
-    await deleteDatabase();
+    await deleteDatabased();
     users.value = [];
     toastRef.value?.show('База удалена!');
   } catch {
     toastRef.value?.show('Ошибка удаления базы!');
   }
+}
+
+function showDetails(user: any) {
+  modalUser.value = user;
 }
 
 onMounted(loadUsers);
@@ -221,5 +258,26 @@ body {
 }
 .lock input:checked + span:before {
   background-color: #1CC691;
+}
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30,30,30,0.17);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+.modal {
+  background: #fff;
+  border-radius: 17px;
+  box-shadow: 0 2px 20px rgba(30,30,30,0.08);
+  min-width: 320px;
+  padding: 28px 32px 16px 32px;
+  text-align: left;
+}
+.modal-content p {
+  font-size: 15px;
+  margin-bottom: 9px;
 }
 </style>
