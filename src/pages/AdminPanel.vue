@@ -1,9 +1,6 @@
 <template>
   <div class="admin-wrap">
     <h2 class="title">Админ-панель</h2>
-    <div class="centered">
-      <button class="danger-btn" @click="deleteDatabase">Удалить всю базу</button>
-    </div>
 
     <table class="users-table">
       <thead>
