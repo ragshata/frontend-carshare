@@ -15,6 +15,14 @@
         <div class="row">
           💰 {{ trip.price }} сомони (TJS) &nbsp; 👥 Мест: {{ trip.seats }}
         </div>
+        <div class="row">
+          <span v-if="trip.car_number || trip.car_brand">
+            🚘
+            <span v-if="trip.car_brand">{{ trip.car_brand }}</span>
+            <span v-if="trip.car_brand && trip.car_number">,</span>
+            <span v-if="trip.car_number">номер {{ trip.car_number }}</span>
+          </span>
+        </div>
         <div class="row" v-if="trip.status">
           Статус:
           <span :class="['status', trip.status]">
@@ -26,7 +34,7 @@
         </div>
       </div>
 
-      <!-- Карточка водителя -->
+      <!-- Блок о водителе -->
       <div class="driver-card" v-if="driver">
         <div class="driver-header">
           <img v-if="driver.photo_url" :src="driver.photo_url" class="driver-avatar" alt="avatar" />
@@ -36,14 +44,13 @@
               <template v-if="driver.last_name"> {{ driver.last_name }}</template>
             </div>
             <div class="driver-username" v-if="driver.username">@{{ driver.username }}</div>
-            <div class="car-info" v-if="driver.car_number || driver.car_brand">
-              <span v-if="driver.car_brand">🚗 {{ driver.car_brand }}</span>
-              <span v-if="driver.car_number">&nbsp;•&nbsp; {{ driver.car_number }}</span>
+            <div class="car-info" v-if="driver.car_brand || driver.car_number">
+              🚗
+              <span v-if="driver.car_brand">{{ driver.car_brand }}</span>
+              <span v-if="driver.car_brand && driver.car_number">,</span>
+              <span v-if="driver.car_number">номер {{ driver.car_number }}</span>
             </div>
           </div>
-          <button class="btn btn-outline" @click="goToProfile(driver.id)">
-            Профиль
-          </button>
         </div>
         <div class="driver-rating">
           Рейтинг: <b>{{ avgRating > 0 ? avgRating.toFixed(1) : "—" }}</b> ⭐ ({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})
@@ -59,7 +66,7 @@
         </div>
       </div>
 
-      <!-- Кнопка "Забронировать" или "Пассажиры" -->
+      <!-- Кнопки действий (не менялись) -->
       <div class="actions">
         <button
           v-if="!isOwner"
@@ -77,6 +84,7 @@
     <Toast ref="toastRef" />
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
