@@ -8,46 +8,21 @@
         <tr>
           <th>ID</th>
           <th>Имя</th>
-          <th>Telegram ID</th>
-          <th>Telegram</th>
-          <th>Роль</th>
-          <th>Может создавать</th>
           <th>Подробнее</th>
-          <th>Удалить</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="user in users" :key="user.id">
           <td>{{ user.id }}</td>
           <td>{{ user.first_name }} <span v-if="user.last_name">{{ user.last_name }}</span></td>
-          <td>{{ user.telegram_id }}</td>
-          <td>
-            <a v-if="user.username" :href="`https://t.me/${user.username}`" target="_blank">@{{ user.username }}</a>
-            <span v-else>—</span>
-          </td>
-          <td>
-            <select v-model="user.is_driver" @change="changeRole(user)">
-              <option :value="true">Водитель</option>
-              <option :value="false">Пассажир</option>
-            </select>
-          </td>
-          <td>
-            <label class="lock">
-              <input type="checkbox" :checked="!!user.active_driver" @change="toggleActive(user)" />
-              <span></span>
-            </label>
-          </td>
           <td>
             <button class="btn" @click="showDetails(user)">Подробнее</button>
-          </td>
-          <td>
-            <button class="delete-btn" @click="deleteUserById(user.id)">✖</button>
           </td>
         </tr>
       </tbody>
     </table>
 
-    <!-- Модальное окно с деталями -->
+    <!-- Модальное окно с деталями пользователя -->
     <div v-if="modalUser" class="modal-overlay" @click.self="modalUser = null">
       <div class="modal">
         <h3>Пользователь #{{ modalUser.id }}</h3>
@@ -58,13 +33,21 @@
             <a v-if="modalUser.username" :href="`https://t.me/${modalUser.username}`" target="_blank">@{{ modalUser.username }}</a>
             <span v-else>—</span>
           </p>
-          <p><b>Роль:</b> {{ modalUser.is_driver ? "Водитель" : "Пассажир" }}</p>
-          <p><b>Может создавать:</b> {{ modalUser.active_driver ? "Да" : "Нет" }}</p>
-          <p><b>Город:</b> {{ modalUser.city || "—" }}</p>
-          <p><b>Телефон:</b> {{ modalUser.phone || "—" }}</p>
-          <p><b>Дата регистрации:</b> {{ formatDate(modalUser.registered_at) }}</p>
+          <p><b>Роль:</b>
+            <select v-model="modalUser.is_driver" @change="changeRole(modalUser)">
+              <option :value="true">Водитель</option>
+              <option :value="false">Пассажир</option>
+            </select>
+          </p>
+          <p><b>Может создавать:</b>
+            <label class="lock">
+              <input type="checkbox" :checked="!!modalUser.active_driver" @change="toggleActive(modalUser)" />
+              <span></span>
+            </label>
+          </p>
         </div>
-        <button class="btn" @click="modalUser = null" style="margin-top:18px;">Закрыть</button>
+        <button class="delete-btn" @click="deleteUserById(modalUser.id)">Удалить пользователя</button>
+        <button class="btn" @click="modalUser = null" style="margin-top:14px;">Закрыть</button>
       </div>
     </div>
 
@@ -80,11 +63,6 @@ import Toast from '@/components/Toast.vue';
 const users = ref<any[]>([]);
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const modalUser = ref<any|null>(null);
-
-function formatDate(dt: string | null) {
-  if (!dt) return '—';
-  return new Date(dt).toLocaleDateString('ru-RU');
-}
 
 async function loadUsers() {
   try {
@@ -119,6 +97,7 @@ async function deleteUserById(id: number) {
     await deleteUser(id);
     users.value = users.value.filter(u => u.id !== id);
     toastRef.value?.show('Пользователь удалён!');
+    modalUser.value = null;
   } catch {
     toastRef.value?.show('Ошибка удаления пользователя!');
   }
@@ -136,18 +115,14 @@ async function deleteDatabase() {
 }
 
 function showDetails(user: any) {
-  modalUser.value = user;
+  // Клонируем чтобы изменения в модалке не влияли сразу на таблицу
+  modalUser.value = { ...user };
 }
 
 onMounted(loadUsers);
 </script>
 
 <style scoped>
-body {
-  background: #FCFCFC;
-  color: #222;
-  font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Open Sans,Helvetica Neue,sans-serif;
-}
 .admin-wrap {
   max-width: 900px;
   margin: 36px auto 0 auto;
@@ -183,15 +158,24 @@ body {
 .users-table td {
   background: #fff;
 }
+.btn, .delete-btn {
+  background: #fff;
+  color: #007bff;
+  border: 1.5px solid #007bff;
+  border-radius: 7px;
+  font-size: 15px;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: background 0.13s, color 0.13s;
+}
+.btn:hover {
+  background: #f1f7ff;
+}
 .delete-btn {
   background: #e53935;
   color: white;
   border: none;
-  border-radius: 7px;
-  font-size: 15px;
-  padding: 6px 10px;
-  cursor: pointer;
-  transition: background 0.13s;
+  margin-top: 10px;
 }
 .delete-btn:hover {
   background: #c62828;
