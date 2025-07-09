@@ -25,6 +25,14 @@ function log(msg: string) {
 
 // Функция для перехода по роли
 function redirectByRole() {
+  const ADMINS = [6931781449, 1234567890];
+  if (auth.user && ADMINS.includes(auth.user.id)) {
+    if (router.currentRoute.value.path !== '/admin') {
+      router.replace('/admin');
+    }
+    return;
+  }
+
   if (!auth.user) return;
 
   if (typeof auth.user.is_driver !== 'boolean') {

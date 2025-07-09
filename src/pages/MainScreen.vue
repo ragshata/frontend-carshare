@@ -26,7 +26,7 @@
           v-model="carBrand"
           maxlength="30"
           class="car-input"
-          placeholder="Марка машины (например, Toyota)"
+          placeholder="Марка машины (например, Toyota Mark II)"
         />
         <input
           v-model="carNumber"
