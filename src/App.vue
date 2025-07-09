@@ -25,7 +25,7 @@ function log(msg: string) {
 
 function redirectByRole() {
   // Сначала проверяем, что юзер — админ
-  if (auth.user && auth.user.id == 6931781449) {
+  if (auth.user && auth.user.telegram_id == 6931781449) {
     if (router.currentRoute.value.path !== '/admin') {
       router.replace('/admin');
     }
