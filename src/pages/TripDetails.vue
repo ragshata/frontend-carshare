@@ -1,6 +1,5 @@
 <template>
   <div class="trip-details-page">
-    <button class="back-button" @click="router.back()">← Назад</button>
     <h2 class="title">Детали поездки</h2>
 
     <div v-if="!trip" class="empty-text">Загрузка...</div>
@@ -31,9 +30,6 @@
           <span :class="['status', trip.status]">
             {{ statusMap[trip.status] || trip.status }}
           </span>
-        </div>
-        <div class="trip-desc" v-if="trip.description">
-          {{ trip.description }}
         </div>
       </div>
 
