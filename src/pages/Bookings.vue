@@ -25,7 +25,7 @@
           🗓 {{ booking.trip?.date || "?" }} &nbsp;&nbsp; ⏰ {{ booking.trip?.time || "?" }}
         </div>
         <div class="row">
-          💸 {{ booking.trip?.price || "?" }}₽ &nbsp; 👥 {{ booking.trip?.seats || "?" }} мест
+          💸 {{ booking.trip?.price || "?" }}сомони (TJS) &nbsp; 👥 {{ booking.trip?.seats || "?" }} мест
         </div>
         <div class="row">
           👤 Водитель: {{ booking.trip?.driver_name || "?" }}

@@ -30,10 +30,15 @@ export interface PatchProfilePayload {
   is_driver?: boolean; // <-- ДОБАВЬ ВОТ ЭТУ СТРОКУ
 }
 
-export async function patchUserRole(user_id: number, is_driver: boolean) {
-  const res = await axios.patch(`${API_BASE}/users/${user_id}`, { is_driver });
+export async function patchUserRole(id: number, isDriver: boolean, car_number?: string, car_brand?: string) {
+  const payload: any = { is_driver: isDriver };
+  if (car_number !== undefined) payload.car_number = car_number;
+  if (car_brand !== undefined) payload.car_brand = car_brand;
+  // PATCH /users/:id
+  const res = await axios.patch(`${API_BASE}/users/${id}`, payload);
   return res.data;
 }
+
 
 
 export async function patchProfile(payload: PatchProfilePayload) {

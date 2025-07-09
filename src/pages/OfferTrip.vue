@@ -1,7 +1,18 @@
 <template>
   <div class="offer-trip-page">
     <h2 class="title">Создать поездку</h2>
-    <form class="form" @submit.prevent="save">
+
+    <!-- 🚫 Плашка для неактивных водителей -->
+    <div v-if="!canCreate" class="locked-block">
+      <div class="locked-msg">
+        🚫 У вас нет доступа к созданию поездок.<br>
+        Попросите администратора активировать возможность публикации поездок.
+      </div>
+      <button class="btn" @click="router.back()">Назад</button>
+    </div>
+
+    <!-- Основная форма — только если есть доступ -->
+    <form v-else class="form" @submit.prevent="save">
       <label>Откуда</label>
       <select v-model="selectedFrom" class="select">
         <option value="">Выберите город</option>
@@ -45,7 +56,7 @@
       <label>Свободных мест</label>
       <input v-model.number="form.seats" type="number" min="1" required class="input" />
 
-      <label>Цена</label>
+      <label>Цена (сомони, TJS)</label>
       <input v-model.number="form.price" type="number" min="0" required class="input" />
 
       <button class="btn" type="submit" :disabled="loading">Создать</button>
@@ -55,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, onBeforeUnmount, watchEffect } from 'vue';
+import { reactive, ref, onMounted, onBeforeUnmount, watchEffect, computed } from 'vue';
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { createTrip } from "@/api/trips";
@@ -75,7 +86,8 @@ const loading = ref(false);
 const selectedFrom = ref('');
 const selectedTo = ref('');
 
-// Универсальная реактивная форма для новой поездки
+const canCreate = computed(() => !!auth.user?.active_driver);
+
 const form = reactive({
   from_: "",
   to: "",
@@ -142,6 +154,23 @@ async function save() {
   color: var(--color-text-primary, #232323);
   text-align: center;
 }
+.locked-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 50px 0 36px 0;
+}
+.locked-msg {
+  background: #ffeaea;
+  color: #c00;
+  padding: 22px 28px;
+  border-radius: 16px;
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
 .form {
   display: flex;
   flex-direction: column;
@@ -149,13 +178,12 @@ async function save() {
   max-width: 380px;
   margin: 0 auto;
 }
-.select, .input {
+.input, .select {
   padding: 9px 12px;
   border-radius: 7px;
   border: 1px solid var(--color-border, #bbb);
   font-size: 16px;
   outline: none;
-  margin-bottom: 6px;
 }
 .btn {
   background: var(--color-primary, #007bff);

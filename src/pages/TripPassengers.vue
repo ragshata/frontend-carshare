@@ -52,26 +52,28 @@ const statusMap: Record<string, string> = {
   "rejected": "Отклонён",
   "cancelled": "Отменён"
 };
+
 onMounted(() => {
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      router.back(); // или router.back()
+      router.back();
     });
   }
 });
+
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
   tg?.BackButton?.hide();
   tg?.BackButton?.offClick?.();
 });
 
-
 async function loadBookings() {
   loading.value = true;
   try {
     bookings.value = await getBookingsByTrip(tripId);
+    // bookings — только для этой поездки
   } catch {
     toastRef.value?.show("Ошибка загрузки пассажиров!");
   } finally {
@@ -101,6 +103,7 @@ async function reject(id: number) {
 
 onMounted(loadBookings);
 </script>
+
 
 <style scoped>
 .trip-passengers-page {

@@ -7,9 +7,10 @@
       <div class="trip-card" v-for="trip in trips" :key="trip.id">
         <div class="row between bold">{{ trip.from_ }} — {{ trip.to }}</div>
         <div class="row">🗓 {{ trip.date }} &nbsp; ⏰ {{ trip.time }}</div>
-        <div class="row">💺 Мест: {{ trip.seats }} &nbsp; 💰 {{ trip.price }}₽</div>
+        <div class="row">💺 Мест: {{ trip.seats }} &nbsp; 💰 {{ trip.price }} сомони (TJS)</div>
         <div class="row">📌 Статус: {{ trip.status }}</div>
         <button class="btn" @click="book(trip)">Забронировать</button>
+        <button class="btn btn-outline" @click="goToDetails(trip.id)">Подробнее</button>
       </div>
     </div>
     <Toast ref="toastRef" />
@@ -60,6 +61,9 @@ async function load() {
   loading.value = false;
 }
 
+function goToDetails(id: number) {
+  router.push(`/trip/${id}`);
+}
 
 onMounted(() => {
   load(); // <-- вот тут вызываем загрузку поездок!

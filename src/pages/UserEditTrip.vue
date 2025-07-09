@@ -17,8 +17,9 @@
       <label>Свободных мест</label>
       <input v-model.number="trip.seats" type="number" min="1" required />
 
-      <label>Цена</label>
+      <label>Цена (сомони, TJS)</label>
       <input v-model.number="trip.price" type="number" min="0" required />
+
 
       <button class="btn" type="submit" :disabled="loading">Сохранить</button>
       <button class="btn btn-danger" @click.prevent="deleteTrip" :disabled="loading">Удалить</button>

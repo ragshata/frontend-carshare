@@ -1,21 +1,46 @@
 <template>
-  <div class="main-screen-bg">
-    <div class="main-screen-content">
-      <h1 class="title">Добро пожаловать в CARshare!</h1>
-      <p class="desc">
-        Это мини-приложение для поиска попутчиков и совместных поездок. Выберите, кто вы:
-      </p>
-      <div class="roles">
-        <button class="role-btn driver" @click="selectRole(true)">
-          🚗 Я водитель
-        </button>
-        <button class="role-btn passenger" @click="selectRole(false)">
-          🙋 Я попутчик
-        </button>
+  <div class="main-screen-root">
+    <div :class="['blur-container', { 'blur-active': showCarModal }]">
+      <div class="main-screen-bg" />
+      <div class="main-screen-content">
+        <h1 class="title">Добро пожаловать в CARshare!</h1>
+        <p class="desc">
+          Это мини-приложение для поиска попутчиков и совместных поездок. Выберите, кто вы:
+        </p>
+        <div class="roles">
+          <button class="role-btn driver" @click="chooseDriver">
+            🚗 Я водитель
+          </button>
+          <button class="role-btn passenger" @click="selectRole(false)">
+            🙋 Я попутчик
+          </button>
+        </div>
+        <div v-if="loading" class="loading">Сохраняем выбор...</div>
       </div>
-      <div v-if="loading" class="loading">Сохраняем выбор...</div>
-      <Toast ref="toastRef" />
     </div>
+    <!-- Модалка для машины -->
+    <div v-if="showCarModal" class="modal-overlay">
+      <div class="modal">
+        <h3>Введите данные автомобиля</h3>
+        <input
+          v-model="carBrand"
+          maxlength="30"
+          class="car-input"
+          placeholder="Марка машины (например, Toyota)"
+        />
+        <input
+          v-model="carNumber"
+          maxlength="15"
+          class="car-input"
+          placeholder="Номер машины (например, 1234АБ-1)"
+        />
+        <div class="modal-actions">
+          <button class="btn" @click="confirmDriver">Сохранить</button>
+          <button class="btn btn-outline" @click="showCarModal = false">Отмена</button>
+        </div>
+      </div>
+    </div>
+    <Toast ref="toastRef" />
   </div>
 </template>
 
@@ -29,18 +54,41 @@ import Toast from '@/components/Toast.vue';
 const router = useRouter();
 const auth = useAuthStore();
 const loading = ref(false);
+const showCarModal = ref(false);
+const carNumber = ref('');
+const carBrand = ref('');
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
-async function selectRole(isDriver: boolean) {
+function chooseDriver() {
+  showCarModal.value = true;
+  carNumber.value = '';
+  carBrand.value = '';
+}
+async function confirmDriver() {
+  if (!carBrand.value.trim()) {
+    toastRef.value?.show('Введите марку машины!');
+    return;
+  }
+  if (!carNumber.value.trim()) {
+    toastRef.value?.show('Введите номер машины!');
+    return;
+  }
+  await selectRole(true, carNumber.value.trim(), carBrand.value.trim());
+  showCarModal.value = false;
+}
+async function selectRole(isDriver: boolean, car_number?: string, car_brand?: string) {
   if (!auth.user) return;
   loading.value = true;
   try {
-    const updated = await patchUserRole(auth.user.id, isDriver);
-    auth.setUser(updated); // обновить в store
+    const updated = await patchUserRole(auth.user.id, isDriver, car_number, car_brand);
+    auth.setUser(updated);
     toastRef.value?.show('✅ Роль успешно выбрана!');
     setTimeout(() => {
-      if (isDriver) router.replace('/driver');
-      else router.replace('/passenger');
+      if (isDriver) {
+        router.replace('/driver');
+      } else {
+        router.replace('/passenger');
+      }
     }, 600);
   } catch (err) {
     toastRef.value?.show('❌ Ошибка выбора роли');
@@ -50,37 +98,45 @@ async function selectRole(isDriver: boolean) {
 </script>
 
 <style scoped>
-.main-screen-bg {
+.main-screen-root {
   min-height: 100vh;
   width: 100vw;
-  background: url('@/assets/main-bg.jpg') center center/cover no-repeat;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   position: relative;
+  overflow: hidden;
 }
-.main-screen-bg::before {
-  content: '';
-  position: absolute;
+/* Блок, который блюрится целиком */
+.blur-container {
+  min-height: 100vh;
+  width: 100vw;
+  position: relative;
+  transition: filter 0.18s, background 0.18s;
+  z-index: 2;
+}
+.blur-active {
+  filter: blur(7px) brightness(0.7);
+  pointer-events: none;
+  user-select: none;
+}
+.main-screen-bg {
+  position: fixed;
   inset: 0;
-  background: rgba(25, 29, 32, 0.32); /* легкий затемняющий фильтр */
   z-index: 1;
+  background: url('@/assets/main-bg.jpg') center center/cover no-repeat;
 }
 .main-screen-content {
-  z-index: 2;
+  z-index: 3;
   position: relative;
-  background: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.93);
   border-radius: 24px;
   padding: 38px 22px 28px 22px;
-  box-shadow: 0 2px 24px rgba(0,0,0,0.07);
-  max-width: 400px;
+  box-shadow: 0 2px 24px rgba(0,0,0,0.10);
+  max-width: 410px;
   width: 100%;
-  margin: 24px;
+  margin: 44px auto;
   text-align: center;
 }
-
 .title {
-  font-size: 23px;
+  font-size: 26px;
   font-weight: bold;
   margin-bottom: 14px;
   color: #232323;
@@ -116,5 +172,75 @@ async function selectRole(isDriver: boolean) {
   font-size: 15px;
   color: #666;
   margin-top: 14px;
+}
+
+.car-input {
+  width: 90%;
+  margin: 14px auto;
+  padding: 11px 13px;
+  font-size: 18px;
+  border: 1.5px solid #b7cbf6;
+  border-radius: 10px;
+  outline: none;
+  background: #f6f9ff;
+  text-align: center;
+  display: block;
+}
+
+/* ===== Модалка ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20,20,30,0.12);
+}
+.modal {
+  background: #fff;
+  border-radius: 24px;
+  padding: 30px 26px 18px 26px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.15);
+  min-width: 280px;
+  max-width: 92vw;
+  text-align: center;
+  animation: pop-in 0.18s;
+  z-index: 13;
+}
+@keyframes pop-in {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.car-input {
+  width: 90%;
+  margin: 22px auto 14px auto;
+  padding: 11px 13px;
+  font-size: 18px;
+  border: 1.5px solid #b7cbf6;
+  border-radius: 10px;
+  outline: none;
+  background: #f6f9ff;
+  text-align: center;
+}
+.modal-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+}
+.btn {
+  background: var(--color-primary, #007bff);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.btn-outline {
+  background: transparent;
+  color: var(--color-primary, #007bff);
+  border: 1.5px solid var(--color-primary, #007bff);
 }
 </style>

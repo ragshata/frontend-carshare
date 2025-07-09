@@ -10,6 +10,11 @@ export interface Booking {
   // можно добавить trip?: Trip если хочешь досконально
 }
 
+export async function getBookingsByTrip(trip_id: number) {
+  const res = await axios.get(`${API_BASE}/bookings/`, { params: { trip_id } });
+  return res.data; // [{id, user: {...}, status, ...}]
+}
+
 // Получить мои бронирования (user_id можно брать из store)
 export async function getBookings(user_id: number): Promise<Booking[]> {
   const res = await axios.get(`${API_BASE}/bookings/`, { params: { user_id } });
@@ -28,12 +33,6 @@ export async function bookTrip(trip_id: number, user_id: number): Promise<Bookin
 // Отменить бронирование
 export async function deleteBooking(id: number) {
   return axios.delete(`${API_BASE}/bookings/${id}`);
-}
-
-// Получить все бронирования для поездки
-export async function getBookingsByTrip(trip_id: number) {
-  const res = await axios.get(`${API_BASE}/bookings/`, { params: { trip_id } });
-  return res.data; // массив бронирований
 }
 
 // Подтвердить бронирование

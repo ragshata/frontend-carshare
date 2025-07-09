@@ -14,7 +14,7 @@
       >
         <div class="row between bold">
           {{ tripMap[b.trip_id]?.from_ || '—' }} — {{ tripMap[b.trip_id]?.to || '—' }}
-          <span>{{ tripMap[b.trip_id]?.price ? tripMap[b.trip_id].price + '₽' : '' }}</span>
+          <span>{{ tripMap[b.trip_id]?.price ? tripMap[b.trip_id].price + 'сомони (TJS)' : '' }}</span>
         </div>
         <div class="row">
           <span v-if="tripMap[b.trip_id]?.date">🗓 {{ tripMap[b.trip_id].date }}</span>

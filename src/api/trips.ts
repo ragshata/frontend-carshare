@@ -14,8 +14,16 @@ export interface Trip {
   owner_id: number;
   status: string;
   created_at?: string;
+  car_number?: string; // Новый
+  car_brand?: string;  // Новый
   // другие поля по модели
 }
+
+
+export async function finishTrip(id: number): Promise<void> {
+  await axios.patch(`${API_BASE}/trips/${id}/finish`);
+}
+
 
 // Поиск поездок с фильтрами
 export async function searchTrips(params: {

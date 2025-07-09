@@ -46,7 +46,7 @@
       <label>Свободных мест</label>
       <input v-model.number="seats" type="number" min="1" required class="input" />
 
-      <label>Цена</label>
+      <label>Цена (сомони, TJS)</label>
       <input v-model.number="price" type="number" min="0" required class="input" />
 
       <button class="btn" type="submit" :disabled="loading">Сохранить</button>

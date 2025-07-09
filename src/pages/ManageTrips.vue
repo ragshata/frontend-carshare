@@ -23,7 +23,7 @@
       >
         <div class="row between bold">
           {{ trip.from_ }} — {{ trip.to }}
-          <span>{{ trip.price }}₽</span>
+          <span>{{ trip.price }} сомони (TJS)</span>
         </div>
         <div class="row">
           🗓 {{ trip.date }} &nbsp;&nbsp; ⏰ {{ trip.time }}
@@ -32,10 +32,26 @@
           👥 Мест: {{ trip.seats }} &nbsp; 
           <span v-if="trip.status === 'active'">🟢 Активна</span>
           <span v-else-if="trip.status === 'draft'">💤 Черновик</span>
+          <span v-else-if="trip.status === 'done'">✅ Завершена</span>
           <span v-else>⏳ {{ trip.status }}</span>
         </div>
         <div class="actions">
-          <button class="btn btn-danger" @click="deleteTrip(trip.id)">🗑 Удалить</button>
+          <!-- Кнопка завершить только для активных -->
+          <button
+            v-if="trip.status === 'active'"
+            class="btn btn-done"
+            @click="finishTrip(trip.id)"
+          >
+            ✅ Завершить поездку
+          </button>
+          <!-- Кнопка удалить только для черновиков -->
+          <button
+            v-if="trip.status === 'draft'"
+            class="btn btn-danger"
+            @click="deleteTrip(trip.id)"
+          >
+            🗑 Удалить
+          </button>
           <button
             v-if="trip.status === 'draft'"
             class="btn btn-outline"
@@ -45,7 +61,7 @@
           </button>
           <button
             class="btn btn-outline"
-            @click="router.push(`/trip/${trip.id}/passengers`)"
+            @click="goToPassengers(trip.id)"
           >
             👥 Пассажиры
           </button>
@@ -60,7 +76,7 @@
 import { ref, computed, onMounted,onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { getMyTrips, deleteTrip as apiDeleteTrip, publishTrip as apiPublishTrip } from '@/api/trips';
+import { getMyTrips, deleteTrip as apiDeleteTrip, publishTrip as apiPublishTrip, finishTrip as apiFinishTrip } from '@/api/trips';
 import Toast from '@/components/Toast.vue';
 
 const router = useRouter();
@@ -75,7 +91,7 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 const statusMap: Record<string, string> = {
   'Активные': 'active',
-  'История': 'history',
+  'История': 'done',
   'Черновики': 'draft'
 };
 
@@ -100,7 +116,7 @@ onMounted(() => {
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      router.back(); // или router.back()
+      router.back();
     });
   }
 });
@@ -110,15 +126,12 @@ onBeforeUnmount(() => {
   tg?.BackButton?.offClick?.();
 });
 
-
 function handleTabClick(tab: string) {
   currentTab.value = tab;
 }
 
-// Действия
-function editTrip(trip: any) {
-  // Можно передать id через query или store
-  router.push({ path: '/user-edit-trip', query: { id: trip.id } });
+function goToPassengers(tripId: number) {
+  router.push(`/trip/${tripId}/passengers`);
 }
 
 async function deleteTrip(id: number) {
@@ -142,8 +155,17 @@ async function publishTrip(id: number) {
   }
 }
 
-// В будущем — реализовать
-// function viewPassengers(id: number) { ... }
+// Новая функция завершения поездки
+async function finishTrip(id: number) {
+  if (!confirm('Завершить поездку?')) return;
+  try {
+    await apiFinishTrip(id);
+    toastRef.value?.show('Поездка завершена');
+    await loadTrips();
+  } catch (e) {
+    toastRef.value?.show('Ошибка завершения');
+  }
+}
 
 onMounted(loadTrips);
 </script>
@@ -253,5 +275,12 @@ onMounted(loadTrips);
 }
 .btn-danger:hover {
   background: #b71c1c;
+}
+.btn-done {
+  background: #1bc47d;
+  color: white;
+}
+.btn-done:hover {
+  background: #17985d;
 }
 </style>

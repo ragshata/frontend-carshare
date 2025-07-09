@@ -13,10 +13,10 @@
           🗓 {{ trip.date }} &nbsp; ⏰ {{ trip.time }}
         </div>
         <div class="row">
-          💰 {{ trip.price }} ₽ &nbsp; 👥 Мест: {{ trip.seats }}
+          💰 {{ trip.price }} сомони (TJS) &nbsp; 👥 Мест: {{ trip.seats }}
         </div>
         <div class="row" v-if="trip.status">
-          Статус: 
+          Статус:
           <span :class="['status', trip.status]">
             {{ statusMap[trip.status] || trip.status }}
           </span>
@@ -26,7 +26,7 @@
         </div>
       </div>
 
-      <!-- Блок о водителе -->
+      <!-- Карточка водителя -->
       <div class="driver-card" v-if="driver">
         <div class="driver-header">
           <img v-if="driver.photo_url" :src="driver.photo_url" class="driver-avatar" alt="avatar" />
@@ -36,6 +36,10 @@
               <template v-if="driver.last_name"> {{ driver.last_name }}</template>
             </div>
             <div class="driver-username" v-if="driver.username">@{{ driver.username }}</div>
+            <div class="car-info" v-if="driver.car_number || driver.car_brand">
+              <span v-if="driver.car_brand">🚗 {{ driver.car_brand }}</span>
+              <span v-if="driver.car_number">&nbsp;•&nbsp; {{ driver.car_number }}</span>
+            </div>
           </div>
           <button class="btn btn-outline" @click="goToProfile(driver.id)">
             Профиль
@@ -136,7 +140,7 @@ async function bookTrip() {
 }
 
 function goToProfile(userId: number) {
-  router.push("/profile"); // Или если у тебя есть страница чужого профиля — туда (например, `/profile/:id`)
+  router.push("/profile");
 }
 
 function formatDate(dt: string | null) {
@@ -238,6 +242,11 @@ function formatDate(dt: string | null) {
 .driver-username {
   font-size: 13px;
   color: var(--color-text-secondary);
+}
+.car-info {
+  font-size: 14px;
+  color: #222;
+  margin-top: 2px;
 }
 .driver-rating {
   font-size: 15px;

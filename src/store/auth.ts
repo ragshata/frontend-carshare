@@ -12,6 +12,7 @@ interface User {
   is_driver?: boolean;
   registered_at?: string;
   city?: string; // <-- Добавь эту строку
+  active_driver?: boolean;
   // можно добавить другие поля по необходимости
 }
 
