@@ -1,188 +1,225 @@
 <template>
-  <div class="admin-panel">
-    <h2>Админ-панель пользователей</h2>
-    <div class="search-controls">
-      <input v-model="searchId" type="number" placeholder="Поиск по ID" />
-      <input v-model="searchUsername" type="text" placeholder="Поиск по @username" />
-      <button class="btn" @click="doSearch">Найти</button>
-      <button class="btn btn-outline" @click="loadAll">Показать всех</button>
-    </div>
+  <div class="admin-wrap">
+    <h2 class="title">Админ-панель</h2>
+    <button class="danger-btn" @click="deleteDatabase" style="margin-bottom: 28px;">Удалить всю базу</button>
 
-    <table v-if="users.length" class="user-table">
+    <table class="users-table">
       <thead>
         <tr>
           <th>ID</th>
           <th>Имя</th>
-          <th>Телефон</th>
           <th>Telegram</th>
           <th>Роль</th>
-          <th>Может создавать?</th>
-          <th>Город</th>
-          <th>Действия</th>
+          <th>Может создавать</th>
+          <th>Удалить</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="u in users" :key="u.id">
-          <td>{{ u.id }}</td>
-          <td>{{ u.first_name }} {{ u.last_name }}</td>
-          <td>{{ u.phone || '-' }}</td>
+        <tr v-for="user in users" :key="user.id">
+          <td>{{ user.id }}</td>
+          <td>{{ user.first_name }} <span v-if="user.last_name">{{ user.last_name }}</span></td>
+          <td>{{ user.phone || '—' }}</td>
           <td>
-            <a v-if="u.username" :href="`https://t.me/${u.username}`" target="_blank">
-              @{{ u.username }}
-            </a>
-            <span v-else>-</span>
+            <a v-if="user.username" :href="`https://t.me/${user.username}`" target="_blank">@{{ user.username }}</a>
+            <span v-else>—</span>
           </td>
           <td>
-            <select v-model="u.is_driver" @change="changeRole(u)">
+            <select v-model="user.is_driver" @change="changeRole(user)">
               <option :value="true">Водитель</option>
               <option :value="false">Пассажир</option>
             </select>
           </td>
           <td>
-            <input
-              type="checkbox"
-              v-model="u.active_driver"
-              @change="changeRole(u)"
-              style="width:18px; height:18px; accent-color:#007bff;"
-            />
+            <label class="lock">
+              <input type="checkbox" :checked="!!user.active_driver" @change="toggleActive(user)" />
+              <span></span>
+            </label>
           </td>
-          <td>{{ u.city || '-' }}</td>
           <td>
-            <!-- Здесь могут быть доп. действия, например, сброс пароля, бан и т.д. -->
+            <button class="delete-btn" @click="deleteUserById(user.id)">✖</button>
           </td>
         </tr>
       </tbody>
     </table>
-    <div v-else class="empty-text">Нет данных</div>
     <Toast ref="toastRef" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useAuthStore } from '@/store/auth';
-import { useRouter } from 'vue-router';
-import { getAdminUsers, patchUser } from "@/api/admin";
-import Toast from "@/components/Toast.vue";
+import { getAllUsers, updateUserRole, updateUserActiveDriver, deleteUser, deleteDatabased } from '@/api/admin';
+import Toast from '@/components/Toast.vue';
 
 const users = ref<any[]>([]);
-const searchId = ref('');
-const searchUsername = ref('');
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
-const auth = useAuthStore();
-const router = useRouter();
 
-// Только админы! (замени ID на нужные)
-const ADMIN_IDS = [6931781449, 23456789];
-onMounted(() => {
-  if (!auth.user || !ADMIN_IDS.includes(auth.user.telegram_id)) {
-    router.replace('/'); // Нет доступа
-    return;
-  }
-  loadAll();
-});
-    
-async function loadAll() {
+async function loadUsers() {
   try {
-    users.value = await getAdminUsers({ telegram_id: auth.user.telegram_id });
+    users.value = await getAllUsers();
   } catch {
-    toastRef.value?.show("Ошибка загрузки пользователей");
-  }
-}
-
-async function doSearch() {
-  try {
-    users.value = await getAdminUsers({
-      telegram_id: auth.user.telegram_id,
-      user_id: searchId.value ? Number(searchId.value) : undefined,
-      username: searchUsername.value ? searchUsername.value : undefined,
-    });
-  } catch {
-    toastRef.value?.show("Ошибка поиска");
+    toastRef.value?.show('Ошибка загрузки пользователей!');
   }
 }
 
 async function changeRole(user: any) {
   try {
-    await patchUser(user.id, {
-      is_driver: user.is_driver,
-      active_driver: user.active_driver
-    }, auth.user.telegram_id);
-    toastRef.value?.show("Пользователь обновлен!");
+    await updateUserRole(user.id, user.is_driver);
+    toastRef.value?.show('Роль обновлена');
   } catch {
-    toastRef.value?.show("Ошибка обновления пользователя!");
+    toastRef.value?.show('Ошибка обновления роли!');
   }
 }
+
+async function toggleActive(user: any) {
+  try {
+    user.active_driver = !user.active_driver;
+    await updateUserActiveDriver(user.id, user.active_driver);
+    toastRef.value?.show('Статус обновлен');
+  } catch {
+    toastRef.value?.show('Ошибка обновления статуса!');
+  }
+}
+
+async function deleteUserById(id: number) {
+  if (!confirm('Удалить пользователя? Это действие необратимо!')) return;
+  try {
+    await deleteUser(id);
+    users.value = users.value.filter(u => u.id !== id);
+    toastRef.value?.show('Пользователь удалён!');
+  } catch {
+    toastRef.value?.show('Ошибка удаления пользователя!');
+  }
+}
+
+async function deleteDatabase() {
+  if (!confirm('ВНИМАНИЕ: Это удалит ВСЕ ДАННЫЕ! Продолжить?')) return;
+  try {
+    await deleteDatabase();
+    users.value = [];
+    toastRef.value?.show('База удалена!');
+  } catch {
+    toastRef.value?.show('Ошибка удаления базы!');
+  }
+}
+
+onMounted(loadUsers);
 </script>
 
 <style scoped>
-.admin-panel {
-  padding: 26px 8px;
-  max-width: 1080px;
-  margin: 0 auto;
+body {
+  background: #FCFCFC;
+  color: #222;
+  font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Open Sans,Helvetica Neue,sans-serif;
 }
-h2 {
-  text-align: center;
-  font-size: 23px;
+.admin-wrap {
+  max-width: 900px;
+  margin: 36px auto 0 auto;
+  padding: 24px 8px 44px 8px;
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 2px 12px rgba(60,80,120,0.06);
+}
+.title {
+  font-size: 25px;
   font-weight: bold;
   margin-bottom: 20px;
+  color: #232323;
+  text-align: center;
 }
-.search-controls {
-  display: flex;
-  gap: 14px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-input[type="text"], input[type="number"] {
-  padding: 8px 14px;
-  border-radius: 7px;
-  border: 1px solid var(--color-border, #bbb);
-  font-size: 16px;
-  outline: none;
-}
-.btn {
-  background: var(--color-primary, #007bff);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  cursor: pointer;
-  padding: 9px 16px;
-  transition: background 0.16s;
-}
-.btn-outline {
-  background: transparent;
-  color: var(--color-primary, #007bff);
-  border: 1px solid var(--color-primary, #007bff);
-}
-.user-table {
+.users-table {
   width: 100%;
   border-collapse: collapse;
-  background: var(--color-surface, #fff);
-  border-radius: 14px;
-  overflow: hidden;
-  margin: 0 auto;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  background: #fff;
+  margin-top: 12px;
 }
-.user-table th, .user-table td {
-  padding: 10px 12px;
-  text-align: center;
-  border-bottom: 1px solid #f0f0f0;
+.users-table th, .users-table td {
+  padding: 11px 10px;
   font-size: 15px;
-}
-.user-table th {
-  background: #f7faff;
-  color: #222;
-  font-weight: 600;
-}
-.user-table tr:last-child td {
-  border-bottom: none;
-}
-.empty-text {
+  border-bottom: 1px solid #eee;
   text-align: center;
-  color: #aaa;
-  font-size: 17px;
-  margin-top: 35px;
+}
+.users-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #222;
+}
+.users-table td {
+  background: #fff;
+}
+.delete-btn {
+  background: #e53935;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  font-size: 15px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.13s;
+}
+.delete-btn:hover {
+  background: #c62828;
+}
+.danger-btn {
+  background: #d9534f;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 9px 22px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background 0.17s;
+}
+.danger-btn:hover {
+  background: #c9302c;
+}
+/* Кнопка-замок (switch) */
+.lock {
+  position: relative;
+  cursor: pointer;
+  height: 32px;
+  display: inline-block;
+  vertical-align: middle;
+  user-select: none;
+}
+.lock input {
+  display: none;
+}
+.lock span:before,
+.lock span:after {
+  content: "";
+}
+.lock span:before {
+  width: 64px;
+  height: 32px;
+  margin-right: 8px;
+  background: #EEE;
+  border-radius: 32px;
+  display: inline-block;
+  vertical-align: middle;
+  transition: all .5s cubic-bezier(.175, .885, .32, 1);
+}
+.lock span:after {
+  margin: 2px;
+  width: 28px;
+  height: 28px;
+  background: #FFF;
+  border-radius: 28px;
+  position: absolute;
+  left: 0;
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAB6ElEQVRYR+3XS8gPURjH8c8bkYV7KVslC4US5RJhgWKDQsnCJZcFWcrCJVkqioVsZOG+eDdvLJAkJJKVkr1EIQu3okfnXy/9Z+bMO8O/5OxmznP5nud35pxn+vR49A0hf/gsxHJMSf4vcQP38L1OzLoA83AaswqSPMFuPMyFqAOwBWcwrCL4N2zDuRyIXIDV6EfYf8IJXMDz9G4aNmEPRiQZVmGgCiIHYAxeYBLeYRmi1N3GHNzEaLzCVHwsg8gB2IfjKchmnK9Y1VacTTZ7cbIpQOzs+XiDyQiNy0ZI8BpjcReLmgJ8SCW9jpVVmqb5kGEp3mNcU4DOd30Z6zMBrmFNsi2VuWwySrkEsfIY96v0HAQX+2Zuel6BW/jaDb4IYCLuYHrmiqvMnmFx+op+sS0COIb9VVFrzh/C4d99igCuYF3NBFXmF7ExF+Aq1lZFrDl/CRv+A7RZgUfpdoyYOzG7QpJWJYjk0ZR8SUlH4kFJnxBmrQJsH3ThdBa+KzUrRYX44wDRCZ0qkaFVgMdYgM8p4agkwYy/BRB5nqZNGIfZDpQlb30P1DyDfpq3KsG/D9Dzy+goDgylziU+B3Ek9ygej9uY2RJEtPGdHjGrIQmj4amjndAQ4m3qjrt20zn/BQ3zl7v3HOAHddxjIRWQtfEAAAAASUVORK5CYII=);
+  background-size: 16px 16px;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index:2;
+  transition: all .5s cubic-bezier(.175, .885, .32, 1); 
+}
+.lock input:checked + span:after {
+  left: 32px;
+  background-image: none;
+}
+.lock input:checked + span:before {
+  background-color: #1CC691;
 }
 </style>
