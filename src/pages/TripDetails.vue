@@ -16,11 +16,11 @@
           💰 {{ trip.price }} сомони (TJS) &nbsp; 👥 Мест: {{ trip.seats }}
         </div>
         <div class="row">
-          <span v-if="trip.car_number || trip.car_brand">
+          <span v-if="driver.car_number || driver.car_brand">
             🚘
-            <span v-if="trip.car_brand">{{ trip.car_brand }}</span>
-            <span v-if="trip.car_brand && trip.car_number">,</span>
-            <span v-if="trip.car_number">номер {{ trip.car_number }}</span>
+            <span v-if="driver.car_brand">{{ driver.car_brand }}</span>
+            <span v-if="driver.car_brand && driver.car_number">,</span>
+            <span v-if="driver.car_number">номер {{ driver.car_number }}</span>
           </span>
         </div>
         <div class="row" v-if="trip.status">
