@@ -15,13 +15,12 @@
         <div class="row">
           💰 {{ trip.price }} сомони (TJS) &nbsp; 👥 Мест: {{ trip.seats }}
         </div>
-        <div class="row">
-          <span v-if="driver.car_number || driver.car_brand">
-            🚘
-            <span v-if="driver.car_brand">{{ driver.car_brand }}</span>
-            <span v-if="driver.car_brand && driver.car_number">,</span>
-            <span v-if="driver.car_number">номер {{ driver.car_number }}</span>
-          </span>
+        <!-- Номер и марка машины -->
+        <div class="row car-info" v-if="driver && (driver.car_brand || driver.car_number)">
+          🚘
+          <span v-if="driver.car_brand">{{ driver.car_brand }}</span>
+          <span v-if="driver.car_brand && driver.car_number">,</span>
+          <span v-if="driver.car_number"> номер {{ driver.car_number }}</span>
         </div>
         <div class="row" v-if="trip.status">
           Статус:
@@ -34,7 +33,7 @@
         </div>
       </div>
 
-      <!-- Блок о водителе -->
+      <!-- Профиль водителя без кнопки перехода -->
       <div class="driver-card" v-if="driver">
         <div class="driver-header">
           <img v-if="driver.photo_url" :src="driver.photo_url" class="driver-avatar" alt="avatar" />
@@ -44,16 +43,12 @@
               <template v-if="driver.last_name"> {{ driver.last_name }}</template>
             </div>
             <div class="driver-username" v-if="driver.username">@{{ driver.username }}</div>
-            <div class="car-info" v-if="driver.car_brand || driver.car_number">
-              🚗
-              <span v-if="driver.car_brand">{{ driver.car_brand }}</span>
-              <span v-if="driver.car_brand && driver.car_number">,</span>
-              <span v-if="driver.car_number">номер {{ driver.car_number }}</span>
-            </div>
+            <div class="driver-telegramid">ID: {{ driver.telegram_id }}</div>
           </div>
         </div>
         <div class="driver-rating">
-          Рейтинг: <b>{{ avgRating > 0 ? avgRating.toFixed(1) : "—" }}</b> ⭐ ({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})
+          <span>Рейтинг:</span>
+          <b>{{ avgRating > 0 ? avgRating.toFixed(1) : "—" }}</b> ⭐ ({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})
         </div>
         <div v-if="reviews.length === 0" class="empty-text">Нет отзывов</div>
         <div v-for="review in reviews.slice(0,3)" :key="review.id" class="review-card">
@@ -66,7 +61,6 @@
         </div>
       </div>
 
-      <!-- Кнопки действий (не менялись) -->
       <div class="actions">
         <button
           v-if="!isOwner"
@@ -84,7 +78,6 @@
     <Toast ref="toastRef" />
   </div>
 </template>
-
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
@@ -123,6 +116,10 @@ onMounted(async () => {
   }
   trip.value = await getTripById(tripId);
   driver.value = await getUserById(trip.value.owner_id);
+
+  // ЛОГ: смотри что реально приходит!
+  console.log("DRIVER DATA:", driver.value);
+
   reviews.value = await getDriverReviews(trip.value.owner_id);
   if (reviews.value.length) {
     avgRating.value =
@@ -145,10 +142,6 @@ async function bookTrip() {
     toastRef.value?.show("Ошибка при бронировании!");
   }
   booking.value = false;
-}
-
-function goToProfile(userId: number) {
-  router.push("/profile");
 }
 
 function formatDate(dt: string | null) {
@@ -204,6 +197,11 @@ function formatDate(dt: string | null) {
   font-size: 18px;
   color: var(--color-text-primary);
 }
+.car-info {
+  color: #232323;
+  font-size: 15px;
+  margin: 6px 0 4px 0;
+}
 .status {
   font-weight: bold;
   margin-left: 6px;
@@ -251,10 +249,9 @@ function formatDate(dt: string | null) {
   font-size: 13px;
   color: var(--color-text-secondary);
 }
-.car-info {
-  font-size: 14px;
-  color: #222;
-  margin-top: 2px;
+.driver-telegramid {
+  font-size: 13px;
+  color: #777;
 }
 .driver-rating {
   font-size: 15px;
