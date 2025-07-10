@@ -1,7 +1,6 @@
 <template>
   <div class="admin-wrap">
     <h2 class="title">Админ-панель</h2>
-
     <table class="users-table">
       <thead>
         <tr>
@@ -20,7 +19,6 @@
         </tr>
       </tbody>
     </table>
-
     <!-- Модальное окно пользователя -->
     <div v-if="modalUser" class="modal-overlay" @click.self="closeModal">
       <div class="modal">
@@ -52,6 +50,8 @@
               <span class="slider"></span>
             </label>
           </p>
+          <p><b>Номер машины:</b> {{ modalUser.car_number || '—' }}</p>
+          <p><b>Марка машины:</b> {{ modalUser.car_brand || '—' }}</p>
         </div>
         <div class="modal-actions">
           <button class="delete-btn" @click="deleteUserById(modalUser.id)">Удалить</button>
@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { getAllUsers, updateUserRole, updateUserActiveDriver, deleteUser, deleteDatabased } from '@/api/admin';
+import { getAllUsers, updateUserRole, updateUserActiveDriver, deleteUser } from '@/api/admin';
 import Toast from '@/components/Toast.vue';
 
 const users = ref<any[]>([]);
@@ -80,7 +80,7 @@ async function loadUsers() {
   }
 }
 function showUser(user: any) {
-  modalUser.value = { ...user }; // глубокая копия чтобы не менять таблицу сразу
+  modalUser.value = { ...user };
 }
 function closeModal() {
   modalUser.value = null;
@@ -117,16 +117,6 @@ async function deleteUserById(id: number) {
     toastRef.value?.show('Ошибка удаления пользователя!');
   }
 }
-async function deleteDatabase() {
-  if (!confirm('ВНИМАНИЕ: Это удалит ВСЕ ДАННЫЕ! Продолжить?')) return;
-  try {
-    await deleteDatabased();
-    users.value = [];
-    toastRef.value?.show('База удалена!');
-  } catch {
-    toastRef.value?.show('Ошибка удаления базы!');
-  }
-}
 onMounted(loadUsers);
 </script>
 
@@ -150,11 +140,6 @@ body {
   margin-bottom: 20px;
   color: #232323;
   text-align: center;
-}
-.centered {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 15px;
 }
 .users-table {
   width: 100%;
@@ -190,7 +175,6 @@ body {
 .info-btn:hover {
   background: #e8f1ff;
 }
-
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -239,29 +223,14 @@ body {
   border: none;
   border-radius: 7px;
   font-size: 15px;
-  padding: 8px 16px;
+  padding: 8px 12px;
   cursor: pointer;
   transition: background 0.13s;
+  min-width: 80px;
 }
 .delete-btn:hover {
   background: #c62828;
 }
-.danger-btn {
-  background: #d9534f;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 500;
-  padding: 12px 28px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: background 0.17s;
-}
-.danger-btn:hover {
-  background: #c9302c;
-}
-
 /* --- Роль: красивый tab-switch --- */
 .role-select {
   display: inline-flex;
@@ -289,7 +258,6 @@ body {
 .role-option:not(.selected):hover {
   background: #e6f8ff;
 }
-
 /* --- Switch --- */
 .switch {
   position: relative;
