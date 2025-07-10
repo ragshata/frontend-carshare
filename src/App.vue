@@ -1,3 +1,10 @@
+<template>
+  <SplashScreen v-if="showSplash" @done="onSplashDone" />
+  <div v-else class="container">
+    <router-view />
+    <div v-if="logMessage" class="tg-log">{{ logMessage }}</div>
+  </div>
+</template>
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
