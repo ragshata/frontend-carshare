@@ -3,7 +3,8 @@
     <button class="back-button" @click="router.back()">← Назад</button>
     <h2 class="title">Оцените водителя</h2>
 
-    <div v-if="!trip" class="empty-text">Загрузка...</div>
+    <div v-if="loadingTrip" class="empty-text">Загрузка...</div>
+    <div v-else-if="!trip" class="empty-text">Поездка не найдена</div>
     <div v-else>
       <div class="trip-info">
         <div>
@@ -52,14 +53,43 @@ const trip = ref<any | null>(null);
 const rating = ref(0);
 const review = ref("");
 const loading = ref(false);
+const loadingTrip = ref(true);
+
+function getTelegramStartParam(): string {
+  try {
+    // @ts-ignore
+    return window.Telegram?.WebApp?.initDataUnsafe?.start_param || '';
+  } catch {
+    return '';
+  }
+}
 
 onMounted(async () => {
-  const tripId = Number(route.params.id);
+  loadingTrip.value = true;
+  let tripId = Number(route.params.id);
+
+  // Если открыто через стартовый параметр (Telegram)
+  if (!tripId) {
+    const startParam = getTelegramStartParam();
+    // ищем паттерн rate_{driverId}_{tripId}
+    const match = /^rate_(\d+)_(\d+)$/.exec(startParam);
+    if (match) {
+      // const driverId = Number(match[1]); // если понадобится
+      tripId = Number(match[2]);
+    }
+  }
+
   if (!tripId) {
     toastRef.value?.show("Ошибка: не найдена поездка!");
+    loadingTrip.value = false;
     return;
   }
-  trip.value = await getTripById(tripId);
+  try {
+    trip.value = await getTripById(tripId);
+  } catch {
+    trip.value = null;
+  }
+  loadingTrip.value = false;
 });
 
 async function submit() {
@@ -73,7 +103,7 @@ async function submit() {
     await createReview({
       trip_id: trip.value.id,
       author_id: auth.user.id,
-      driver_id: trip.value.owner_id, // ВАЖНО: водитель = owner_id
+      driver_id: trip.value.owner_id, // водитель = owner_id
       rating: rating.value,
       text: review.value
     });
