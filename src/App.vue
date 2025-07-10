@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import SplashScreen from '@/components/SplashScreen.vue';
 import { useAuthStore } from '@/store/auth';
@@ -22,6 +22,18 @@ function log(msg: string) {
   logMessage.value = msg;
   setTimeout(() => (logMessage.value = ''), 4000);
 }
+
+// --- ОБРАБОТКА start_param (rate_x_y) ---
+onMounted(() => {
+  // Проверяем, есть ли start_param (мини-апп открыт с inline-кнопки)
+  // @ts-ignore
+  const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+  if (startParam && startParam.startsWith('rate_')) {
+    const [, driverId, tripId] = startParam.split('_');
+    // Переходим на страницу RateDriver с нужными параметрами
+    router.replace(`/rate/${tripId}?driver=${driverId}`);
+  }
+});
 
 function redirectByRole() {
   // Сначала проверяем, что юзер — админ
@@ -49,7 +61,6 @@ function redirectByRole() {
     router.replace('/passenger');
   }
 }
-
 
 async function onSplashDone() {
   // Telegram WebApp SDK

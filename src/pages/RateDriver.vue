@@ -45,6 +45,8 @@ import { createReview } from "@/api/reviews";
 import Toast from "@/components/Toast.vue";
 
 const route = useRoute();
+const driverId = route.query.driver; // это твой driver_id
+const tripId = route.params.id; // это trip_id (id поездки)
 const router = useRouter();
 const auth = useAuthStore();
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
