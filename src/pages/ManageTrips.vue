@@ -157,7 +157,7 @@ async function publishTrip(id: number) {
 
 // Новая функция завершения поездки
 async function finishTrip(id: number) {
-  if (!confirm('Завершить поездку?')) return;
+  
   try {
     await apiFinishTrip(id);
     toastRef.value?.show('Поездка завершена');
