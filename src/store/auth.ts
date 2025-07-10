@@ -13,6 +13,8 @@ interface User {
   registered_at?: string;
   city?: string; // <-- Добавь эту строку
   active_driver?: boolean;
+  car_number?: string;
+  car_brand?: string;
   // можно добавить другие поля по необходимости
 }
 
