@@ -14,5 +14,5 @@ export async function createReview(payload: {
   rating: number,
   text?: string
 }) {
-  return axios.post(`${API_BASE}/reviews`, payload); // <- обязательно слэш!
+  return axios.post(`${API_BASE}/reviews/`, payload); // <- обязательно слэш!
 }
