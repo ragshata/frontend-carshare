@@ -139,7 +139,7 @@ async function bookTrip() {
     });
     toastRef.value?.show("Вы успешно забронировали поездку!");
   } catch (e) {
-    toastRef.value?.show("Ошибка при бронировании!");
+    toastRef.value?.show("Мест нет!");
   }
   booking.value = false;
 }

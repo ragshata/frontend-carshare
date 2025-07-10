@@ -1,8 +1,9 @@
-yо, [10.07.2025 11:51]
 <template>
   <div class="main-screen-root">
+    <!-- Фиксированный фон -->
+    <div class="background-img"></div>
+    <!-- Всё содержимое с блюром -->
     <div :class="['blur-container', { 'blur-active': showCarModal }]">
-      <div class="main-screen-bg"></div>
       <div class="main-screen-content">
         <h1 class="title">Добро пожаловать в <span class="brand">SafarBar</span>!</h1>
         <p class="desc">
@@ -105,26 +106,33 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
   position: relative;
   overflow: hidden;
 }
+
+/* Фиксированный фон */
+.background-img {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: url('@/assets/main-bg.jpg') center center/cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
 .blur-container {
   min-height: 100vh;
   width: 100vw;
   position: relative;
   transition: filter 0.18s, background 0.18s;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .blur-active {
   filter: blur(7px) brightness(0.7);
   pointer-events: none;
   user-select: none;
-}
-.main-screen-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  background: url('@/assets/main-bg.jpg') center center/cover no-repeat;
-  background-attachment: fixed;
-  width: 100vw;
-  height: 100vh;
 }
 .main-screen-content {
   z-index: 3;
@@ -134,8 +142,7 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
   padding: 38px 22px 28px 22px;
   box-shadow: 0 2px 24px rgba(0,0,0,0.10);
   max-width: 410px;
-  
-width: 100%;
+  width: 100%;
   margin: 44px auto;
   text-align: center;
 }
