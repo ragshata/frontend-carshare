@@ -52,7 +52,7 @@ async function load() {
   Object.entries(rawParams).forEach(([k, v]) => {
     if (typeof v === 'string' && v.trim() !== '') params[k] = v;
   });
-  params.status == 'active'
+  params.status = 'active'
 
 
   try {
