@@ -98,7 +98,7 @@ async function submit() {
     toastRef.value?.show("Поставьте оценку звёздами!");
     return;
   }
-
+  if (!trip.value) return;
   loading.value = true;
   try {
     await createReview({
@@ -110,9 +110,33 @@ async function submit() {
     });
     toastRef.value?.show("Спасибо за отзыв!");
     setTimeout(() => router.push('/manage-trips'), 600);
-  } catch (e) {
-    toastRef.value?.show("Ошибка при отправке отзыва!");
+  } catch (e: unknown) {
+    let errorMessage = "Ошибка при отправке отзыва!";
+
+    // Проверяем, что это ошибка Axios
+    if (typeof e === "object" && e !== null) {
+      // @ts-ignore - временно, если уверен в типе (лучше сделать проверку)
+      const err = e as any;
+      if (err.response && err.response.data) {
+        if (typeof err.response.data === "string") {
+          errorMessage = err.response.data;
+        } else if (err.response.data.detail) {
+          errorMessage = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMessage = err.response.data.message;
+        } else {
+          errorMessage = JSON.stringify(err.response.data);
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+    } else if (typeof e === "string") {
+      errorMessage = e;
+    }
+
+    toastRef.value?.show(errorMessage);
   }
+
   loading.value = false;
 }
 </script>
