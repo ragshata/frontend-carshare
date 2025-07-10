@@ -38,7 +38,7 @@ onMounted(() => {
 
 function redirectByRole() {
   // Сначала проверяем, что юзер — админ
-  if (auth.user && auth.user.telegram_id == 6931781449) {
+  if (auth.user && auth.user.telegram_id == 363320196) {
     if (router.currentRoute.value.path !== '/admin') {
       router.replace('/admin');
     }
@@ -69,7 +69,6 @@ async function onSplashDone() {
   const tg = window.Telegram?.WebApp;
 
   if (!tg) {
-    log("❌ Telegram WebApp не обнаружен (window.Telegram.WebApp is undefined)");
     showSplash.value = false;
     return;
   }
@@ -79,7 +78,6 @@ async function onSplashDone() {
 
   const telegramUser = tg.initDataUnsafe?.user;
   if (!telegramUser) {
-    log("❌ Нет данных пользователя Telegram. Запусти через Telegram Mini App!");
     showSplash.value = false;
     return;
   }
@@ -99,7 +97,6 @@ async function onSplashDone() {
     }
     showSplash.value = false;
   } catch (e: any) {
-    log("❌ Ошибка авторизации через Telegram: " + (e?.message || e));
     showSplash.value = false;
   }
 }

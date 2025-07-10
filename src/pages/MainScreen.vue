@@ -110,14 +110,20 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
 /* Фиксированный фон */
 .background-img {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   width: 100vw;
   height: 100vh;
-  background: url('@/assets/main-bg.jpg') center center/cover no-repeat;
+  background: url('@/assets/main-bg.svg') center center / cover no-repeat;
   z-index: 0;
   pointer-events: none;
   user-select: none;
+  animation: bg-fade-in 1.1s;
 }
+@keyframes bg-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 
 .blur-container {
   min-height: 100vh;
