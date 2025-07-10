@@ -1,6 +1,5 @@
 <template>
   <div class="rate-driver-page">
-    <button class="back-button" @click="router.back()">← Назад</button>
     <h2 class="title">Оцените водителя</h2>
 
     <div v-if="loadingTrip" class="empty-text">Загрузка...</div>
@@ -99,7 +98,7 @@ async function submit() {
     toastRef.value?.show("Поставьте оценку звёздами!");
     return;
   }
-  if (!trip.value) return;
+
   loading.value = true;
   try {
     await createReview({
