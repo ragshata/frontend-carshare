@@ -80,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { getTripById } from "@/api/trips";
@@ -148,6 +148,23 @@ function formatDate(dt: string | null) {
   if (!dt) return '';
   return new Date(dt).toLocaleDateString('ru-RU');
 }
+
+onMounted(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => {
+      router.back();
+    });
+  }
+  // Подгрузи отзывы/рейтинг (пример):
+  // getDriverReviews(user.id).then(res => { reviews.value = res; avgRating.value = ... });
+});
+onBeforeUnmount(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  tg?.BackButton?.hide();
+  tg?.BackButton?.offClick?.();
+});
 </script>
 
 <style scoped>
