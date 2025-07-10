@@ -31,3 +31,7 @@ export async function patchUser(id: number, data: any, telegram_id: number) {
   const res = await axios.patch(`${API_BASE}/admin/users/${id}?telegram_id=${telegram_id}`, data);
   return res.data;
 }
+
+export async function deleteUserByTelegramId(telegram_id: number) {
+  return axios.delete('${API_BASE}/users/by_telegram/${telegram_id}');
+}

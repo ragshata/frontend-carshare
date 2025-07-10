@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { getAllUsers, updateUserRole, updateUserActiveDriver, deleteUser } from '@/api/admin';
+import { getAllUsers, updateUserRole, updateUserActiveDriver, deleteUser, deleteUserByTelegramId } from '@/api/admin';
 import Toast from '@/components/Toast.vue';
 
 const users = ref<any[]>([]);
@@ -106,11 +106,11 @@ async function toggleActive(user: any) {
     toastRef.value?.show('Ошибка обновления статуса!');
   }
 }
-async function deleteUserById(id: number) {
+async function deleteUserById(telegram_id: number) {
   if (!confirm('Удалить пользователя? Это действие необратимо!')) return;
   try {
-    await deleteUser(id);
-    users.value = users.value.filter(u => u.id !== id);
+    await deleteUserByTelegramId(telegram_id);
+    users.value = users.value.filter(u => u.telegram_id !== telegram_id);
     closeModal();
     toastRef.value?.show('Пользователь удалён!');
   } catch {
