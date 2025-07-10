@@ -23,7 +23,7 @@
   
   const emit = defineEmits(['done']);
   
-  const letters = ['C', 'A', 'R', 'S', 'H', 'A', 'R', 'E'];
+  const letters = ['S', 'A', 'F', 'A', 'R', 'B', 'A', 'R'];
   const hide = ref(false);
   const finished = ref(false);
   

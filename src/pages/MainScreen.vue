@@ -1,9 +1,10 @@
+yо, [10.07.2025 11:51]
 <template>
   <div class="main-screen-root">
     <div :class="['blur-container', { 'blur-active': showCarModal }]">
-      <div class="main-screen-bg" />
+      <div class="main-screen-bg"></div>
       <div class="main-screen-content">
-        <h1 class="title">Добро пожаловать в CARshare!</h1>
+        <h1 class="title">Добро пожаловать в <span class="brand">SafarBar</span>!</h1>
         <p class="desc">
           Это мини-приложение для поиска попутчиков и совместных поездок. Выберите, кто вы:
         </p>
@@ -104,7 +105,6 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
   position: relative;
   overflow: hidden;
 }
-/* Блок, который блюрится целиком */
 .blur-container {
   min-height: 100vh;
   width: 100vw;
@@ -122,6 +122,9 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
   inset: 0;
   z-index: 1;
   background: url('@/assets/main-bg.jpg') center center/cover no-repeat;
+  background-attachment: fixed;
+  width: 100vw;
+  height: 100vh;
 }
 .main-screen-content {
   z-index: 3;
@@ -131,7 +134,8 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
   padding: 38px 22px 28px 22px;
   box-shadow: 0 2px 24px rgba(0,0,0,0.10);
   max-width: 410px;
-  width: 100%;
+  
+width: 100%;
   margin: 44px auto;
   text-align: center;
 }
@@ -140,6 +144,11 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
   font-weight: bold;
   margin-bottom: 14px;
   color: #232323;
+}
+.brand {
+  color: #007bff;
+  font-weight: 800;
+  letter-spacing: 1px;
 }
 .desc {
   font-size: 15px;
@@ -211,17 +220,6 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
 @keyframes pop-in {
   0% { transform: scale(0.95); opacity: 0.7; }
   100% { transform: scale(1); opacity: 1; }
-}
-.car-input {
-  width: 90%;
-  margin: 22px auto 14px auto;
-  padding: 11px 13px;
-  font-size: 18px;
-  border: 1.5px solid #b7cbf6;
-  border-radius: 10px;
-  outline: none;
-  background: #f6f9ff;
-  text-align: center;
 }
 .modal-actions {
   display: flex;

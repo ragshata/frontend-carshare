@@ -82,7 +82,6 @@ async function onSplashDone() {
   try {
     await authorizeViaTelegram(telegramUser);
     redirectByRole();
-    log("✅ Авторизация через Telegram прошла успешно!");
     showSplash.value = false;
   } catch (e: any) {
     log("❌ Ошибка авторизации через Telegram: " + (e?.message || e));
