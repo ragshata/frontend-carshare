@@ -1,11 +1,3 @@
-<template>
-  <SplashScreen v-if="showSplash" @done="onSplashDone" />
-  <div v-else class="container">
-    <router-view />
-    <div v-if="logMessage" class="tg-log">{{ logMessage }}</div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -17,6 +9,8 @@ const showSplash = ref(true);
 const logMessage = ref('');
 const auth = useAuthStore();
 const router = useRouter();
+
+const initialRedirectHandled = ref(false); // Флаг, что переход через start_param уже был
 
 function log(msg: string) {
   logMessage.value = msg;
@@ -30,8 +24,8 @@ onMounted(() => {
   const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
   if (startParam && startParam.startsWith('rate_')) {
     const [, driverId, tripId] = startParam.split('_');
-    // Переходим на страницу RateDriver с нужными параметрами
-    router.replace(`/rate/${tripId}?driver=${driverId}`);
+    router.replace('/rate/${tripId}?driver=${driverId}');
+    initialRedirectHandled.value = true; // Отметили, что редирект уже был
   }
 });
 
@@ -92,7 +86,10 @@ async function onSplashDone() {
   // Авторизация и регистрация на бэкенде
   try {
     await authorizeViaTelegram(telegramUser);
-    redirectByRole();
+    // Только если не было редиректа через start_param — делаем обычный редирект
+    if (!initialRedirectHandled.value) {
+      redirectByRole();
+    }
     showSplash.value = false;
   } catch (e: any) {
     log("❌ Ошибка авторизации через Telegram: " + (e?.message || e));
