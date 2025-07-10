@@ -89,7 +89,8 @@ async function changeRole() {
 }
 
 // Загрузка отзывов — добавь свою логику если нужно!
-onMounted(() => {
+onMounted(async () => {
+  // Настройка Telegram BackButton
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
     tg.BackButton.show();
@@ -97,8 +98,25 @@ onMounted(() => {
       router.back();
     });
   }
-  // Подгрузи отзывы/рейтинг (пример):
-  // getDriverReviews(user.id).then(res => { reviews.value = res; avgRating.value = ... });
+
+  // Подгружаем отзывы и рейтинг водителя
+  if (user && user.id) {
+    try {
+      const res = await getDriverReviews(user.id);
+      reviews.value = res;
+      if (reviews.value.length) {
+        avgRating.value = (
+          reviews.value.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviews.value.length
+        );
+      } else {
+        avgRating.value = 0;
+      }
+    } catch (err) {
+      reviews.value = [];
+      avgRating.value = 0;
+      // Можно показать тост или лог
+    }
+  }
 });
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
