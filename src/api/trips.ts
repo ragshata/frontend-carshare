@@ -22,7 +22,7 @@ export interface Trip {
 
 
 export async function finishTrip(id: number): Promise<void> {
-  await axios.patch(`${API_BASE}/${id}/finish`);
+  await axios.patch(`${API_BASE}/trips/${id}/finish`);
 }
 
 
