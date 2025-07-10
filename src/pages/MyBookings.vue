@@ -14,7 +14,7 @@
       >
         <div class="row between bold">
           {{ tripMap[b.trip_id]?.from_ || '—' }} — {{ tripMap[b.trip_id]?.to || '—' }}
-          <span>{{ tripMap[b.trip_id]?.price ? tripMap[b.trip_id].price + 'сомони (TJS)' : '' }}</span>
+          <span>{{ tripMap[b.trip_id]?.price ? tripMap[b.trip_id].price + ' сомони (TJS)' : '' }}</span>
         </div>
         <div class="row">
           <span v-if="tripMap[b.trip_id]?.date">🗓 {{ tripMap[b.trip_id].date }}</span>
@@ -31,6 +31,12 @@
             </a>
           </div>
         </div>
+        <!-- Кнопка "Оценить" если поездка завершена -->
+        <div v-if="tripMap[b.trip_id]?.status === 'done'" style="margin-top:8px;">
+          <button class="btn rate-btn" @click="goToRate(b.trip_id)">
+            Оценить водителя
+          </button>
+        </div>
       </div>
     </div>
     <Toast ref="toastRef" />
@@ -42,7 +48,7 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useAuthStore } from "@/store/auth";
 import { getMyBookings } from "@/api/bookings";
 import { getTripById } from "@/api/trips";
-import { getUserById } from "@/api/users"; // если путь другой — поправь!
+import { getUserById } from "@/api/users";
 import Toast from "@/components/Toast.vue";
 import { useRouter } from "vue-router";
 
@@ -55,7 +61,6 @@ const tripMap = ref<Record<number, any>>({});
 const drivers = ref<Record<number, any>>({});
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
-// Функция перевода статусов на русский
 function ruStatus(status: string) {
   switch (status) {
     case "confirmed":
@@ -69,19 +74,21 @@ function ruStatus(status: string) {
   }
 }
 
+// Переход на экран оценки водителя для поездки
+function goToRate(tripId: number) {
+  router.push(`/rate/${tripId}`);
+}
+
 onMounted(async () => {
   loading.value = true;
   try {
-    // Получаем только подтвержденные бронирования
     const all = await getMyBookings(auth.user.id);
     confirmedBookings.value = all.filter((b: any) => b.status === "confirmed");
-    // Для каждой брони грузим поездку и водителя
     for (const b of confirmedBookings.value) {
       if (!tripMap.value[b.trip_id]) {
         try {
           const trip = await getTripById(b.trip_id);
           tripMap.value[b.trip_id] = trip;
-          // Грузим водителя (owner_id — id пользователя)
           if (trip && trip.owner_id && !drivers.value[b.trip_id]) {
             try {
               const driver = await getUserById(trip.owner_id);
@@ -202,5 +209,19 @@ onBeforeUnmount(() => {
 .driver-info a {
   color: var(--color-primary, #007bff);
   text-decoration: underline;
+}
+.rate-btn {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 15px;
+  margin-top: 2px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.rate-btn:hover {
+  background: #065fc3;
 }
 </style>
