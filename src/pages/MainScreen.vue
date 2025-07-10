@@ -1,21 +1,17 @@
 <template>
   <div class="main-screen-root">
-    <!-- Фиксированный фон -->
+    <!-- Фиксированный SVG-фон -->
     <div class="background-img"></div>
-    <!-- Всё содержимое с блюром -->
+    <!-- Весь основной контент -->
     <div :class="['blur-container', { 'blur-active': showCarModal }]">
       <div class="main-screen-content">
-        <h1 class="title">Добро пожаловать в <span class="brand">SafarBar</span>!</h1>
+        <h1 class="title">Добро пожаловать!</h1>
         <p class="desc">
           Это мини-приложение для поиска попутчиков и совместных поездок. Выберите, кто вы:
         </p>
         <div class="roles">
-          <button class="role-btn driver" @click="chooseDriver">
-            🚗 Я водитель
-          </button>
-          <button class="role-btn passenger" @click="selectRole(false)">
-            🙋 Я попутчик
-          </button>
+          <button class="role-btn driver" @click="chooseDriver">🚗 Я водитель</button>
+          <button class="role-btn passenger" @click="selectRole(false)">🙋 Я попутчик</button>
         </div>
         <div v-if="loading" class="loading">Сохраняем выбор...</div>
       </div>
@@ -24,18 +20,8 @@
     <div v-if="showCarModal" class="modal-overlay">
       <div class="modal">
         <h3>Введите данные автомобиля</h3>
-        <input
-          v-model="carBrand"
-          maxlength="30"
-          class="car-input"
-          placeholder="Марка машины (например, Toyota Mark II)"
-        />
-        <input
-          v-model="carNumber"
-          maxlength="15"
-          class="car-input"
-          placeholder="Номер машины (например, 1234АБ-1)"
-        />
+        <input v-model="carBrand" maxlength="30" class="car-input" placeholder="Марка машины (например, Toyota Mark II)" />
+        <input v-model="carNumber" maxlength="15" class="car-input" placeholder="Номер машины (например, 1234АБ-1)" />
         <div class="modal-actions">
           <button class="btn" @click="confirmDriver">Сохранить</button>
           <button class="btn btn-outline" @click="showCarModal = false">Отмена</button>
@@ -98,16 +84,22 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
   loading.value = false;
 }
 </script>
-
 <style scoped>
-.main-screen-root {
-  min-height: 100vh;
+html, body {
   width: 100vw;
-  position: relative;
-  overflow: hidden;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden !important;   /* ВАЖНО */
+  touch-action: manipulation;
+  -webkit-overflow-scrolling: auto;
+  background: #222;
 }
+  
 
-/* Фиксированный фон */
+* { box-sizing: border-box; }
+
+/* Фон SVG всегда по всему экрану */
 .background-img {
   position: fixed;
   inset: 0;
@@ -124,39 +116,65 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
   to { opacity: 1; }
 }
 
-
+/* Центрируем плашку с текстом всегда по центру */
+.main-screen-root,
 .blur-container {
+  position: fixed; /* или absolute, если нужно поверх фона */
+  inset: 0;
   min-height: 100vh;
   width: 100vw;
-  position: relative;
-  transition: filter 0.18s, background 0.18s;
-  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2;
+  transition: filter 0.18s, background 0.18s;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-top: env(safe-area-inset-top, 0);
+  /* Без flex-direction: column — для одного блока достаточно */
 }
+
+
 .blur-active {
   filter: blur(7px) brightness(0.7);
   pointer-events: none;
   user-select: none;
 }
+
+/* Плашка-контент — аккуратно под мобильный */
 .main-screen-content {
   z-index: 3;
   position: relative;
-  background: rgba(255,255,255,0.93);
-  border-radius: 24px;
-  padding: 38px 22px 28px 22px;
-  box-shadow: 0 2px 24px rgba(0,0,0,0.10);
-  max-width: 410px;
+  background: rgba(255,255,255,0.96);
+  border-radius: 22px;
+  padding: 28px 8vw 22px 8vw;
+  box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+  max-width: 95vw;
   width: 100%;
-  margin: 44px auto;
   text-align: center;
+  margin: 0;
 }
+
+/* Адаптация размеров для телефонов */
+@media (max-width: 430px) {
+  .main-screen-content {
+    padding: 20px 3vw 16px 3vw;
+    font-size: 15px;
+    border-radius: 16px;
+  }
+}
+@media (max-width: 340px) {
+  .main-screen-content {
+    padding: 12px 1vw 10px 1vw;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+}
+
 .title {
-  font-size: 26px;
-  font-weight: bold;
-  margin-bottom: 14px;
-  color: #232323;
+  font-size: 21px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #222;
 }
 .brand {
   color: #007bff;
@@ -165,31 +183,33 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
 }
 .desc {
   font-size: 15px;
-  color: #666;
-  margin-bottom: 24px;
+  color: #555;
+  margin-bottom: 20px;
 }
 .roles {
   display: flex;
-  gap: 22px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 18px;
   justify-content: center;
+  align-items: stretch;
 }
 .role-btn {
-  padding: 18px 36px;
+  padding: 15px 0;
   font-size: 18px;
   font-weight: 600;
   border: none;
-  border-radius: 18px;
+  border-radius: 13px;
   background: #fff;
   color: #007bff;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.09);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
   cursor: pointer;
   transition: background 0.16s;
+  width: 100%;
 }
 .role-btn.driver { background: #f1f8ff; }
 .role-btn.passenger { background: #f9f4ff; }
-.role-btn:hover { background: #e3eeff; }
+.role-btn:active { background: #e3eeff; }
 .loading {
   font-size: 15px;
   color: #666;
@@ -197,12 +217,12 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
 }
 
 .car-input {
-  width: 90%;
-  margin: 14px auto;
-  padding: 11px 13px;
-  font-size: 18px;
-  border: 1.5px solid #b7cbf6;
-  border-radius: 10px;
+  width: 95%;
+  margin: 12px auto;
+  padding: 10px 11px;
+  font-size: 17px;
+  border: 1.2px solid #b7cbf6;
+  border-radius: 9px;
   outline: none;
   background: #f6f9ff;
   text-align: center;
@@ -217,18 +237,24 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(20,20,30,0.12);
+  background: rgba(20,20,30,0.16);
 }
 .modal {
   background: #fff;
-  border-radius: 24px;
-  padding: 30px 26px 18px 26px;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.15);
-  min-width: 280px;
-  max-width: 92vw;
+  border-radius: 20px;
+  padding: 22px 8vw 16px 8vw;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.14);
+  min-width: 0;
+  max-width: 96vw;
   text-align: center;
   animation: pop-in 0.18s;
   z-index: 13;
+}
+@media (max-width: 430px) {
+  .modal {
+    padding: 12px 3vw 10px 3vw;
+    border-radius: 12px;
+  }
 }
 @keyframes pop-in {
   0% { transform: scale(0.95); opacity: 0.7; }
@@ -236,15 +262,15 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
 }
 .modal-actions {
   display: flex;
-  gap: 14px;
+  gap: 10px;
   justify-content: center;
 }
 .btn {
   background: var(--color-primary, #007bff);
   color: white;
   border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
+  padding: 11px 18px;
+  border-radius: 7px;
   font-size: 16px;
   cursor: pointer;
   transition: background 0.18s;
@@ -252,6 +278,6 @@ async function selectRole(isDriver: boolean, car_number?: string, car_brand?: st
 .btn-outline {
   background: transparent;
   color: var(--color-primary, #007bff);
-  border: 1.5px solid var(--color-primary, #007bff);
+  border: 1.2px solid var(--color-primary, #007bff);
 }
 </style>
