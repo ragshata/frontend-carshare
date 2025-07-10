@@ -23,6 +23,7 @@
         <div class="profile-phone" v-if="user.phone">
           Телефон: {{ user.phone }}
         </div>
+        <!-- Блок с рейтингом -->
         <div class="rating-box">
           <span v-if="avgRating > 0">{{ avgRating.toFixed(1) }}</span>
           <span v-else>—</span>
@@ -46,7 +47,7 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { getDriverReviews } from "@/api/reviews";
-import { updateProfileById } from "@/api/auth"; // Патч по id!
+import { updateProfileById } from "@/api/auth";
 import Toast from "@/components/Toast.vue";
 
 const router = useRouter();
@@ -58,7 +59,6 @@ const reviews = ref<any[]>([]);
 const avgRating = ref(0);
 const roleLoading = ref(false);
 
-// Получаем инициалы для плейсхолдера
 function getInitials(user: any) {
   let initials = user.first_name?.charAt(0) || "";
   if (user.last_name) initials += user.last_name.charAt(0);
@@ -69,7 +69,6 @@ async function changeRole() {
   if (!user || !user.id) return;
   roleLoading.value = true;
   try {
-    // Меняем на противоположную роль
     const updated = await updateProfileById({
       id: user.id,
       is_driver: !user.is_driver,
@@ -77,7 +76,6 @@ async function changeRole() {
     auth.setUser(updated);
     toastRef.value?.show("Роль успешно изменена!");
 
-    // Перенаправляем на соответствующий экран
     setTimeout(() => {
       if (updated.is_driver) router.replace("/driver");
       else router.replace("/passenger");
@@ -88,9 +86,8 @@ async function changeRole() {
   roleLoading.value = false;
 }
 
-// Загрузка отзывов — добавь свою логику если нужно!
+// Загрузка отзывов и рейтинга
 onMounted(async () => {
-  // Настройка Telegram BackButton
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
     tg.BackButton.show();
@@ -98,16 +95,15 @@ onMounted(async () => {
       router.back();
     });
   }
-
-  // Подгружаем отзывы и рейтинг водителя
-  if (user && user.id) {
+  // Грузим отзывы только если пользователь — водитель
+  if (user && user.id && user.is_driver) {
     try {
       const res = await getDriverReviews(user.id);
       reviews.value = res;
       if (reviews.value.length) {
-        avgRating.value = (
-          reviews.value.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviews.value.length
-        );
+        avgRating.value =
+          reviews.value.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) /
+          reviews.value.length;
       } else {
         avgRating.value = 0;
       }
@@ -116,6 +112,9 @@ onMounted(async () => {
       avgRating.value = 0;
       // Можно показать тост или лог
     }
+  } else {
+    reviews.value = [];
+    avgRating.value = 0;
   }
 });
 onBeforeUnmount(() => {
@@ -140,14 +139,12 @@ onBeforeUnmount(() => {
   margin-left: auto;
   margin-right: auto;
 }
-
 .avatar-block {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-bottom: 25px;
 }
-
 .avatar {
   width: 180px;
   height: 180px;
@@ -156,7 +153,6 @@ onBeforeUnmount(() => {
   background: #eaeaea;
   margin-bottom: 0;
 }
-
 .avatar-placeholder {
   background: #eee;
   color: #888;
@@ -168,7 +164,6 @@ onBeforeUnmount(() => {
   height: 80px;
   border-radius: 20px;
 }
-
 .profile-info {
   width: 100%;
   display: flex;
@@ -177,7 +172,6 @@ onBeforeUnmount(() => {
   gap: 7px;
   text-align: center;
 }
-
 .profile-name {
   font-size: 20px;
   font-weight: bold;
