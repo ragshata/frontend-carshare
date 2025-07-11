@@ -125,8 +125,8 @@ onMounted(async () => {
 async function save() {
   loading.value = true;
   try {
-    await updateTrip({
-      id: Number(route.params.id),
+    // Теперь updateTrip ожидает 2 аргумента!
+    await updateTrip(Number(route.params.id), {
       from_: from_.value,
       to: to.value,
       date: date.value,

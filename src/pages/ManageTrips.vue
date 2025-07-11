@@ -65,6 +65,13 @@
           >
             👥 Пассажиры
           </button>
+          <!-- Новая кнопка Редактировать -->
+          <button
+            class="btn btn-outline"
+            @click="editTrip(trip.id)"
+          >
+            ✏️ Редактировать
+          </button>
         </div>
       </div>
     </div>
@@ -73,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted,onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { getMyTrips, deleteTrip as apiDeleteTrip, publishTrip as apiPublishTrip, finishTrip as apiFinishTrip } from '@/api/trips';
@@ -134,6 +141,10 @@ function goToPassengers(tripId: number) {
   router.push(`/trip/${tripId}/passengers`);
 }
 
+function editTrip(tripId: number) {
+  router.push(`/trip/${tripId}/edit`);
+}
+
 async function deleteTrip(id: number) {
   if (!confirm('Удалить поездку?')) return;
   try {
@@ -157,7 +168,6 @@ async function publishTrip(id: number) {
 
 // Новая функция завершения поездки
 async function finishTrip(id: number) {
-  
   try {
     await apiFinishTrip(id);
     toastRef.value?.show('Поездка завершена');

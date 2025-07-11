@@ -2,30 +2,31 @@
   <div class="main-screen-root">
     <!-- Фиксированный SVG-фон -->
     <div class="background-img"></div>
-    <!-- Весь основной контент -->
-    <div :class="['blur-container', { 'blur-active': showCarModal }]">
+    <div class="blur-container" :class="{ 'blur-active': showModal }">
       <div class="main-screen-content">
         <h1 class="title">Добро пожаловать!</h1>
         <p class="desc">
           Это мини-приложение для поиска попутчиков и совместных поездок. Выберите, кто вы:
         </p>
         <div class="roles">
-          <button class="role-btn driver" @click="chooseDriver">🚗 Я водитель</button>
-          <button class="role-btn passenger" @click="selectRole(false)">🙋 Я попутчик</button>
+          <button class="role-btn driver" @click="openModal('driver')">🚗 Я водитель</button>
+          <button class="role-btn passenger" @click="openModal('passenger')">🙋 Я попутчик</button>
         </div>
         <div v-if="loading" class="loading">Сохраняем выбор...</div>
       </div>
     </div>
-    <!-- Модалка для машины -->
-    <div v-if="showCarModal" class="modal-overlay">
+    <!-- Модалка с подсказкой -->
+    <div v-if="showModal" class="modal-overlay">
       <div class="modal">
-        <h3>Введите данные автомобиля</h3>
-        <input v-model="carBrand" maxlength="30" class="car-input" placeholder="Марка машины (например, Toyota Mark II)" />
-        <input v-model="carNumber" maxlength="15" class="car-input" placeholder="Номер машины (например, 1234АБ-1)" />
-        <div class="modal-actions">
-          <button class="btn" @click="confirmDriver">Сохранить</button>
-          <button class="btn btn-outline" @click="showCarModal = false">Отмена</button>
+        <h3 class="modal-title">Завершите регистрацию</h3>
+        <div class="modal-desc">
+          <div>Пожалуйста, перейдите во вкладку <b>Профиль</b> и заполните:</div>
+          <ul>
+            <li>Фамилию, имя и телефон</li>
+            <li v-if="modalRole==='driver'">Марку, номер и фото машины</li>
+          </ul>
         </div>
+        <button class="btn" @click="goToProfile">Перейти в профиль</button>
       </div>
     </div>
     <Toast ref="toastRef" />
@@ -35,71 +36,37 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/store/auth';
-import { patchUserRole } from '@/api/auth';
 import Toast from '@/components/Toast.vue';
 
 const router = useRouter();
-const auth = useAuthStore();
+const showModal = ref(false);
+const modalRole = ref<'driver' | 'passenger' | null>(null);
 const loading = ref(false);
-const showCarModal = ref(false);
-const carNumber = ref('');
-const carBrand = ref('');
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
-function chooseDriver() {
-  showCarModal.value = true;
-  carNumber.value = '';
-  carBrand.value = '';
+function openModal(role: 'driver' | 'passenger') {
+  modalRole.value = role;
+  showModal.value = true;
 }
-async function confirmDriver() {
-  if (!carBrand.value.trim()) {
-    toastRef.value?.show('Введите марку машины!');
-    return;
-  }
-  if (!carNumber.value.trim()) {
-    toastRef.value?.show('Введите номер машины!');
-    return;
-  }
-  await selectRole(true, carNumber.value.trim(), carBrand.value.trim());
-  showCarModal.value = false;
-}
-async function selectRole(isDriver: boolean, car_number?: string, car_brand?: string) {
-  if (!auth.user) return;
-  loading.value = true;
-  try {
-    const updated = await patchUserRole(auth.user.id, isDriver, car_number, car_brand);
-    auth.setUser(updated);
-    toastRef.value?.show('✅ Роль успешно выбрана!');
-    setTimeout(() => {
-      if (isDriver) {
-        router.replace('/driver');
-      } else {
-        router.replace('/passenger');
-      }
-    }, 600);
-  } catch (err) {
-    toastRef.value?.show('❌ Ошибка выбора роли');
-  }
-  loading.value = false;
+
+function goToProfile() {
+  showModal.value = false;
+  router.replace('/profile');
 }
 </script>
+
 <style scoped>
 html, body {
   width: 100vw;
   height: 100vh;
   margin: 0;
   padding: 0;
-  overflow: hidden !important;   /* ВАЖНО */
+  overflow: hidden !important;
   touch-action: manipulation;
   -webkit-overflow-scrolling: auto;
   background: #222;
 }
-  
-
 * { box-sizing: border-box; }
-
-/* Фон SVG всегда по всему экрану */
 .background-img {
   position: fixed;
   inset: 0;
@@ -115,11 +82,9 @@ html, body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
-/* Центрируем плашку с текстом всегда по центру */
 .main-screen-root,
 .blur-container {
-  position: fixed; /* или absolute, если нужно поверх фона */
+  position: fixed;
   inset: 0;
   min-height: 100vh;
   width: 100vw;
@@ -130,17 +95,12 @@ html, body {
   transition: filter 0.18s, background 0.18s;
   padding-bottom: env(safe-area-inset-bottom, 0);
   padding-top: env(safe-area-inset-top, 0);
-  /* Без flex-direction: column — для одного блока достаточно */
 }
-
-
 .blur-active {
   filter: blur(7px) brightness(0.7);
   pointer-events: none;
   user-select: none;
 }
-
-/* Плашка-контент — аккуратно под мобильный */
 .main-screen-content {
   z-index: 3;
   position: relative;
@@ -153,8 +113,6 @@ html, body {
   text-align: center;
   margin: 0;
 }
-
-/* Адаптация размеров для телефонов */
 @media (max-width: 430px) {
   .main-screen-content {
     padding: 20px 3vw 16px 3vw;
@@ -169,17 +127,11 @@ html, body {
     border-radius: 12px;
   }
 }
-
 .title {
   font-size: 21px;
   font-weight: 700;
   margin-bottom: 12px;
   color: #222;
-}
-.brand {
-  color: #007bff;
-  font-weight: 800;
-  letter-spacing: 1px;
 }
 .desc {
   font-size: 15px;
@@ -216,68 +168,57 @@ html, body {
   margin-top: 14px;
 }
 
-.car-input {
-  width: 95%;
-  margin: 12px auto;
-  padding: 10px 11px;
-  font-size: 17px;
-  border: 1.2px solid #b7cbf6;
-  border-radius: 9px;
-  outline: none;
-  background: #f6f9ff;
-  text-align: center;
-  display: block;
-}
-
-/* ===== Модалка ===== */
+/* ==== Модалка ==== */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 12;
+  z-index: 20;
+  background: rgba(18,24,36,0.16);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(20,20,30,0.16);
 }
 .modal {
   background: #fff;
-  border-radius: 20px;
-  padding: 22px 8vw 16px 8vw;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.14);
-  min-width: 0;
-  max-width: 96vw;
+  border-radius: 18px;
+  padding: 30px 22px 18px 22px;
+  min-width: 250px;
+  max-width: 90vw;
   text-align: center;
-  animation: pop-in 0.18s;
-  z-index: 13;
-}
-@media (max-width: 430px) {
-  .modal {
-    padding: 12px 3vw 10px 3vw;
-    border-radius: 12px;
-  }
+  box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+  animation: pop-in 0.16s;
 }
 @keyframes pop-in {
-  0% { transform: scale(0.95); opacity: 0.7; }
+  0% { transform: scale(0.97); opacity: 0.75; }
   100% { transform: scale(1); opacity: 1; }
 }
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
+.modal-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #232323;
+  margin-bottom: 13px;
+}
+.modal-desc {
+  font-size: 15px;
+  color: #444;
+  margin-bottom: 20px;
+}
+.modal-desc ul {
+  text-align: left;
+  margin: 10px 0 0 0;
+  padding-left: 20px;
+  font-size: 15px;
 }
 .btn {
   background: var(--color-primary, #007bff);
   color: white;
   border: none;
-  padding: 11px 18px;
-  border-radius: 7px;
+  padding: 11px 24px;
+  border-radius: 9px;
   font-size: 16px;
   cursor: pointer;
   transition: background 0.18s;
+  font-weight: 600;
 }
-.btn-outline {
-  background: transparent;
-  color: var(--color-primary, #007bff);
-  border: 1.2px solid var(--color-primary, #007bff);
-}
+.btn:active { background: #1d6de6; }
 </style>

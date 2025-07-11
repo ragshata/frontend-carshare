@@ -17,10 +17,19 @@
         </div>
         <div class="row">
           <span v-if="booking.user?.username">
-            Telegram: 
+            Telegram:
             <a :href="`https://t.me/${booking.user.username}`" target="_blank">@{{ booking.user.username }}</a>
           </span>
-          <span v-if="booking.user?.phone">Телефон: {{ booking.user.phone }}</span>
+        </div>
+        <div class="row">
+          <span>
+            Телефон:
+            <b v-if="booking.user?.phone">{{ booking.user.phone }}</b>
+            <span v-else class="empty-phone">—</span>
+          </span>
+        </div>
+        <div class="row">
+          <span>Telegram ID: <b>{{ booking.user?.telegram_id }}</b></span>
         </div>
         <div class="actions" v-if="booking.status === 'pending'">
           <button class="btn" @click="confirm(booking.id)">Подтвердить</button>
@@ -73,7 +82,6 @@ async function loadBookings() {
   loading.value = true;
   try {
     bookings.value = await getBookingsByTrip(tripId);
-    // bookings — только для этой поездки
   } catch {
     toastRef.value?.show("Ошибка загрузки пассажиров!");
   } finally {
@@ -103,7 +111,6 @@ async function reject(id: number) {
 
 onMounted(loadBookings);
 </script>
-
 
 <style scoped>
 .trip-passengers-page {
@@ -175,6 +182,10 @@ onMounted(loadBookings);
 .status.rejected,
 .status.cancelled {
   background: #ffcdd2;
+}
+.empty-phone {
+  color: #b5b5b5;
+  font-style: italic;
 }
 .actions {
   display: flex;

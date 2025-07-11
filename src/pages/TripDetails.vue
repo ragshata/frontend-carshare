@@ -47,6 +47,7 @@
               <template v-if="driver.last_name"> {{ driver.last_name }}</template>
             </div>
             <div class="driver-username" v-if="driver.username">@{{ driver.username }}</div>
+            <div class="driver-phone" v-if="driver.phone"><b>Телефон:</b>{{driver.phone}}</div>
             <div class="driver-telegramid">ID: {{ driver.telegram_id }}</div>
           </div>
         </div>

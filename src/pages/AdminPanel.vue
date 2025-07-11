@@ -1,24 +1,67 @@
 <template>
   <div class="admin-wrap">
     <h2 class="title">Админ-панель</h2>
-    <table class="users-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Имя</th>
-          <th>Подробнее</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="user in users" :key="user.id">
-          <td>{{ user.id }}</td>
-          <td>{{ user.first_name }} <span v-if="user.last_name">{{ user.last_name }}</span></td>
-          <td>
-            <button class="info-btn" @click="showUser(user)">Подробнее</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="admin-tabs">
+      <button :class="{active: tab === 'users'}" @click="tab = 'users'">Пользователи</button>
+      <button :class="{active: tab === 'trips'}" @click="tab = 'trips'">Поездки</button>
+      <button :class="{active: tab === 'stats'}" @click="tab = 'stats'">Аналитика</button>
+    </div>
+
+    <!-- Разделы -->
+    <div v-if="tab === 'users'">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Имя</th>
+            <th>Подробнее</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="user in users" :key="user.id">
+            <td>{{ user.id }}</td>
+            <td>{{ user.first_name }} <span v-if="user.last_name">{{ user.last_name }}</span></td>
+            <td>
+              <button class="info-btn" @click="showUser(user)">Подробнее</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div v-else-if="tab === 'trips'">
+      <table class="trips-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Маршрут</th>
+            <th>Дата</th>
+            <th>Статус</th>
+            <th>Подробнее</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="trip in trips" :key="trip.id">
+            <td>{{ trip.id }}</td>
+            <td>{{ trip.from_ }} — {{ trip.to }}</td>
+            <td>{{ trip.date }} {{ trip.time }}</td>
+            <td>{{ trip.status }}</td>
+            <td>
+              <button class="info-btn" @click="showTrip(trip)">Подробнее</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div v-else-if="tab === 'stats'">
+      <div class="stats-section">
+        <h3>Базовая аналитика</h3>
+        <div>🚗 Поездок за период: <b>{{ stats.tripsCount }}</b></div>
+        <div>👥 Бронирований: <b>{{ stats.bookingsCount }}</b></div>
+      </div>
+    </div>
+
     <!-- Модальное окно пользователя -->
     <div v-if="modalUser" class="modal-overlay" @click.self="closeModal">
       <div class="modal">
@@ -54,23 +97,65 @@
           <p><b>Марка машины:</b> {{ modalUser.car_brand || '—' }}</p>
         </div>
         <div class="modal-actions">
-          <button class="delete-btn" @click="deleteUserById(modalUser.id)">Удалить</button>
+          <button class="delete-btn" @click="deleteUserById(modalUser.telegram_id)">Удалить</button>
           <button class="btn close-btn" @click="closeModal">Закрыть</button>
         </div>
       </div>
     </div>
+
+    <!-- Модальное окно поездки -->
+    <div v-if="modalTrip" class="modal-overlay" @click.self="closeModal">
+      <div class="modal">
+        <h3>Поездка #{{ modalTrip.id }}</h3>
+        <div class="modal-content">
+          <p><b>Маршрут:</b> {{ modalTrip.from_ }} — {{ modalTrip.to }}</p>
+          <p><b>Дата:</b> {{ modalTrip.date }} {{ modalTrip.time }}</p>
+          <p><b>Статус:</b> {{ modalTrip.status }}</p>
+          <p><b>Водитель (ID):</b> {{ modalTrip.owner_id }}</p>
+          <p v-if="modalTrip.description"><b>Особенности:</b> {{ modalTrip.description }}</p>
+          <p v-if="modalTrip.car_brand || modalTrip.car_number">
+            <b>Машина:</b>
+            <span v-if="modalTrip.car_brand">{{ modalTrip.car_brand }}</span>
+            <span v-if="modalTrip.car_brand && modalTrip.car_number">,</span>
+            <span v-if="modalTrip.car_number"> номер {{ modalTrip.car_number }}</span>
+          </p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn close-btn" @click="closeModal">Закрыть</button>
+        </div>
+      </div>
+    </div>
+
     <Toast ref="toastRef" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { getAllUsers, updateUserRole, updateUserActiveDriver, deleteUser, deleteUserByTelegramId } from '@/api/admin';
+import { ref, onMounted, watch } from 'vue';
+import { useAuthStore } from '@/store/auth';
+import { useRouter } from 'vue-router';
+import { getAllUsers, updateUserRole, updateUserActiveDriver, deleteUserByTelegramId } from '@/api/admin';
+import { getAllTrips, getAdminStats } from '@/api/admin-trips'; // Должен быть отдельный файл
 import Toast from '@/components/Toast.vue';
 
+const ADMIN_TELEGRAM_ID = 6931781449; // <== твой id
+
+const router = useRouter();
+const auth = useAuthStore();
+
+if (auth.user?.telegram_id !== ADMIN_TELEGRAM_ID) {
+  router.replace('/main-screen');
+}
+
+const tab = ref('users');
+
 const users = ref<any[]>([]);
+const trips = ref<any[]>([]);
+const stats = ref({ tripsCount: 0, bookingsCount: 0 });
+
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const modalUser = ref<any | null>(null);
+const modalTrip = ref<any | null>(null);
 
 async function loadUsers() {
   try {
@@ -79,11 +164,30 @@ async function loadUsers() {
     toastRef.value?.show('Ошибка загрузки пользователей!');
   }
 }
+async function loadTrips() {
+  try {
+    trips.value = await getAllTrips();
+  } catch {
+    toastRef.value?.show('Ошибка загрузки поездок!');
+  }
+}
+async function loadStats() {
+  try {
+    stats.value = await getAdminStats();
+  } catch {
+    toastRef.value?.show('Ошибка аналитики!');
+  }
+}
+
 function showUser(user: any) {
   modalUser.value = { ...user };
 }
+function showTrip(trip: any) {
+  modalTrip.value = { ...trip };
+}
 function closeModal() {
   modalUser.value = null;
+  modalTrip.value = null;
 }
 async function setRole(isDriver: boolean) {
   if (!modalUser.value) return;
@@ -117,15 +221,20 @@ async function deleteUserById(telegram_id: number) {
     toastRef.value?.show('Ошибка удаления пользователя!');
   }
 }
-onMounted(loadUsers);
+
+onMounted(() => {
+  if (tab.value === 'users') loadUsers();
+  if (tab.value === 'trips') loadTrips();
+  if (tab.value === 'stats') loadStats();
+});
+watch(tab, (newTab) => {
+  if (newTab === 'users') loadUsers();
+  if (newTab === 'trips') loadTrips();
+  if (newTab === 'stats') loadStats();
+});
 </script>
 
 <style scoped>
-body {
-  background: #FCFCFC;
-  color: #222;
-  font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Open Sans,Helvetica Neue,sans-serif;
-}
 .admin-wrap {
   max-width: 900px;
   margin: 36px auto 0 auto;
@@ -141,24 +250,46 @@ body {
   color: #232323;
   text-align: center;
 }
-.users-table {
+.admin-tabs {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.admin-tabs button {
+  padding: 10px 26px;
+  font-size: 16px;
+  background: #fff;
+  border: 1.5px solid #007bff;
+  color: #007bff;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.14s;
+}
+.admin-tabs button.active,
+.admin-tabs button:hover {
+  background: #e8f1ff;
+}
+.users-table, .trips-table {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
   margin-top: 12px;
 }
-.users-table th, .users-table td {
+.users-table th, .users-table td,
+.trips-table th, .trips-table td {
   padding: 11px 10px;
   font-size: 15px;
   border-bottom: 1px solid #eee;
   text-align: center;
 }
-.users-table th {
+.users-table th, .trips-table th {
   background: #f8fafc;
   font-weight: 600;
   color: #222;
 }
-.users-table td {
+.users-table td, .trips-table td {
   background: #fff;
 }
 .info-btn {
@@ -174,6 +305,11 @@ body {
 }
 .info-btn:hover {
   background: #e8f1ff;
+}
+.stats-section {
+  padding: 40px;
+  text-align: center;
+  font-size: 17px;
 }
 .modal-overlay {
   position: fixed;
@@ -231,7 +367,6 @@ body {
 .delete-btn:hover {
   background: #c62828;
 }
-/* --- Роль: красивый tab-switch --- */
 .role-select {
   display: inline-flex;
   border-radius: 11px;
@@ -258,7 +393,6 @@ body {
 .role-option:not(.selected):hover {
   background: #e6f8ff;
 }
-/* --- Switch --- */
 .switch {
   position: relative;
   display: inline-block;
