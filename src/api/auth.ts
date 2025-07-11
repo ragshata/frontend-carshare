@@ -59,3 +59,9 @@ export async function updateProfileById(payload: {
   const res = await axios.patch(`${API_BASE}/users/${payload.id}`, payload);
   return res.data; // <-- так!
 }
+
+export async function uploadCarPhoto(user_id: number, formData: FormData) {
+  return axios.post(`${API_BASE}/upload/car_photo/${user_id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+}

@@ -25,6 +25,10 @@
           <span v-if="driver.car_brand && driver.car_number">,</span>
           <span v-if="driver.car_number"> номер {{ driver.car_number }}</span>
         </div>
+        <!-- Фотка машины -->
+        <div class="car-photo-wrapper" v-if="driver && driver.car_photo_url">
+          <img :src="driver.car_photo_url" class="car-photo" alt="Фото машины" />
+        </div>
         <div class="row" v-if="trip.status">
           Статус:
           <span :class="['status', trip.status]">
@@ -48,11 +52,11 @@
         </div>
         <div class="driver-rating">
           <span>Рейтинг:</span>
-          <b>{{ avgRating > 0 ? avgRating.toFixed(1) : "—" }}</b> ⭐ ({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})
+          <b>{{ avgRating > 0 ? avgRating.toFixed(1) : "—" }}</b> ⭐️ ({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})
         </div>
         <div v-if="reviews.length === 0" class="empty-text">Нет отзывов</div>
         <div v-for="review in reviews.slice(0,3)" :key="review.id" class="review-card">
-          <div class="review-rating">{{ review.rating }} ⭐</div>
+          <div class="review-rating">{{ review.rating }} ⭐️</div>
           <div class="review-text" v-if="review.text">{{ review.text }}</div>
           <div class="review-meta">
             Поездка: #{{ review.trip_id }}
@@ -157,8 +161,6 @@ onMounted(() => {
       router.back();
     });
   }
-  // Подгрузи отзывы/рейтинг (пример):
-  // getDriverReviews(user.id).then(res => { reviews.value = res; avgRating.value = ... });
 });
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
@@ -218,6 +220,19 @@ onBeforeUnmount(() => {
   color: #232323;
   font-size: 15px;
   margin: 6px 0 4px 0;
+}
+/* Фото машины */
+.car-photo-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0 10px 0;
+}
+.car-photo {
+  max-width: 260px;
+  max-height: 130px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.09);
+  object-fit: cover;
 }
 .status {
   font-weight: bold;

@@ -23,6 +23,13 @@
           <label>Марка машины</label>
           <input v-model="form.car_brand" placeholder="Например, Toyota Prius" />
         </div>
+        <div class="input-group">
+          <label>Фото машины</label>
+          <input type="file" accept="image/*" @change="onFileChange" />
+          <div v-if="carPhotoUrl" class="car-photo-preview">
+            <img :src="carPhotoUrl" alt="Фото машины" />
+          </div>
+        </div>
       </template>
       <button class="btn" type="submit">Сохранить</button>
       <button class="btn btn-outline" type="button" @click="router.push('/profile')">Отмена</button>
@@ -35,7 +42,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { patchProfile } from '@/api/auth'; // функция запроса PATCH /me
+import { patchProfile, uploadCarPhoto } from '@/api/auth'; // <- добавь uploadCarPhoto в api/auth.ts
 import Toast from '@/components/Toast.vue';
 
 const router = useRouter();
@@ -49,6 +56,17 @@ const form = ref({
   car_number: auth.user.car_number || '',
   car_brand: auth.user.car_brand || '',
 });
+
+const carPhotoUrl = ref(auth.user.car_photo_url || '');
+const carPhotoFile = ref<File | null>(null);
+
+function onFileChange(e: Event) {
+  const target = e.target as HTMLInputElement;
+  if (target.files && target.files[0]) {
+    carPhotoFile.value = target.files[0];
+    carPhotoUrl.value = URL.createObjectURL(target.files[0]);
+  }
+}
 
 onMounted(() => {
   const tg = (window as any).Telegram?.WebApp;
@@ -67,19 +85,24 @@ onBeforeUnmount(() => {
 
 async function submit() {
   try {
-    // Добавь telegram_id в объект для запроса!
     const payload: any = {
       ...form.value,
       telegram_id: auth.user.telegram_id,
     };
-
     // Если юзер НЕ водитель — удаляем из запроса машину
     if (!auth.user.is_driver) {
       delete payload.car_number;
       delete payload.car_brand;
     }
-
     const updated = await patchProfile(payload);
+
+    // Загружаем фото машины если выбрано
+    if (auth.user.is_driver && carPhotoFile.value) {
+      const formData = new FormData();
+      formData.append('file', carPhotoFile.value);
+      await uploadCarPhoto(auth.user.id, formData);
+    }
+
     auth.setUser(updated);
     toastRef.value?.show('✅ Профиль обновлен!');
     router.push('/profile');
@@ -127,6 +150,11 @@ input {
 }
 input:focus {
   border-color: #007bff;
+}
+.car-photo-preview img {
+  max-width: 240px;
+  border-radius: 13px;
+  margin-top: 7px;
 }
 .btn {
   background: var(--color-primary, #007bff);

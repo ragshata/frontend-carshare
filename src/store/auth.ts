@@ -15,6 +15,7 @@ interface User {
   active_driver?: boolean;
   car_number?: string;
   car_brand?: string;
+  car_photo_url?: string;
   // можно добавить другие поля по необходимости
 }
 
