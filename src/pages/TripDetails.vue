@@ -27,14 +27,15 @@
         </div>
         <!-- Фотка машины -->
         <div class="car-photo-wrapper" v-if="driver && driver.car_photo_url">
-          <img :src="driver.car_photo_url" class="car-photo" alt="Фото машины" />
+          <img
+            :src="driver.car_photo_url.startsWith('http')
+              ? driver.car_photo_url
+              : BACKEND_URL + driver.car_photo_url"
+            class="car-photo"
+            alt="Фото машины"
+          />
         </div>
-        <div class="row" v-if="trip.status">
-          Статус:
-          <span :class="['status', trip.status]">
-            {{ statusMap[trip.status] || trip.status }}
-          </span>
-        </div>
+
       </div>
 
       <!-- Профиль водителя без кнопки перехода -->
@@ -97,6 +98,7 @@ import Toast from "@/components/Toast.vue";
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const trip = ref<any | null>(null);
 const driver = ref<any | null>(null);
