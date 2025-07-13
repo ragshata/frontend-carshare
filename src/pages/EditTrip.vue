@@ -1,6 +1,5 @@
 <template>
   <div class="edit-trip-page">
-    <button class="back-button" @click="router.back()">← Назад</button>
     <h2 class="title">Редактировать поездку</h2>
     <form class="form" @submit.prevent="save">
       <label>Откуда</label>
@@ -56,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watchEffect } from "vue";
+import { ref, onMounted, watchEffect, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { getTrip, updateTrip } from "@/api/trips";
 import Toast from "@/components/Toast.vue";
@@ -91,6 +90,14 @@ watchEffect(() => {
 });
 
 onMounted(async () => {
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => {
+      router.back();
+    });
+  }
+
   const tripId = Number(route.params.id);
   if (!tripId) {
     toastRef.value?.show("Ошибка: не найдена поездка!");
@@ -122,10 +129,15 @@ onMounted(async () => {
   }
 });
 
+onBeforeUnmount(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  tg?.BackButton?.hide();
+  tg?.BackButton?.offClick?.();
+});
+
 async function save() {
   loading.value = true;
   try {
-    // Теперь updateTrip ожидает 2 аргумента!
     await updateTrip(Number(route.params.id), {
       from_: from_.value,
       to: to.value,
@@ -155,17 +167,6 @@ async function save() {
   margin-bottom: 18px;
   color: var(--color-text-primary, #232323);
   text-align: center;
-}
-.back-button {
-  background: transparent;
-  border: 1px solid var(--color-primary, #007bff);
-  color: var(--color-primary, #007bff);
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-bottom: 12px;
-  transition: background 0.2s ease;
 }
 .form {
   display: flex;
