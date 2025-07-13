@@ -9,8 +9,8 @@
           Это мини-приложение для поиска попутчиков и совместных поездок. Выберите, кто вы:
         </p>
         <div class="roles">
-          <button class="role-btn driver" @click="openModal('driver')">🚗 Я водитель</button>
-          <button class="role-btn passenger" @click="openModal('passenger')">🙋 Я попутчик</button>
+          <button class="role-btn driver" @click="chooseRole('driver')">🚗 Я водитель</button>
+          <button class="role-btn passenger" @click="chooseRole('passenger')">🙋 Я попутчик</button>
         </div>
         <div v-if="loading" class="loading">Сохраняем выбор...</div>
       </div>
@@ -34,19 +34,61 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/store/auth';
+import { patchUserRole } from '@/api/auth'; // Функция для PATCH запроса к API
 import Toast from '@/components/Toast.vue';
 
 const router = useRouter();
+const auth = useAuthStore();
 const showModal = ref(false);
 const modalRole = ref<'driver' | 'passenger' | null>(null);
 const loading = ref(false);
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
-function openModal(role: 'driver' | 'passenger') {
-  modalRole.value = role;
-  showModal.value = true;
+// ----- REDIRECT если роль уже выбрана -----
+onMounted(() => {
+  // При инициализации — редирект по роли, если есть user
+  if (auth.user?.is_driver === true) {
+    router.replace('/driver');
+    return;
+  }
+  if (auth.user?.is_driver === false) {
+    router.replace('/passenger');
+    return;
+  }
+  // Если в localStorage есть роль, но в профиле ещё нет — покажем подсказку
+  const storedRole = localStorage.getItem('user_role');
+  if (!auth.user?.is_driver && storedRole) {
+    modalRole.value = storedRole as 'driver' | 'passenger';
+    showModal.value = true;
+  }
+});
+
+// ----- Основная логика выбора роли -----
+async function chooseRole(role: 'driver' | 'passenger') {
+  loading.value = true;
+  try {
+    // 1. PATCH запрос к API (сохраняем роль на бэке)
+    //      - если в auth.user уже есть id, иначе жди авторизации
+    if (!auth.user?.id) {
+      toastRef.value?.show('Ошибка: не авторизован!');
+      loading.value = false;
+      return;
+    }
+    await patchUserRole(auth.user.id, role == 'driver'); // функция см. ниже
+    // 2. Обновляем роль в Pinia store (или запроси профиль заново)
+    auth.user.is_driver = role === 'driver';
+    // 3. Сохраняем в localStorage (для UX, не бизнес-логика)
+    localStorage.setItem('user_role', role);
+    // 4. Открываем модалку и сохраняем выбранную роль
+    modalRole.value = role;
+    showModal.value = true;
+  } catch (e) {
+    toastRef.value?.show('Ошибка при выборе роли');
+  }
+  loading.value = false;
 }
 
 function goToProfile() {
@@ -167,8 +209,6 @@ html, body {
   color: #666;
   margin-top: 14px;
 }
-
-/* ==== Модалка ==== */
 .modal-overlay {
   position: fixed;
   inset: 0;
