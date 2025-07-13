@@ -37,9 +37,6 @@
           <tr>
             <th>ID</th>
             <th>Имя водителя</th>
-            <th>Маршрут</th>
-            <th>Дата</th>
-            <th>Статус</th>
             <th>Подробнее</th>
           </tr>
         </thead>
@@ -50,9 +47,6 @@
               <span v-if="getDriverName(trip.owner_id)">{{ getDriverName(trip.owner_id) }}</span>
               <span v-else>—</span>
             </td>
-            <td>{{ trip.from_ }} — {{ trip.to }}</td>
-            <td>{{ trip.date }} {{ trip.time }}</td>
-            <td>{{ trip.status }}</td>
             <td>
               <button class="info-btn" @click="showTrip(trip)">Подробнее</button>
             </td>
