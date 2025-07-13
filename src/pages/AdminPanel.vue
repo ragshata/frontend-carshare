@@ -1,13 +1,15 @@
 <template>
   <div class="admin-wrap">
     <h2 class="title">Админ-панель</h2>
-    <div class="admin-tabs">
+
+    <!-- Маленькие табы -->
+    <div class="admin-tabs small">
       <button :class="{active: tab === 'users'}" @click="tab = 'users'">Пользователи</button>
       <button :class="{active: tab === 'trips'}" @click="tab = 'trips'">Поездки</button>
       <button :class="{active: tab === 'stats'}" @click="tab = 'stats'">Аналитика</button>
     </div>
 
-    <!-- Раздел пользователи -->
+    <!-- Пользователи -->
     <div v-if="tab === 'users'">
       <table class="users-table">
         <thead>
@@ -29,13 +31,14 @@
       </table>
     </div>
 
-    <!-- Раздел поездки -->
+    <!-- Поездки -->
     <div v-else-if="tab === 'trips'">
       <table class="trips-table">
         <thead>
           <tr>
             <th>ID</th>
             <th>Водитель</th>
+            <th>Маршрут</th>
             <th>Подробнее</th>
           </tr>
         </thead>
@@ -43,11 +46,10 @@
           <tr v-for="trip in trips" :key="trip.id">
             <td>{{ trip.id }}</td>
             <td>
-              <span v-if="getDriverName(trip.owner_id)">
-                {{ getDriverName(trip.owner_id) }}
-              </span>
-              <span v-else>—</span>
+              {{ findUser(trip.owner_id)?.first_name }}
+              <span v-if="findUser(trip.owner_id)?.last_name">{{ findUser(trip.owner_id).last_name }}</span>
             </td>
+            <td>{{ trip.from_ }} — {{ trip.to }}</td>
             <td>
               <button class="info-btn" @click="showTrip(trip)">Подробнее</button>
             </td>
@@ -56,11 +58,12 @@
       </table>
     </div>
 
-    <!-- Раздел аналитика -->
+    <!-- Аналитика -->
     <div v-else-if="tab === 'stats'">
       <div class="stats-section">
-        <div>🚗 Всего поездок: <b>{{ stats.tripsCount }}</b></div>
-        <div>👥 Всего бронирований: <b>{{ stats.bookingsCount }}</b></div>
+        <h3>Базовая аналитика</h3>
+        <div>🚗 Поездок за период: <b>{{ stats.trips_count }}</b></div>
+        <div>👥 Бронирований: <b>{{ stats.bookings_count }}</b></div>
       </div>
     </div>
 
@@ -113,7 +116,7 @@
           <p><b>Маршрут:</b> {{ modalTrip.from_ }} — {{ modalTrip.to }}</p>
           <p><b>Дата:</b> {{ modalTrip.date }} {{ modalTrip.time }}</p>
           <p><b>Статус:</b> {{ modalTrip.status }}</p>
-          <p><b>Водитель:</b> {{ getDriverName(modalTrip.owner_id) || ('ID: ' + modalTrip.owner_id) }}</p>
+          <p><b>Водитель (ID):</b> {{ modalTrip.owner_id }}</p>
           <p v-if="modalTrip.description"><b>Особенности:</b> {{ modalTrip.description }}</p>
           <p v-if="modalTrip.car_brand || modalTrip.car_number">
             <b>Машина:</b>
@@ -137,10 +140,10 @@ import { ref, onMounted, watch } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'vue-router';
 import { getAllUsers, updateUserRole, updateUserActiveDriver, deleteUserByTelegramId } from '@/api/admin';
-import { getAllTrips, getAdminStats } from '@/api/admin-trips';
+import { getAllTrips, getAdminStats } from '@/api/admin-trips'; // Должен быть отдельный файл
 import Toast from '@/components/Toast.vue';
 
-const ADMIN_TELEGRAM_ID = 6931781449; // <== твой id
+const ADMIN_TELEGRAM_ID = 6931781449; // твой id
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -153,18 +156,11 @@ const tab = ref('users');
 
 const users = ref<any[]>([]);
 const trips = ref<any[]>([]);
-const stats = ref({ tripsCount: 0, bookingsCount: 0 });
+const stats = ref({ trips_count: 0, bookings_count: 0 });
 
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const modalUser = ref<any | null>(null);
 const modalTrip = ref<any | null>(null);
-
-// Получить имя водителя по owner_id
-function getDriverName(owner_id: number) {
-  const user = users.value.find(u => u.id === owner_id);
-  if (!user) return '';
-  return user.first_name + (user.last_name ? ' ' + user.last_name : '');
-}
 
 async function loadUsers() {
   try {
@@ -182,13 +178,14 @@ async function loadTrips() {
 }
 async function loadStats() {
   try {
-    // Всегда получаем актуальные значения
-    const s = await getAdminStats();
-    stats.value.tripsCount = s.trips_count ?? s.tripsCount ?? 0;
-    stats.value.bookingsCount = s.bookings_count ?? s.bookingsCount ?? 0;
+    stats.value = await getAdminStats();
   } catch {
     toastRef.value?.show('Ошибка аналитики!');
   }
+}
+
+function findUser(id: number) {
+  return users.value.find(u => u.id === id) || {};
 }
 
 function showUser(user: any) {
@@ -234,16 +231,15 @@ async function deleteUserById(telegram_id: number) {
   }
 }
 
-// Подгружаем все данные сразу, чтобы getDriverName работал
-onMounted(async () => {
-  await loadUsers();
-  await loadTrips();
-  await loadStats();
+onMounted(() => {
+  if (tab.value === 'users') loadUsers();
+  if (tab.value === 'trips') { loadUsers(); loadTrips(); }
+  if (tab.value === 'stats') loadStats();
 });
-watch(tab, async (newTab) => {
-  if (newTab === 'users') await loadUsers();
-  if (newTab === 'trips') await loadTrips();
-  if (newTab === 'stats') await loadStats();
+watch(tab, (newTab) => {
+  if (newTab === 'users') loadUsers();
+  if (newTab === 'trips') { loadUsers(); loadTrips(); }
+  if (newTab === 'stats') loadStats();
 });
 </script>
 
@@ -263,29 +259,7 @@ watch(tab, async (newTab) => {
   color: #232323;
   text-align: center;
 }
-/* --- Tabs (обычные) --- */
-.admin-tabs {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-.admin-tabs button {
-  padding: 10px 26px;
-  font-size: 16px;
-  background: #fff;
-  border: 1.5px solid #007bff;
-  color: #007bff;
-  border-radius: 10px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.14s;
-}
-.admin-tabs button.active,
-.admin-tabs button:hover {
-  background: #e8f1ff;
-}
-/* --- Tabs (маленькие) --- */
+/* --- Маленькие табы --- */
 .admin-tabs.small {
   display: flex;
   flex-wrap: nowrap;
@@ -317,7 +291,6 @@ watch(tab, async (newTab) => {
   background: #e8f1ff;
   color: #007bff;
 }
-
 .users-table, .trips-table {
   width: 100%;
   border-collapse: collapse;
