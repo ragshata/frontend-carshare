@@ -26,8 +26,8 @@
         <div class="input-group">
           <label>Фото машины</label>
           <input type="file" accept="image/*" @change="onFileChange" />
-          <div v-if="carPhotoUrl" class="car-photo-preview">
-            <img :src="carPhotoUrl" alt="Фото машины" />
+          <div v-if="showCarPhoto" class="car-photo-preview">
+            <img :src="showCarPhoto" alt="Фото машины" />
           </div>
         </div>
       </template>
@@ -39,11 +39,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { patchProfile, uploadCarPhoto } from '@/api/auth'; // <- добавь uploadCarPhoto в api/auth.ts
+import { patchProfile, uploadCarPhoto } from '@/api/auth';
 import Toast from '@/components/Toast.vue';
+
+const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -57,14 +59,26 @@ const form = ref({
   car_brand: auth.user.car_brand || '',
 });
 
-const carPhotoUrl = ref(auth.user.car_photo_url || '');
+const carPhotoUrl = ref(auth.user.car_photo_url || ''); // относительный путь или абсолютная ссылка
 const carPhotoFile = ref<File | null>(null);
+const localPreview = ref<string>('');
+
+// Показывать что-то для превью: если только что выбрали файл, то localPreview, иначе фото из БД (carPhotoUrl)
+const showCarPhoto = computed(() => {
+  if (localPreview.value) return localPreview.value;
+  if (carPhotoUrl.value) {
+    return carPhotoUrl.value.startsWith('http')
+      ? carPhotoUrl.value
+      : BACKEND_URL + carPhotoUrl.value;
+  }
+  return '';
+});
 
 function onFileChange(e: Event) {
   const target = e.target as HTMLInputElement;
   if (target.files && target.files[0]) {
     carPhotoFile.value = target.files[0];
-    carPhotoUrl.value = URL.createObjectURL(target.files[0]);
+    localPreview.value = URL.createObjectURL(target.files[0]);
   }
 }
 
@@ -89,21 +103,23 @@ async function submit() {
       ...form.value,
       telegram_id: auth.user.telegram_id,
     };
-    // Если юзер НЕ водитель — удаляем из запроса машину
     if (!auth.user.is_driver) {
       delete payload.car_number;
       delete payload.car_brand;
     }
     const updated = await patchProfile(payload);
 
-    // Загружаем фото машины если выбрано
+    // Если выбрано новое фото — загружаем
     if (auth.user.is_driver && carPhotoFile.value) {
       const formData = new FormData();
       formData.append('file', carPhotoFile.value);
       await uploadCarPhoto(auth.user.id, formData);
     }
 
-    auth.setUser(updated);
+    auth.setUser({
+      ...updated,
+      car_photo_url: updated.car_photo_url || carPhotoUrl.value // актуализация фото
+    });
     toastRef.value?.show('✅ Профиль обновлен!');
     router.push('/profile');
   } catch (err) {
