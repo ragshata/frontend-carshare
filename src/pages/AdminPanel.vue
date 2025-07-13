@@ -1,8 +1,7 @@
 <template>
   <div class="admin-wrap">
     <h2 class="title">Админ-панель</h2>
-
-    <!-- Маленькие табы -->
+    <!-- Tabs с малым размером и прокруткой -->
     <div class="admin-tabs small">
       <button :class="{active: tab === 'users'}" @click="tab = 'users'">Пользователи</button>
       <button :class="{active: tab === 'trips'}" @click="tab = 'trips'">Поездки</button>
@@ -37,8 +36,10 @@
         <thead>
           <tr>
             <th>ID</th>
-            <th>Водитель</th>
+            <th>Имя водителя</th>
             <th>Маршрут</th>
+            <th>Дата</th>
+            <th>Статус</th>
             <th>Подробнее</th>
           </tr>
         </thead>
@@ -46,10 +47,12 @@
           <tr v-for="trip in trips" :key="trip.id">
             <td>{{ trip.id }}</td>
             <td>
-              {{ findUser(trip.owner_id)?.first_name }}
-              <span v-if="findUser(trip.owner_id)?.last_name">{{ findUser(trip.owner_id).last_name }}</span>
+              <span v-if="getDriverName(trip.owner_id)">{{ getDriverName(trip.owner_id) }}</span>
+              <span v-else>—</span>
             </td>
             <td>{{ trip.from_ }} — {{ trip.to }}</td>
+            <td>{{ trip.date }} {{ trip.time }}</td>
+            <td>{{ trip.status }}</td>
             <td>
               <button class="info-btn" @click="showTrip(trip)">Подробнее</button>
             </td>
@@ -62,8 +65,9 @@
     <div v-else-if="tab === 'stats'">
       <div class="stats-section">
         <h3>Базовая аналитика</h3>
-        <div>🚗 Поездок за период: <b>{{ stats.trips_count }}</b></div>
-        <div>👥 Бронирований: <b>{{ stats.bookings_count }}</b></div>
+        <div>🚗 Поездок за период: <b>{{ stats.trips_count ?? '—' }}</b></div>
+        <div>👥 Бронирований: <b>{{ stats.bookings_count ?? '—' }}</b></div>
+        <div>⭐️ Средний рейтинг водителей: <b>{{ stats.avg_driver_rating !== undefined ? stats.avg_driver_rating.toFixed(2) : '—' }}</b></div>
       </div>
     </div>
 
@@ -140,10 +144,10 @@ import { ref, onMounted, watch } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'vue-router';
 import { getAllUsers, updateUserRole, updateUserActiveDriver, deleteUserByTelegramId } from '@/api/admin';
-import { getAllTrips, getAdminStats } from '@/api/admin-trips'; // Должен быть отдельный файл
+import { getAllTrips, getAdminStats } from '@/api/admin-trips';
 import Toast from '@/components/Toast.vue';
 
-const ADMIN_TELEGRAM_ID = 6931781449; // твой id
+const ADMIN_TELEGRAM_ID = 6931781449;
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -153,14 +157,20 @@ if (auth.user?.telegram_id !== ADMIN_TELEGRAM_ID) {
 }
 
 const tab = ref('users');
-
 const users = ref<any[]>([]);
 const trips = ref<any[]>([]);
-const stats = ref({ trips_count: 0, bookings_count: 0 });
+const stats = ref({ trips_count: 0, bookings_count: 0, avg_driver_rating: 0 });
 
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const modalUser = ref<any | null>(null);
 const modalTrip = ref<any | null>(null);
+
+// Получаем имя водителя по owner_id поездки
+function getDriverName(owner_id: number) {
+  const user = users.value.find(u => u.id === owner_id);
+  if (!user) return null;
+  return user.first_name + (user.last_name ? ' ' + user.last_name : '');
+}
 
 async function loadUsers() {
   try {
@@ -182,10 +192,6 @@ async function loadStats() {
   } catch {
     toastRef.value?.show('Ошибка аналитики!');
   }
-}
-
-function findUser(id: number) {
-  return users.value.find(u => u.id === id) || {};
 }
 
 function showUser(user: any) {
@@ -233,12 +239,12 @@ async function deleteUserById(telegram_id: number) {
 
 onMounted(() => {
   if (tab.value === 'users') loadUsers();
-  if (tab.value === 'trips') { loadUsers(); loadTrips(); }
+  if (tab.value === 'trips') loadTrips();
   if (tab.value === 'stats') loadStats();
 });
 watch(tab, (newTab) => {
   if (newTab === 'users') loadUsers();
-  if (newTab === 'trips') { loadUsers(); loadTrips(); }
+  if (newTab === 'trips') loadTrips();
   if (newTab === 'stats') loadStats();
 });
 </script>
@@ -259,7 +265,8 @@ watch(tab, (newTab) => {
   color: #232323;
   text-align: center;
 }
-/* --- Маленькие табы --- */
+
+/* Маленькие tabs, в строку и с прокруткой */
 .admin-tabs.small {
   display: flex;
   flex-wrap: nowrap;
@@ -267,30 +274,26 @@ watch(tab, (newTab) => {
   gap: 7px;
   justify-content: flex-start;
   margin-bottom: 15px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.admin-tabs.small::-webkit-scrollbar {
-  display: none;
 }
 .admin-tabs.small button {
   font-size: 13px;
   padding: 7px 14px;
   border-radius: 8px;
-  min-width: 90px;
-  white-space: nowrap;
+  min-width: 92px;
   background: #fff;
+  border: 1.5px solid #007bff;
   color: #007bff;
-  border: 1.2px solid #007bff;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background 0.14s;
+  white-space: nowrap;
 }
 .admin-tabs.small button.active,
 .admin-tabs.small button:hover {
   background: #e8f1ff;
-  color: #007bff;
 }
+
+/* Таблицы */
 .users-table, .trips-table {
   width: 100%;
   border-collapse: collapse;
