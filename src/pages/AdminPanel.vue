@@ -58,7 +58,7 @@
     <!-- Аналитика -->
     <div v-else-if="tab === 'stats'">
       <div class="stats-section">
-        <h3>Базовая аналитика</h3>
+
         <div>🚗 Поездок за период: <b>{{ stats.trips_count ?? '—' }}</b></div>
         <div>👥 Бронирований: <b>{{ stats.bookings_count ?? '—' }}</b></div>
         <div>⭐️ Средний рейтинг водителей: <b>{{ stats.avg_driver_rating !== undefined ? stats.avg_driver_rating.toFixed(2) : '—' }}</b></div>
