@@ -19,12 +19,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { searchTrips } from '@/api/trips';
 import { useAuthStore } from '@/store/auth';
 import { bookTrip } from '@/api/bookings';
 import Toast from '@/components/Toast.vue';
-import { useRouter } from 'vue-router';
+
 const router = useRouter();
 const trips = ref<any[]>([]);
 const loading = ref(true);
@@ -36,7 +36,7 @@ const auth = useAuthStore();
 async function load() {
   loading.value = true;
 
-  // Получаем параметры из query, undefined если нет
+  // Получаем параметры из query
   const rawParams: any = {
     from_: typeof route.query.from_ === 'string' ? route.query.from_ : undefined,
     to: typeof route.query.to === 'string' ? route.query.to : undefined,
@@ -52,11 +52,18 @@ async function load() {
   Object.entries(rawParams).forEach(([k, v]) => {
     if (typeof v === 'string' && v.trim() !== '') params[k] = v;
   });
-  params.status = 'active'
-
+  params.status = 'active';
 
   try {
-    trips.value = await searchTrips(params);
+    // Загружаем и фильтруем только будущие поездки (или сегодня)
+    trips.value = (await searchTrips(params)).filter(t => {
+      if (!t.date) return false;
+      const today = new Date();
+      const tripDate = new Date(t.date);
+      today.setHours(0,0,0,0);
+      tripDate.setHours(0,0,0,0);
+      return tripDate >= today;
+    });
   } catch {
     trips.value = [];
   }
@@ -68,17 +75,16 @@ function goToDetails(id: number) {
 }
 
 onMounted(() => {
-  load(); // <-- вот тут вызываем загрузку поездок!
+  load();
 
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      router.back(); // Можно заменить на router.push('/main') если надо
+      router.back();
     });
   }
 });
-
 
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
@@ -94,9 +100,6 @@ async function book(trip: any) {
     alert('Мест нет!');
   }
 }
-
-
-
 </script>
 
 <style scoped>
