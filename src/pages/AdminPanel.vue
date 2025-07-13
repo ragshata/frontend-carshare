@@ -59,7 +59,6 @@
     <!-- Раздел аналитика -->
     <div v-else-if="tab === 'stats'">
       <div class="stats-section">
-        <h3>Базовая аналитика</h3>
         <div>🚗 Всего поездок: <b>{{ stats.tripsCount }}</b></div>
         <div>👥 Всего бронирований: <b>{{ stats.bookingsCount }}</b></div>
       </div>
@@ -264,6 +263,7 @@ watch(tab, async (newTab) => {
   color: #232323;
   text-align: center;
 }
+/* --- Tabs (обычные) --- */
 .admin-tabs {
   display: flex;
   gap: 16px;
@@ -285,6 +285,39 @@ watch(tab, async (newTab) => {
 .admin-tabs button:hover {
   background: #e8f1ff;
 }
+/* --- Tabs (маленькие) --- */
+.admin-tabs.small {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 7px;
+  justify-content: flex-start;
+  margin-bottom: 15px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.admin-tabs.small::-webkit-scrollbar {
+  display: none;
+}
+.admin-tabs.small button {
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  min-width: 90px;
+  white-space: nowrap;
+  background: #fff;
+  color: #007bff;
+  border: 1.2px solid #007bff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.admin-tabs.small button.active,
+.admin-tabs.small button:hover {
+  background: #e8f1ff;
+  color: #007bff;
+}
+
 .users-table, .trips-table {
   width: 100%;
   border-collapse: collapse;
