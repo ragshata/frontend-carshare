@@ -2,8 +2,30 @@
   <div class="offer-trip-page">
     <h2 class="title">Создать поездку</h2>
 
-    <!-- 🚫 Плашка для неактивных водителей -->
-    <div v-if="!canCreate" class="locked-block">
+    <!-- 🚫 Модалка с тарифами/триалом для водителей -->
+    <div v-if="showTrialModal" class="modal-overlay">
+      <div class="modal">
+        <h3>Доступ к размещению поездок</h3>
+        <ul class="tariff-list">
+          <li>За 1 день: <b>10 сомони</b></li>
+          <li>За 1 неделю: <b>50 сомони</b></li>
+          <li>За 1 месяц: <b>150 сомони</b></li>
+        </ul>
+        <div class="trial-info">
+          <b>Первые 3 дня бесплатно — для теста!</b>
+        </div>
+        <button class="btn" @click="activateTrial" :disabled="loadingTrial">
+          Начать пробный период 3 дня
+        </button>
+        <div v-if="trialEnd" class="trial-end">
+          Пробный период активен до: {{ trialEnd }}
+        </div>
+        <button class="btn btn-outline" style="margin-top:10px" @click="router.back()">Назад</button>
+      </div>
+    </div>
+
+    <!-- 🚫 Плашка для неактивных водителей (триал и платные опции) -->
+    <div v-else-if="!canCreate" class="locked-block">
       <div class="locked-msg">
         🚫 У вас нет доступа к созданию поездок.<br>
         Попросите администратора активировать возможность публикации поездок.
@@ -80,6 +102,7 @@ import { reactive, ref, onMounted, onBeforeUnmount, watchEffect } from 'vue';
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { createTrip } from "@/api/trips";
+import axios from 'axios';
 import Toast from "@/components/Toast.vue";
 
 const cities = [
@@ -93,29 +116,34 @@ const auth = useAuthStore();
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const loading = ref(false);
 
-const selectedFrom = ref('');
-const selectedTo = ref('');
-const canCreate = auth.user?.active_driver !== false;
+// ===== Новая логика триала и тарифов =====
+const showTrialModal = ref(false);
+const loadingTrial = ref(false);
+const trialEnd = ref<string | null>(null);
 
-const form = reactive({
-  from_: "",
-  to: "",
-  date: "",
-  time: "",
-  seats: 1,
-  price: 0,
-  status: "active",
-  description: "", // Новое поле
-});
-
-watchEffect(() => {
-  form.from_ = selectedFrom.value === 'other' ? form.from_ : selectedFrom.value;
-});
-watchEffect(() => {
-  form.to = selectedTo.value === 'other' ? form.to : selectedTo.value;
-});
+// Проверяем, можно ли создавать поездки
+const canCreate = ref(true);
 
 onMounted(() => {
+  const user = auth.user;
+  // Нет триала или триал истёк
+  if (
+    user.is_driver &&
+    (!user.active_driver ||
+      !user.driver_trial_end ||
+      new Date(user.driver_trial_end) < new Date())
+  ) {
+    showTrialModal.value = true;
+    canCreate.value = false;
+    trialEnd.value = user.driver_trial_end
+      ? new Date(user.driver_trial_end).toLocaleString('ru-RU')
+      : null;
+  } else {
+    showTrialModal.value = false;
+    canCreate.value = true;
+  }
+
+  // ТГ кнопка назад
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
     tg.BackButton.show();
@@ -128,6 +156,46 @@ onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
   tg?.BackButton?.hide();
   tg?.BackButton?.offClick?.();
+});
+
+// ===== Активация триального периода =====
+async function activateTrial() {
+  loadingTrial.value = true;
+  try {
+    const res = await axios.post('/api/start_driver_trial', { user_id: auth.user.id });
+    // После успешного актива триала
+    auth.user.active_driver = true;
+    auth.user.driver_trial_end = res.data.trial_end;
+    trialEnd.value = new Date(res.data.trial_end).toLocaleString('ru-RU');
+    showTrialModal.value = false;
+    canCreate.value = true;
+    toastRef.value?.show('Пробный период активирован!');
+  } catch (e: any) {
+    toastRef.value?.show(e.response?.data?.detail || 'Ошибка!');
+  }
+  loadingTrial.value = false;
+}
+
+// ====== Форма ======
+const selectedFrom = ref('');
+const selectedTo = ref('');
+
+const form = reactive({
+  from_: "",
+  to: "",
+  date: "",
+  time: "",
+  seats: 1,
+  price: 0,
+  status: "active",
+  description: "",
+});
+
+watchEffect(() => {
+  form.from_ = selectedFrom.value === 'other' ? form.from_ : selectedFrom.value;
+});
+watchEffect(() => {
+  form.to = selectedTo.value === 'other' ? form.to : selectedTo.value;
 });
 
 async function save() {
@@ -220,5 +288,32 @@ textarea.input {
   cursor: pointer;
   margin-top: 8px;
   transition: background 0.2s;
+}
+
+/* Модалка */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.22);
+  display: flex; align-items: center; justify-content: center;
+}
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 30px 26px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+  min-width: 260px; max-width: 97vw; text-align: center;
+}
+.tariff-list {
+  padding-left: 0;
+  margin: 0 0 10px 0;
+  list-style: none;
+}
+.tariff-list li { margin-bottom: 3px; }
+.trial-info { margin: 13px 0 4px 0; color: #198754; font-weight: 500; }
+.trial-end { color: #555; font-size: 14px; margin-top: 10px; }
+.btn-outline {
+  background: transparent;
+  color: var(--color-primary, #007bff);
+  border: 1.5px solid var(--color-primary, #007bff);
 }
 </style>

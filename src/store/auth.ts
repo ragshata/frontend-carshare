@@ -16,6 +16,7 @@ interface User {
   car_number?: string;
   car_brand?: string;
   car_photo_url?: string;
+  driver_trial_end?: string | null ;
   // можно добавить другие поля по необходимости
 }
 
