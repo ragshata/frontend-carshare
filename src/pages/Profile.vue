@@ -27,7 +27,7 @@
         <div class="rating-box">
           <span v-if="avgRating > 0">{{ avgRating.toFixed(1) }}</span>
           <span v-else>—</span>
-          <span class="star">⭐</span>
+          <span class="star">⭐️</span>
           <span class="reviews-count">({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})</span>
         </div>
         <button class="btn btn-outline" @click="router.push('/edit-profile')">
@@ -92,7 +92,12 @@ onMounted(async () => {
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      router.back();
+      // Вернём на нужный экран в зависимости от роли
+      if (user.is_driver) {
+        router.replace('/driver');
+      } else {
+        router.replace('/passenger');
+      }
     });
   }
   // Грузим отзывы только если пользователь — водитель
@@ -110,7 +115,6 @@ onMounted(async () => {
     } catch (err) {
       reviews.value = [];
       avgRating.value = 0;
-      // Можно показать тост или лог
     }
   } else {
     reviews.value = [];
@@ -125,7 +129,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* ... твои стили без изменений ... */
+/* ... Твои стили без изменений ... */
 .profile-card {
   display: flex;
   flex-direction: column;
