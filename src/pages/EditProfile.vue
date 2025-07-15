@@ -4,15 +4,32 @@
     <form @submit.prevent="submit">
       <div class="input-group">
         <label>Имя</label>
-        <input v-model="form.first_name" required />
+        <input
+          v-model="form.first_name"
+          required
+          @input="onNameInput('first_name')"
+          pattern="[A-Za-zА-Яа-яЁё\s\-]+"
+          maxlength="30"
+        />
       </div>
       <div class="input-group">
         <label>Фамилия</label>
-        <input v-model="form.last_name" />
+        <input
+          v-model="form.last_name"
+          @input="onNameInput('last_name')"
+          pattern="[A-Za-zА-Яа-яЁё\s\-]+"
+          maxlength="40"
+        />
       </div>
       <div class="input-group">
         <label>Телефон</label>
-        <input v-model="form.phone" />
+        <input
+          v-model="form.phone"
+          @input="onPhoneInput"
+          inputmode="numeric"
+          pattern="[0-9]+"
+          maxlength="15"
+        />
       </div>
       <template v-if="auth.user.is_driver">
         <div class="input-group">
@@ -59,11 +76,11 @@ const form = ref({
   car_brand: auth.user.car_brand || '',
 });
 
-const carPhotoUrl = ref(auth.user.car_photo_url || ''); // относительный путь или абсолютная ссылка
+const carPhotoUrl = ref(auth.user.car_photo_url || '');
 const carPhotoFile = ref<File | null>(null);
 const localPreview = ref<string>('');
 
-// Показывать что-то для превью: если только что выбрали файл, то localPreview, иначе фото из БД (carPhotoUrl)
+// Показывать превью для фото машины
 const showCarPhoto = computed(() => {
   if (localPreview.value) return localPreview.value;
   if (carPhotoUrl.value) {
@@ -73,6 +90,17 @@ const showCarPhoto = computed(() => {
   }
   return '';
 });
+
+// Оставляет только буквы, пробелы и дефисы в имени/фамилии
+function onNameInput(field: 'first_name' | 'last_name') {
+  form.value[field] = form.value[field].replace(/[^A-Za-zА-Яа-яЁё\s\-]/g, "");
+}
+
+// Оставляет только цифры в телефоне
+function onPhoneInput(e: Event) {
+  let val = (e.target as HTMLInputElement).value.replace(/\D/g, "");
+  form.value.phone = val;
+}
 
 function onFileChange(e: Event) {
   const target = e.target as HTMLInputElement;
@@ -118,7 +146,7 @@ async function submit() {
 
     auth.setUser({
       ...updated,
-      car_photo_url: updated.car_photo_url || carPhotoUrl.value // актуализация фото
+      car_photo_url: updated.car_photo_url || carPhotoUrl.value
     });
     toastRef.value?.show('✅ Профиль обновлен!');
     router.push('/profile');
