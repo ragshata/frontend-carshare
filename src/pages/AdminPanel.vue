@@ -141,7 +141,7 @@ import { getAllUsers, updateUserRole, updateUserActiveDriver, deleteUserByTelegr
 import { getAllTrips, getAdminStats } from '@/api/admin-trips';
 import Toast from '@/components/Toast.vue';
 
-const ADMIN_TELEGRAM_ID = 363320196;
+const ADMIN_TELEGRAM_ID = 6931781449;
 
 const router = useRouter();
 const auth = useAuthStore();
