@@ -31,6 +31,10 @@
             </a>
           </div>
         </div>
+        <!-- Кнопка "Подробнее" -->
+        <div>
+          <button class="btn btn-outline" @click="goToTripDetails(b.trip_id)">Подробнее</button>
+        </div>
         <!-- Кнопка "Оценить" если поездка завершена -->
         <div v-if="tripMap[b.trip_id]?.status === 'done'" style="margin-top:8px;">
           <button class="btn rate-btn" @click="goToRate(b.trip_id)">
@@ -75,9 +79,13 @@ function ruStatus(status: string) {
   }
 }
 
-// Переход на экран оценки водителя для поездки
 function goToRate(tripId: number) {
   router.push(`/rate/${tripId}`);
+}
+
+// Новая функция — переход на детали поездки
+function goToTripDetails(tripId: number) {
+  router.push(`/trip/${tripId}`);
 }
 
 onMounted(async () => {
@@ -115,7 +123,7 @@ onMounted(() => {
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      useSmartBack(router); // передай свой router
+      useSmartBack(router);
     });
   }
 });
@@ -224,5 +232,16 @@ onBeforeUnmount(() => {
 }
 .rate-btn:hover {
   background: #065fc3;
+}
+.btn-outline {
+  background: transparent;
+  color: var(--color-primary, #007bff);
+  border: 1px solid var(--color-primary, #007bff);
+  margin-top: 8px;
+  font-size: 15px;
+  border-radius: 8px;
+  padding: 9px 18px;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 </style>

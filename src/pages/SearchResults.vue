@@ -9,7 +9,13 @@
         <div class="row">🗓 {{ trip.date }} &nbsp; ⏰ {{ trip.time }}</div>
         <div class="row">💺 Мест: {{ trip.seats }} &nbsp; 💰 {{ trip.price }} сомони (TJS)</div>
         <div class="row">📌 Статус: {{ trip.status }}</div>
-        <button class="btn" @click="book(trip)">Забронировать</button>
+        <button
+          class="btn"
+          @click="book(trip)"
+          :disabled="isTripBooked(trip.id)"
+        >
+          {{ isTripBooked(trip.id) ? "Уже забронировано" : "Забронировать" }}
+        </button>
         <button class="btn btn-outline" @click="goToDetails(trip.id)">Подробнее</button>
       </div>
     </div>
@@ -22,7 +28,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { searchTrips } from '@/api/trips';
 import { useAuthStore } from '@/store/auth';
-import { bookTrip } from '@/api/bookings';
+import { bookTrip, getBookings } from '@/api/bookings';
 import Toast from '@/components/Toast.vue';
 
 const router = useRouter();
@@ -32,6 +38,11 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 const route = useRoute();
 const auth = useAuthStore();
+const myBookings = ref<any[]>([]);
+
+function isTripBooked(tripId: number): boolean {
+  return myBookings.value.some(b => b.trip_id === tripId);
+}
 
 async function load() {
   loading.value = true;
@@ -47,7 +58,7 @@ async function load() {
     maxPrice: typeof route.query.maxPrice === 'string' ? route.query.maxPrice : undefined,
   };
 
-  // Только не пустые!
+  // Только не пустые
   const params: any = {};
   Object.entries(rawParams).forEach(([k, v]) => {
     if (typeof v === 'string' && v.trim() !== '') params[k] = v;
@@ -55,7 +66,7 @@ async function load() {
   params.status = 'active';
 
   try {
-    // Загружаем и фильтруем только будущие поездки (или сегодня)
+    // Получаем только будущие поездки
     trips.value = (await searchTrips(params)).filter(t => {
       if (!t.date) return false;
       const today = new Date();
@@ -64,8 +75,14 @@ async function load() {
       tripDate.setHours(0,0,0,0);
       return tripDate >= today;
     });
+
+    // Получаем все бронирования пользователя
+    if (auth.user?.id) {
+      myBookings.value = await getBookings(auth.user.id);
+    }
   } catch {
     trips.value = [];
+    myBookings.value = [];
   }
   loading.value = false;
 }
@@ -96,6 +113,7 @@ async function book(trip: any) {
   try {
     await bookTrip(trip.id, auth.user.id);
     alert('Заявка на бронирование отправлена!\nПоездка появится во вкладке "Мои брони" только после подтверждения водителем.');
+    myBookings.value.push({ trip_id: trip.id });
   } catch {
     alert('Мест нет!');
   }
@@ -169,30 +187,5 @@ async function book(trip: any) {
   color: var(--color-primary, #007bff);
   border: 1px solid var(--color-primary, #007bff);
   margin-left: 10px;
-}
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.15);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.modal {
-  background: #fff;
-  border-radius: 16px;
-  padding: 30px 26px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.09);
-  min-width: 260px;
-  text-align: center;
-}
-.modal-header {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 8px;
-}
-.modal-body {
-  font-size: 15px;
 }
 </style>
