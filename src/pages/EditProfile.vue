@@ -69,7 +69,7 @@ const auth = useAuthStore();
 const toastRef = ref();
 
 const form = ref({
-  first_name: auth.user.first_name,
+  first_name: auth.user.first_name || '',
   last_name: auth.user.last_name || '',
   phone: auth.user.phone || '',
   car_number: auth.user.car_number || '',
@@ -91,12 +91,12 @@ const showCarPhoto = computed(() => {
   return '';
 });
 
-// Оставляет только буквы, пробелы и дефисы в имени/фамилии
+// Только буквы, пробелы, дефисы
 function onNameInput(field: 'first_name' | 'last_name') {
   form.value[field] = form.value[field].replace(/[^A-Za-zА-Яа-яЁё\s\-]/g, "");
 }
 
-// Оставляет только цифры в телефоне
+// Только цифры в телефоне
 function onPhoneInput(e: Event) {
   let val = (e.target as HTMLInputElement).value.replace(/\D/g, "");
   form.value.phone = val;
