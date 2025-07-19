@@ -103,6 +103,7 @@ import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { createTrip } from "@/api/trips";
 import { startDriverTrial } from "@/api/trial"; // <-- добавь эту функцию в api/trial.ts
+import { useSmartBack } from "@/utils/navigation";
 import Toast from "@/components/Toast.vue";
 
 const cities = [
@@ -146,12 +147,14 @@ watchEffect(() => {
   form.to = selectedTo.value === 'other' ? form.to : selectedTo.value;
 });
 
+
+
 onMounted(() => {
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      router.back();
+      useSmartBack(router); // передай свой router
     });
   }
 });

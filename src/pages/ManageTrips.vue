@@ -85,6 +85,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { getMyTrips, deleteTrip as apiDeleteTrip, publishTrip as apiPublishTrip, finishTrip as apiFinishTrip } from '@/api/trips';
 import Toast from '@/components/Toast.vue';
+import { useSmartBack } from '@/utils/navigation';
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -177,7 +178,15 @@ async function finishTrip(id: number) {
   }
 }
 
-onMounted(loadTrips);
+onMounted(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => {
+      useSmartBack(router); // передай свой router
+    });
+  }
+});
 </script>
 
 <style scoped>

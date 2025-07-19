@@ -54,6 +54,7 @@
 </template>
 
 <script setup lang="ts">
+import { useSmartBack } from '@/utils/navigation';
 import { reactive, ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -86,7 +87,7 @@ onMounted(() => {
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      router.push('/main');
+      useSmartBack(router); // передай свой router
     });
   }
 });

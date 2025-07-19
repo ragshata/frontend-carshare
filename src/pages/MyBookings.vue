@@ -51,6 +51,7 @@ import { getTripById } from "@/api/trips";
 import { getUserById } from "@/api/users";
 import Toast from "@/components/Toast.vue";
 import { useRouter } from "vue-router";
+import { useSmartBack } from "@/utils/navigation";
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -114,7 +115,7 @@ onMounted(() => {
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      router.back();
+      useSmartBack(router); // передай свой router
     });
   }
 });
