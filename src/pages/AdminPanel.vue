@@ -141,12 +141,12 @@ import { getAllUsers, updateUserRole, updateUserActiveDriver, deleteUserByTelegr
 import { getAllTrips, getAdminStats } from '@/api/admin-trips';
 import Toast from '@/components/Toast.vue';
 
-const ADMIN_TELEGRAM_ID = 363320196;
-
 const router = useRouter();
 const auth = useAuthStore();
 
-if (auth.user?.telegram_id !== ADMIN_TELEGRAM_ID) {
+const ADMIN_IDS = [363320196, 6931781449];
+
+if (!ADMIN_IDS.includes(auth.user?.telegram_id)) {
   router.replace('/main-screen');
 }
 

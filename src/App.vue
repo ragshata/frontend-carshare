@@ -36,9 +36,12 @@ onMounted(() => {
   }
 });
 
+
+
+const ADMIN_IDS = [363320196, 6931781449];
+
 function redirectByRole() {
-  // Сначала проверяем, что юзер — админ
-  if (auth.user && auth.user.telegram_id == 363320196) {
+  if (auth.user && ADMIN_IDS.includes(auth.user.telegram_id)) {
     if (router.currentRoute.value.path !== '/admin') {
       router.replace('/admin');
     }
