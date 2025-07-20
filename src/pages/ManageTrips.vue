@@ -2,6 +2,9 @@
   <div class="manage-trips-page">
     <h2 class="title">Мои поездки</h2>
 
+    <!-- Блок ошибки -->
+    <div v-if="errorMessage" class="error-box">{{ errorMessage }}</div>
+
     <div class="tabs">
       <button
         v-for="tab in tabs"
@@ -36,42 +39,33 @@
           <span v-else>⏳ {{ trip.status }}</span>
         </div>
         <div class="actions">
-          <!-- Кнопка завершить только для активных -->
           <button
             v-if="trip.status === 'active'"
             class="btn btn-done"
             @click="finishTrip(trip.id)"
-          >
-            ✅ Завершить поездку
-          </button>
-          <!-- Кнопка удалить только для черновиков -->
+          >✅ Завершить поездку</button>
+
           <button
             v-if="trip.status === 'draft'"
             class="btn btn-danger"
             @click="deleteTrip(trip.id)"
-          >
-            🗑 Удалить
-          </button>
+          >🗑 Удалить</button>
+
           <button
             v-if="trip.status === 'draft'"
             class="btn btn-outline"
             @click="publishTrip(trip.id)"
-          >
-            🚀 Опубликовать
-          </button>
+          >🚀 Опубликовать</button>
+
           <button
             class="btn btn-outline"
             @click="goToPassengers(trip.id)"
-          >
-            👥 Пассажиры
-          </button>
-          <!-- Новая кнопка Редактировать -->
+          >👥 Пассажиры</button>
+
           <button
             class="btn btn-outline"
             @click="editTrip(trip.id)"
-          >
-            ✏️ Редактировать
-          </button>
+          >✏️ Редактировать</button>
         </div>
       </div>
     </div>
@@ -100,6 +94,7 @@ const currentTab = ref(tabs[0]);
 
 const allTrips = ref<any[]>([]);
 const loading = ref(true);
+const errorMessage = ref('');
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 const statusMap: Record<string, string> = {
@@ -108,23 +103,29 @@ const statusMap: Record<string, string> = {
   'Черновики': 'draft'
 };
 
-// 🔧 Обновлённая функция загрузки с логами
 async function loadTrips() {
-  if (!auth.user?.id) {
-    console.warn('⚠️ auth.user.id отсутствует при загрузке поездок');
-    toastRef.value?.show('Ошибка: не удалось определить пользователя');
+  loading.value = true;
+  errorMessage.value = '';
+
+  const userId = auth.user?.id;
+  if (!userId) {
+    const msg = 'Ошибка: не удалось определить пользователя';
+    toastRef.value?.show(msg);
+    errorMessage.value = msg;
+    console.warn('❌ auth.user.id отсутствует');
+    loading.value = false;
     return;
   }
 
-  loading.value = true;
   try {
-    console.log(`🔄 Загружаем поездки для пользователя ID=${auth.user.id}`);
-    allTrips.value = await getMyTrips(auth.user.id);
-    console.log(`✅ Загружено ${allTrips.value.length} поездок, allTrips.value`);
+    console.log(`🔄 Запрос поездок для пользователя ID=${userId}`);
+    allTrips.value = await getMyTrips(userId);
+    console.log(`✅ Получено ${allTrips.value.length} поездок`, allTrips.value);
   } catch (e: any) {
-    console.error('❌ Ошибка при загрузке поездок:', e);
     const msg = e?.response?.data?.detail || e?.message || 'Неизвестная ошибка';
-    toastRef.value?.show(`Ошибка загрузки поездок: ${msg}`);
+    toastRef.value?.show(`Ошибка загрузки: ${msg}`);
+    errorMessage.value = `🚫 ${msg}`;
+    console.error('❌ Ошибка загрузки поездок:', e);
     allTrips.value = [];
   } finally {
     loading.value = false;
@@ -179,8 +180,7 @@ async function finishTrip(id: number) {
 }
 
 onMounted(() => {
-  loadTrips(); // ⬅️ вызываем загрузку при монтировании
-
+  loadTrips();
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
     tg.BackButton.show();
@@ -208,15 +208,15 @@ onBeforeUnmount(() => {
   color: var(--color-text-primary);
   text-align: center;
 }
-.back-button {
-  background: transparent;
-  border: 1px solid var(--color-primary);
-  color: var(--color-primary);
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s ease;
+.error-box {
+  background: #ffecec;
+  color: #c00;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin: 12px auto;
+  max-width: 420px;
+  font-size: 15px;
+  text-align: center;
 }
 .tabs {
   display: flex;
