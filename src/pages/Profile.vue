@@ -100,11 +100,14 @@ onMounted(async () => {
       }
     });
   }
+
   // Грузим отзывы только если пользователь — водитель
-  if (user && user.id) {
+  if (user && user.id && user.is_driver) {
     try {
       const res = await getDriverReviews(user.id);
       reviews.value = res;
+      console.log("🔍 Загружаем отзывы водителя ID=", user.id);
+      console.log("Полученные отзывы:", res);
       if (reviews.value.length) {
         avgRating.value =
           reviews.value.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) /
