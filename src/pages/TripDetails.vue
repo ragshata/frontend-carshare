@@ -117,12 +117,12 @@ const statusMap: Record<string, string> = {
 const isOwner = computed(() => trip.value && driver.value && driver.value.id === auth.user.id);
 
 onMounted(async () => {
-  // Telegram BackButton
+  // Telegram BackButton → на страницу результатов поиска
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      useSmartBack(router); // Передай свой router
+      router.replace("/search-results"); // или другой путь, если надо
     });
   }
 
@@ -150,6 +150,7 @@ onMounted(async () => {
     toastRef.value?.show("Ошибка при загрузке поездки или водителя");
   }
 });
+
 
 
 async function bookTrip() {
