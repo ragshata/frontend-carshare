@@ -27,8 +27,11 @@ export interface PatchProfilePayload {
   last_name?: string;
   phone?: string;
   city?: string;
-  is_driver?: boolean; // <-- ДОБАВЬ ВОТ ЭТУ СТРОКУ
+  is_driver?: boolean;
+  car_number?: string;   
+  car_brand?: string;   
 }
+
 
 export async function patchUserRole(id: number, isDriver: boolean, car_number?: string, car_brand?: string) {
   const payload: any = { is_driver: isDriver };
