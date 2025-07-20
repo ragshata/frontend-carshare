@@ -92,7 +92,6 @@ onMounted(async () => {
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      // Вернём на нужный экран в зависимости от роли
       if (user.is_driver) {
         router.replace('/driver');
       } else {
@@ -101,13 +100,14 @@ onMounted(async () => {
     });
   }
 
-  // Грузим отзывы только если пользователь — водитель
+  // Загружаем отзывы только для водителя
   if (user && user.id && user.is_driver) {
     try {
+      console.log("🔍 Загружаем отзывы для водителя с ID:", user.id);
       const res = await getDriverReviews(user.id);
+      console.log("✅ Полученные отзывы:", res);
+
       reviews.value = res;
-      console.log("🔍 Загружаем отзывы водителя ID=", user.id);
-      console.log("Полученные отзывы:", res);
       if (reviews.value.length) {
         avgRating.value =
           reviews.value.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) /
@@ -116,14 +116,17 @@ onMounted(async () => {
         avgRating.value = 0;
       }
     } catch (err) {
+      console.error("❌ Ошибка при загрузке отзывов:", err);
       reviews.value = [];
       avgRating.value = 0;
     }
   } else {
+    console.warn("⚠️ Пользователь не является водителем или не авторизован.");
     reviews.value = [];
     avgRating.value = 0;
   }
 });
+
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
   tg?.BackButton?.hide();
