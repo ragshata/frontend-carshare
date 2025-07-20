@@ -61,6 +61,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { patchProfile, uploadCarPhoto } from '@/api/auth';
 import Toast from '@/components/Toast.vue';
+import axios from 'axios';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
