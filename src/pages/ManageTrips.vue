@@ -83,7 +83,12 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { getMyTrips, deleteTrip as apiDeleteTrip, publishTrip as apiPublishTrip, finishTrip as apiFinishTrip } from '@/api/trips';
+import {
+  getMyTrips,
+  deleteTrip as apiDeleteTrip,
+  publishTrip as apiPublishTrip,
+  finishTrip as apiFinishTrip
+} from '@/api/trips';
 import Toast from '@/components/Toast.vue';
 import { useSmartBack } from '@/utils/navigation';
 
@@ -103,13 +108,24 @@ const statusMap: Record<string, string> = {
   'Черновики': 'draft'
 };
 
+// 🔧 Обновлённая функция загрузки с логами
 async function loadTrips() {
+  if (!auth.user?.id) {
+    console.warn('⚠️ auth.user.id отсутствует при загрузке поездок');
+    toastRef.value?.show('Ошибка: не удалось определить пользователя');
+    return;
+  }
+
   loading.value = true;
   try {
+    console.log(`🔄 Загружаем поездки для пользователя ID=${auth.user.id}`);
     allTrips.value = await getMyTrips(auth.user.id);
-  } catch (e) {
+    console.log(`✅ Загружено ${allTrips.value.length} поездок, allTrips.value`);
+  } catch (e: any) {
+    console.error('❌ Ошибка при загрузке поездок:', e);
+    const msg = e?.response?.data?.detail || e?.message || 'Неизвестная ошибка';
+    toastRef.value?.show(`Ошибка загрузки поездок: ${msg}`);
     allTrips.value = [];
-    toastRef.value?.show('Ошибка загрузки поездок!');
   } finally {
     loading.value = false;
   }
@@ -118,21 +134,6 @@ async function loadTrips() {
 const filteredTrips = computed(() =>
   allTrips.value.filter(trip => trip.status === statusMap[currentTab.value])
 );
-
-onMounted(() => {
-  const tg = (window as any).Telegram?.WebApp;
-  if (tg?.BackButton) {
-    tg.BackButton.show();
-    tg.BackButton.onClick(() => {
-      router.back();
-    });
-  }
-});
-onBeforeUnmount(() => {
-  const tg = (window as any).Telegram?.WebApp;
-  tg?.BackButton?.hide();
-  tg?.BackButton?.offClick?.();
-});
 
 function handleTabClick(tab: string) {
   currentTab.value = tab;
@@ -167,7 +168,6 @@ async function publishTrip(id: number) {
   }
 }
 
-// Новая функция завершения поездки
 async function finishTrip(id: number) {
   try {
     await apiFinishTrip(id);
@@ -179,16 +179,22 @@ async function finishTrip(id: number) {
 }
 
 onMounted(() => {
+  loadTrips(); // ⬅️ вызываем загрузку при монтировании
+
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      useSmartBack(router); // передай свой router
+      useSmartBack(router);
     });
   }
 });
+onBeforeUnmount(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  tg?.BackButton?.hide();
+  tg?.BackButton?.offClick?.();
+});
 </script>
-
 <style scoped>
 .manage-trips-page {
   padding: 16px;
