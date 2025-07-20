@@ -115,14 +115,13 @@ const statusMap: Record<string, string> = {
 };
 
 const isOwner = computed(() => trip.value && driver.value && driver.value.id === auth.user.id);
-
 onMounted(async () => {
-  // Telegram BackButton → на страницу результатов поиска
   const tg = (window as any).Telegram?.WebApp;
+
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      router.replace("/search-results"); // или другой путь, если надо
+      router.replace("/search-results");
     });
   }
 
@@ -139,17 +138,14 @@ onMounted(async () => {
     console.log("DRIVER DATA:", driver.value);
 
     reviews.value = await getDriverReviews(trip.value.owner_id);
-    if (reviews.value.length) {
-      avgRating.value =
-        reviews.value.reduce((sum, r) => sum + (r.rating || 0), 0) /
-        reviews.value.length;
-    } else {
-      avgRating.value = 0;
-    }
+    avgRating.value = reviews.value.length
+      ? reviews.value.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.value.length
+      : 0;
   } catch (err) {
     toastRef.value?.show("Ошибка при загрузке поездки или водителя");
   }
 });
+
 
 
 
@@ -174,15 +170,7 @@ function formatDate(dt: string | null) {
   return new Date(dt).toLocaleDateString('ru-RU');
 }
 
-onMounted(() => {
-  const tg = (window as any).Telegram?.WebApp;
-  if (tg?.BackButton) {
-    tg.BackButton.show();
-    tg.BackButton.onClick(() => {
-      router.back();
-    });
-  }
-});
+
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
   tg?.BackButton?.hide();
