@@ -94,6 +94,7 @@ import { getUserById } from "@/api/users";
 import { getDriverReviews } from "@/api/reviews";
 import { createBooking } from "@/api/bookings";
 import Toast from "@/components/Toast.vue";
+import { useSmartBack } from "@/utils/navigation";
 
 const route = useRoute();
 const router = useRouter();
@@ -116,24 +117,40 @@ const statusMap: Record<string, string> = {
 const isOwner = computed(() => trip.value && driver.value && driver.value.id === auth.user.id);
 
 onMounted(async () => {
+  // Telegram BackButton
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => {
+      useSmartBack(router); // Передай свой router
+    });
+  }
+
   const tripId = Number(route.params.id);
   if (!tripId) {
     toastRef.value?.show("Ошибка: не найдена поездка!");
     return;
   }
-  trip.value = await getTripById(tripId);
-  driver.value = await getUserById(trip.value.owner_id);
 
-  // ЛОГ: смотри что реально приходит!
-  console.log("DRIVER DATA:", driver.value);
+  try {
+    trip.value = await getTripById(tripId);
+    driver.value = await getUserById(trip.value.owner_id);
 
-  reviews.value = await getDriverReviews(trip.value.owner_id);
-  if (reviews.value.length) {
-    avgRating.value =
-      reviews.value.reduce((sum, r) => sum + (r.rating || 0), 0) /
-      reviews.value.length;
+    console.log("DRIVER DATA:", driver.value);
+
+    reviews.value = await getDriverReviews(trip.value.owner_id);
+    if (reviews.value.length) {
+      avgRating.value =
+        reviews.value.reduce((sum, r) => sum + (r.rating || 0), 0) /
+        reviews.value.length;
+    } else {
+      avgRating.value = 0;
+    }
+  } catch (err) {
+    toastRef.value?.show("Ошибка при загрузке поездки или водителя");
   }
 });
+
 
 async function bookTrip() {
   if (!trip.value) return;
