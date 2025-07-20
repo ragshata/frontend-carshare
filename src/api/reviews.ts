@@ -2,7 +2,7 @@ import axios from "axios";
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 // Получить отзывы о водителе
 export async function getDriverReviews(driver_id: number) {
-  const res = await axios.get(`${API_BASE}/reviews/driver/${driver_id}`); // <- слэш ок!
+  const res = await axios.get(`${API_BASE}/reviews/driver/${driver_id}/`); // <- слэш ок!
   return res.data;
 }
 
