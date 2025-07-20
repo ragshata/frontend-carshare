@@ -21,6 +21,8 @@ export async function updateProfileById(payload: {
   last_name?: string;
   phone?: string;
   city?: string;
+  car_number?: string;
+  car_brand?: string;
 }) {
   return axios.patch(`${API_BASE}/users/${payload.id}`, payload);
 }
