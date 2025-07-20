@@ -79,6 +79,8 @@ const form = ref({
 const carPhotoUrl = ref(auth.user.car_photo_url || '');
 const carPhotoFile = ref<File | null>(null);
 const localPreview = ref<string>('');
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
 
 // Показывать превью для фото машины
 const showCarPhoto = computed(() => {
@@ -129,13 +131,15 @@ async function submit() {
   try {
     const payload: any = {
       ...form.value,
-      telegram_id: auth.user.telegram_id,
     };
+
     if (!auth.user.is_driver) {
       delete payload.car_number;
       delete payload.car_brand;
     }
-    const updated = await patchProfile(payload);
+
+    // ВАЖНО: передаём user.id в URL
+    const updated = await axios.patch(`${API_BASE}/users/${auth.user.id}`, payload);
 
     // Если выбрано новое фото — загружаем
     if (auth.user.is_driver && carPhotoFile.value) {
@@ -145,15 +149,17 @@ async function submit() {
     }
 
     auth.setUser({
-      ...updated,
-      car_photo_url: updated.car_photo_url || carPhotoUrl.value
+      ...updated.data,
+      car_photo_url: updated.data.car_photo_url || carPhotoUrl.value
     });
+
     toastRef.value?.show('✅ Профиль обновлен!');
     router.push('/profile');
   } catch (err) {
     toastRef.value?.show('❌ Ошибка обновления профиля');
   }
 }
+
 </script>
 
 <style scoped>
