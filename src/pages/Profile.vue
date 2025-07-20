@@ -101,7 +101,7 @@ onMounted(async () => {
     });
   }
   // Грузим отзывы только если пользователь — водитель
-  if (user && user.id && user.is_driver) {
+  if (user && user.id) {
     try {
       const res = await getDriverReviews(user.id);
       reviews.value = res;
