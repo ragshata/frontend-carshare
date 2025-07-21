@@ -1,39 +1,47 @@
 <template>
   <div class="rate-driver-page">
-    <h2 class="title">Оцените водителя</h2>
+    <!-- Фон -->
+    <div class="background-img"></div>
 
-    <div v-if="loadingTrip" class="empty-text">Загрузка...</div>
-    <div v-else-if="!trip" class="empty-text">Поездка не найдена</div>
-    <div v-else>
-      <div class="trip-info">
-        <div>
-          <b>{{ trip.from_ }}</b> — <b>{{ trip.to }}</b>
+    <!-- Карточка -->
+    <div class="content-card">
+      <h2 class="title">Оцените водителя</h2>
+
+      <div v-if="loadingTrip" class="empty-text">Загрузка...</div>
+      <div v-else-if="!trip" class="empty-text">Поездка не найдена</div>
+      <div v-else>
+        <div class="trip-info">
+          <div>
+            <b>{{ trip.from_ }}</b> — <b>{{ trip.to }}</b>
+          </div>
+          <div>
+            🗓 {{ trip.date }} &nbsp; ⏰ {{ trip.time }}
+          </div>
         </div>
-        <div>
-          🗓 {{ trip.date }} &nbsp; ⏰ {{ trip.time }}
+        <div class="stars">
+          <span
+            v-for="n in 5"
+            :key="n"
+            :class="['star', { active: n <= rating }]"
+            @click="rating = n"
+          >★</span>
         </div>
+        <textarea
+          v-model="review"
+          class="review-input"
+          rows="3"
+          placeholder="Ваш комментарий (необязательно)"
+        ></textarea>
+        <button class="btn" @click="submit" :disabled="loading">
+          Отправить отзыв
+        </button>
       </div>
-      <div class="stars">
-        <span
-          v-for="n in 5"
-          :key="n"
-          :class="['star', { active: n <= rating }]"
-          @click="rating = n"
-        >★</span>
-      </div>
-      <textarea
-        v-model="review"
-        class="review-input"
-        rows="3"
-        placeholder="Ваш комментарий (необязательно)"
-      ></textarea>
-      <button class="btn" @click="submit" :disabled="loading">
-        Отправить отзыв
-      </button>
+
+      <Toast ref="toastRef" />
     </div>
-    <Toast ref="toastRef" />
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
@@ -217,4 +225,26 @@ async function submit() {
   opacity: 0.7;
   cursor: default;
 }
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.content-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px;
+  padding: 20px 16px;
+  margin: 16px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+}
+
 </style>

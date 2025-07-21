@@ -1,89 +1,75 @@
 <template>
   <div class="trip-details-page">
-    <h2 class="title">Детали поездки</h2>
+    <!-- Фон -->
+    <div class="background-img"></div>
 
-    <div v-if="!trip" class="empty-text">Загрузка...</div>
-    <div v-else>
-      <div class="trip-info-card">
-        <div class="row bold">
-          {{ trip.from_ }} — {{ trip.to }}
-        </div>
-        <div class="row">
-          🗓 {{ trip.date }} &nbsp; ⏰ {{ trip.time }}
-        </div>
-        <div class="row">
-          💰 {{ trip.price }} сомони (TJS) &nbsp; 👥 Мест: {{ trip.seats }}
-        </div>
-        <div class="trip-desc" v-if="trip.description">
-          <b>Особенности поездки:</b>
-          <div style="margin-top:4px;">{{ trip.description }}</div>
-        </div>
-        <!-- Номер и марка машины -->
-        <div class="row car-info" v-if="driver && (driver.car_brand || driver.car_number)">
-          🚘
-          <span v-if="driver.car_brand">{{ driver.car_brand }}</span>
-          <span v-if="driver.car_brand && driver.car_number">,</span>
-          <span v-if="driver.car_number"> номер {{ driver.car_number }}</span>
-        </div>
-        <!-- Фотка машины -->
-        <div class="car-photo-wrapper" v-if="driver && driver.car_photo_url">
-          <img
-            :src="driver.car_photo_url.startsWith('http')
-              ? driver.car_photo_url
-              : BACKEND_URL + driver.car_photo_url"
-            class="car-photo"
-            alt="Фото машины"
-          />
+    <!-- Контент -->
+    <div class="content-card">
+      <h2 class="title">Детали поездки</h2>
+
+      <div v-if="!trip" class="empty-text">Загрузка...</div>
+      <div v-else>
+        <!-- Инфо о поездке -->
+        <div class="trip-info-card">
+          <div class="row bold">{{ trip.from_ }} — {{ trip.to }}</div>
+          <div class="row">🗓 {{ trip.date }} &nbsp; ⏰ {{ trip.time }}</div>
+          <div class="row">💰 {{ trip.price }} сомони (TJS) &nbsp; 👥 Мест: {{ trip.seats }}</div>
+          <div class="trip-desc" v-if="trip.description">
+            <b>Особенности поездки:</b>
+            <div style="margin-top:4px;">{{ trip.description }}</div>
+          </div>
+          <div class="row car-info" v-if="driver && (driver.car_brand || driver.car_number)">
+            🚘 <span v-if="driver.car_brand">{{ driver.car_brand }}</span>
+            <span v-if="driver.car_brand && driver.car_number">,</span>
+            <span v-if="driver.car_number"> номер {{ driver.car_number }}</span>
+          </div>
+          <div class="car-photo-wrapper" v-if="driver && driver.car_photo_url">
+            <img
+              :src="driver.car_photo_url.startsWith('http')
+                ? driver.car_photo_url
+                : BACKEND_URL + driver.car_photo_url"
+              class="car-photo"
+              alt="Фото машины"
+            />
+          </div>
         </div>
 
-      </div>
-
-      <!-- Профиль водителя без кнопки перехода -->
-      <div class="driver-card" v-if="driver">
-        <div class="driver-header">
-          <img v-if="driver.photo_url" :src="driver.photo_url" class="driver-avatar" alt="avatar" />
-          <div>
-            <div class="driver-name">
-              {{ driver.first_name }}
-              <template v-if="driver.last_name"> {{ driver.last_name }}</template>
+        <!-- Блок с водителем -->
+        <div class="driver-card" v-if="driver">
+          <div class="driver-header">
+            <img v-if="driver.photo_url" :src="driver.photo_url" class="driver-avatar" alt="avatar" />
+            <div>
+              <div class="driver-name">{{ driver.first_name }}<template v-if="driver.last_name"> {{ driver.last_name }}</template></div>
+              <div class="driver-username" v-if="driver.username">@{{ driver.username }}</div>
+              <div class="driver-phone" v-if="driver.phone"><b>Телефон:</b> {{ driver.phone }}</div>
+              <div class="driver-telegramid">ID: {{ driver.telegram_id }}</div>
             </div>
-            <div class="driver-username" v-if="driver.username">@{{ driver.username }}</div>
-            <div class="driver-phone" v-if="driver.phone"><b>Телефон:</b>{{driver.phone}}</div>
-            <div class="driver-telegramid">ID: {{ driver.telegram_id }}</div>
+          </div>
+          <div class="driver-rating">
+            <span>Рейтинг:</span>
+            <b>{{ avgRating > 0 ? avgRating.toFixed(1) : "—" }}</b> ⭐️ ({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})
+          </div>
+          <div v-if="reviews.length === 0" class="empty-text">Нет отзывов</div>
+          <div v-for="review in reviews.slice(0,3)" :key="review.id" class="review-card">
+            <div class="review-rating">{{ review.rating }} ⭐️</div>
+            <div class="review-text" v-if="review.text">{{ review.text }}</div>
+            <div class="review-meta">
+              Поездка: #{{ review.trip_id }}
+              <span class="review-date">{{ formatDate(review.created_at) }}</span>
+            </div>
           </div>
         </div>
-        <div class="driver-rating">
-          <span>Рейтинг:</span>
-          <b>{{ avgRating > 0 ? avgRating.toFixed(1) : "—" }}</b> ⭐️ ({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})
-        </div>
-        <div v-if="reviews.length === 0" class="empty-text">Нет отзывов</div>
-        <div v-for="review in reviews.slice(0,3)" :key="review.id" class="review-card">
-          <div class="review-rating">{{ review.rating }} ⭐️</div>
-          <div class="review-text" v-if="review.text">{{ review.text }}</div>
-          <div class="review-meta">
-            Поездка: #{{ review.trip_id }}
-            <span class="review-date">{{ formatDate(review.created_at) }}</span>
-          </div>
-        </div>
-      </div>
 
-      <div class="actions">
-        <button
-          v-if="!isOwner"
-          class="btn"
-          @click="bookTrip"
-          :disabled="booking"
-        >Забронировать</button>
-        <button
-          v-if="isOwner"
-          class="btn btn-outline"
-          @click="router.push(`/trip/${trip.id}/passengers`)"
-        >👥 Пассажиры поездки</button>
+        <div class="actions">
+          <button v-if="!isOwner" class="btn" @click="bookTrip" :disabled="booking">Забронировать</button>
+          <button v-if="isOwner" class="btn btn-outline" @click="router.push(`/trip/${trip.id}/passengers`)">👥 Пассажиры поездки</button>
+        </div>
       </div>
+      <Toast ref="toastRef" />
     </div>
-    <Toast ref="toastRef" />
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, onMounted, computed, onBeforeUnmount } from "vue";
@@ -180,27 +166,45 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .trip-details-page {
-  padding: 16px;
-  min-height: 100vh;
-  background: var(--color-background);
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  background: transparent;
 }
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.content-card {
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+  margin: 36px auto;
+  padding: 24px 18px 32px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
 .title {
   font-size: 20px;
   font-weight: bold;
   margin-bottom: 18px;
   color: var(--color-text-primary);
   text-align: center;
-}
-.back-button {
-  background: transparent;
-  border: 1px solid var(--color-primary);
-  color: var(--color-primary);
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-bottom: 12px;
-  transition: background 0.2s ease;
 }
 .empty-text {
   color: var(--color-text-secondary);
@@ -209,7 +213,7 @@ onBeforeUnmount(() => {
   margin-top: 20px;
 }
 .trip-info-card {
-  background: var(--color-surface);
+  background: rgba(255,255,255,0.65);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 18px;
@@ -230,7 +234,6 @@ onBeforeUnmount(() => {
   font-size: 15px;
   margin: 6px 0 4px 0;
 }
-/* Фото машины */
 .car-photo-wrapper {
   display: flex;
   justify-content: center;
@@ -243,27 +246,13 @@ onBeforeUnmount(() => {
   box-shadow: 0 2px 10px rgba(0,0,0,0.09);
   object-fit: cover;
 }
-.status {
-  font-weight: bold;
-  margin-left: 6px;
-  text-transform: capitalize;
-}
-.status.active {
-  color: #3ac569;
-}
-.status.done {
-  color: #888;
-}
-.status.cancelled {
-  color: #e53935;
-}
 .trip-desc {
   margin-top: 7px;
   color: var(--color-text-primary);
   font-size: 15px;
 }
 .driver-card {
-  background: var(--color-surface);
+  background: rgba(255,255,255,0.65);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 18px;
@@ -281,22 +270,16 @@ onBeforeUnmount(() => {
   border-radius: 12px;
   object-fit: cover;
 }
-.input, textarea.input {
-  padding: 9px 12px;
-  border-radius: 7px;
-  border: 1px solid var(--color-border, #bbb);
-  font-size: 15px;
-  outline: none;
-  width: 100%;
-  resize: vertical;
-}
-
 .driver-name {
   font-size: 17px;
   font-weight: bold;
   color: var(--color-text-primary);
 }
 .driver-username {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.driver-phone {
   font-size: 13px;
   color: var(--color-text-secondary);
 }
@@ -354,5 +337,10 @@ onBeforeUnmount(() => {
   background: transparent;
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 </style>

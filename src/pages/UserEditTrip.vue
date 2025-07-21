@@ -1,32 +1,38 @@
 <template>
   <div class="edit-trip-page">
-    <h2 class="title">Редактировать поездку</h2>
-    <form class="form" @submit.prevent="save">
-      <label>Откуда</label>
-      <input v-model="trip.from_" type="text" required maxlength="40" />
+    <!-- Фоновое изображение -->
+    <div class="background-img"></div>
 
-      <label>Куда</label>
-      <input v-model="trip.to" type="text" required maxlength="40" />
+    <!-- Полупрозрачная карточка -->
+    <div class="content-card">
+      <h2 class="title">Редактировать поездку</h2>
+      <form class="form" @submit.prevent="save">
+        <label>Откуда</label>
+        <input v-model="trip.from_" type="text" required maxlength="40" />
 
-      <label>Дата</label>
-      <input v-model="trip.date" type="date" required />
+        <label>Куда</label>
+        <input v-model="trip.to" type="text" required maxlength="40" />
 
-      <label>Время</label>
-      <input v-model="trip.time" type="time" required />
+        <label>Дата</label>
+        <input v-model="trip.date" type="date" required />
 
-      <label>Свободных мест</label>
-      <input v-model.number="trip.seats" type="number" min="1" required />
+        <label>Время</label>
+        <input v-model="trip.time" type="time" required />
 
-      <label>Цена (сомони, TJS)</label>
-      <input v-model.number="trip.price" type="number" min="0" required />
+        <label>Свободных мест</label>
+        <input v-model.number="trip.seats" type="number" min="1" required />
 
+        <label>Цена (сомони, TJS)</label>
+        <input v-model.number="trip.price" type="number" min="0" required />
 
-      <button class="btn" type="submit" :disabled="loading">Сохранить</button>
-      <button class="btn btn-danger" @click.prevent="deleteTrip" :disabled="loading">Удалить</button>
-    </form>
-    <Toast ref="toastRef" />
+        <button class="btn" type="submit" :disabled="loading">Сохранить</button>
+        <button class="btn btn-danger" @click.prevent="deleteTrip" :disabled="loading">Удалить</button>
+      </form>
+      <Toast ref="toastRef" />
+    </div>
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from "vue";
@@ -67,7 +73,7 @@ onMounted(async () => {
 async function save() {
   loading.value = true;
   try {
-    await updateTrip(trip);
+    await updateTrip(trip.id, trip);
     toastRef.value?.show("Поездка обновлена!");
     setTimeout(() => router.push("/manage-trips"), 700);
   } catch {
@@ -92,10 +98,39 @@ async function deleteTrip() {
 
 <style scoped>
 .edit-trip-page {
-  padding: 16px;
-  min-height: 100vh;
-  background: var(--color-background);
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  background: transparent;
 }
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.content-card {
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+  margin: 36px auto;
+  padding: 24px 18px 32px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
 .title {
   font-size: 20px;
   font-weight: bold;
@@ -103,20 +138,23 @@ async function deleteTrip() {
   color: var(--color-text-primary);
   text-align: center;
 }
+
 .form {
   display: flex;
   flex-direction: column;
   gap: 13px;
-  max-width: 380px;
-  margin: 0 auto;
 }
+
 input {
   padding: 9px 12px;
   border-radius: 7px;
   border: 1px solid var(--color-border, #bbb);
   font-size: 16px;
   outline: none;
+  width: 100%;
+  box-sizing: border-box;
 }
+
 .btn {
   background: var(--color-primary);
   color: white;
@@ -128,9 +166,16 @@ input {
   margin-top: 8px;
   transition: background 0.2s;
 }
+
 .btn-danger {
   background: #e53935;
   color: white;
   margin-top: 8px;
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 </style>

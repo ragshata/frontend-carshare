@@ -1,77 +1,82 @@
 <template>
   <div class="manage-trips-page">
-    <h2 class="title">Мои поездки</h2>
+    <div class="background-img"></div>
 
-    <!-- Блок ошибки -->
-    <div v-if="errorMessage" class="error-box">{{ errorMessage }}</div>
+    <div class="content-card">
+      <h2 class="title">Мои поездки</h2>
 
-    <div class="tabs">
-      <button
-        v-for="tab in tabs"
-        :key="tab"
-        :class="['tab', { active: currentTab === tab }]"
-        @click="handleTabClick(tab)"
-      >
-        {{ tab }}
-      </button>
-    </div>
+      <div v-if="errorMessage" class="error-box">{{ errorMessage }}</div>
 
-    <div v-if="loading" class="empty-text">Загрузка...</div>
-    <div v-else-if="filteredTrips.length === 0" class="empty-text">Нет поездок</div>
-    <div v-else class="trip-list">
-      <div
-        v-for="trip in filteredTrips"
-        :key="trip.id"
-        class="trip-card"
-      >
-        <div class="row between bold">
-          {{ trip.from_ }} — {{ trip.to }}
-          <span>{{ trip.price }} сомони (TJS)</span>
-        </div>
-        <div class="row">
-          🗓 {{ trip.date }} &nbsp;&nbsp; ⏰ {{ trip.time }}
-        </div>
-        <div class="row">
-          👥 Мест: {{ trip.seats }} &nbsp; 
-          <span v-if="trip.status === 'active'">🟢 Активна</span>
-          <span v-else-if="trip.status === 'draft'">💤 Черновик</span>
-          <span v-else-if="trip.status === 'done'">✅ Завершена</span>
-          <span v-else>⏳ {{ trip.status }}</span>
-        </div>
-        <div class="actions">
-          <button
-            v-if="trip.status === 'active'"
-            class="btn btn-done"
-            @click="finishTrip(trip.id)"
-          >✅ Завершить поездку</button>
+      <div class="tabs">
+        <button
+          v-for="tab in tabs"
+          :key="tab"
+          :class="['tab', { active: currentTab === tab }]"
+          @click="handleTabClick(tab)"
+        >
+          {{ tab }}
+        </button>
+      </div>
 
-          <button
-            v-if="trip.status === 'draft'"
-            class="btn btn-danger"
-            @click="deleteTrip(trip.id)"
-          >🗑 Удалить</button>
+      <div v-if="loading" class="empty-text">Загрузка...</div>
+      <div v-else-if="filteredTrips.length === 0" class="empty-text">Нет поездок</div>
+      <div v-else class="trip-list">
+        <div
+          v-for="trip in filteredTrips"
+          :key="trip.id"
+          class="trip-card"
+        >
+          <div class="row between bold">
+            {{ trip.from_ }} — {{ trip.to }}
+            <span>{{ trip.price }} сомони (TJS)</span>
+          </div>
+          <div class="row">
+            🗓 {{ trip.date }} &nbsp;&nbsp; ⏰ {{ trip.time }}
+          </div>
+          <div class="row">
+            👥 Мест: {{ trip.seats }} &nbsp;
+            <span v-if="trip.status === 'active'">🟢 Активна</span>
+            <span v-else-if="trip.status === 'draft'">💤 Черновик</span>
+            <span v-else-if="trip.status === 'done'">✅ Завершена</span>
+            <span v-else>⏳ {{ trip.status }}</span>
+          </div>
+          <div class="actions">
+            <button
+              v-if="trip.status === 'active'"
+              class="btn btn-done"
+              @click="finishTrip(trip.id)"
+            >✅ Завершить поездку</button>
 
-          <button
-            v-if="trip.status === 'draft'"
-            class="btn btn-outline"
-            @click="publishTrip(trip.id)"
-          >🚀 Опубликовать</button>
+            <button
+              v-if="trip.status === 'draft'"
+              class="btn btn-danger"
+              @click="deleteTrip(trip.id)"
+            >🗑 Удалить</button>
 
-          <button
-            class="btn btn-outline"
-            @click="goToPassengers(trip.id)"
-          >👥 Пассажиры</button>
+            <button
+              v-if="trip.status === 'draft'"
+              class="btn btn-outline"
+              @click="publishTrip(trip.id)"
+            >🚀 Опубликовать</button>
 
-          <button
-            class="btn btn-outline"
-            @click="editTrip(trip.id)"
-          >✏️ Редактировать</button>
+            <button
+              class="btn btn-outline"
+              @click="goToPassengers(trip.id)"
+            >👥 Пассажиры</button>
+
+            <button
+              class="btn btn-outline"
+              @click="editTrip(trip.id)"
+            >✏️ Редактировать</button>
+          </div>
         </div>
       </div>
     </div>
+
     <Toast ref="toastRef" />
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
@@ -197,10 +202,39 @@ onBeforeUnmount(() => {
 </script>
 <style scoped>
 .manage-trips-page {
-  padding: 16px;
-  background: var(--color-background);
-  min-height: 100vh;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  background: transparent;
 }
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.content-card {
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+  margin: 40px auto;
+  padding: 22px 18px 28px 18px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
 .title {
   font-size: 20px;
   font-weight: bold;
@@ -251,7 +285,7 @@ onBeforeUnmount(() => {
   gap: 16px;
 }
 .trip-card {
-  background: var(--color-surface);
+  background: rgba(255, 255, 255, 0.75);
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -307,5 +341,10 @@ onBeforeUnmount(() => {
 }
 .btn-done:hover {
   background: #17985d;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 </style>

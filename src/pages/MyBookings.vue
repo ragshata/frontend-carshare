@@ -1,51 +1,46 @@
 <template>
   <div class="my-bookings-page">
-    <h2 class="title">Мои бронирования</h2>
+    <div class="background-img"></div>
 
-    <div class="tabs">
-      <button :class="{ active: currentTab === 'active' }" @click="currentTab = 'active'">Активные</button>
-      <button :class="{ active: currentTab === 'done' }" @click="currentTab = 'done'">Завершённые</button>
-    </div>
+    <div class="content-card">
+      <h2 class="title">Мои бронирования</h2>
 
-    <div v-if="loading" class="empty-text">Загрузка...</div>
-    <div
-      v-else-if="filteredBookings.length === 0"
-      class="empty-text"
-    >
-      Нет бронирований
-    </div>
-    <div v-else class="booking-list">
-      <div
-        class="booking-card"
-        v-for="b in filteredBookings"
-        :key="b.id"
-      >
-        <div class="row between bold">
-          {{ tripMap[b.trip_id]?.from_ || '—' }} — {{ tripMap[b.trip_id]?.to || '—' }}
-          <span>{{ tripMap[b.trip_id]?.price ? tripMap[b.trip_id].price + ' сомони (TJS)' : '' }}</span>
-        </div>
-        <div class="row">
-          <span v-if="tripMap[b.trip_id]?.date">🗓 {{ tripMap[b.trip_id].date }}</span>
-          <span v-if="tripMap[b.trip_id]?.time">⏰ {{ tripMap[b.trip_id].time }}</span>
-        </div>
-        <div class="row">
-          <span :class="['status', b.status]">{{ ruStatus(b.status) }}</span>
-        </div>
-        <div v-if="drivers[b.trip_id]" class="driver-info">
-          <div v-if="drivers[b.trip_id]?.username">
-            Telegram:
-            <a :href="'https://t.me/' + drivers[b.trip_id].username" target="_blank">
-              @{{ drivers[b.trip_id].username }}
-            </a>
-          </div>
-        </div>
-        <div>
-          <button class="btn btn-outline" @click="goToTripDetails(b.trip_id)">Подробнее</button>
-        </div>
+      <div class="tabs">
+        <button :class="{ active: currentTab === 'active' }" @click="currentTab = 'active'">Активные</button>
+        <button :class="{ active: currentTab === 'done' }" @click="currentTab = 'done'">Завершённые</button>
+      </div>
+
+      <div v-if="loading" class="empty-text">Загрузка...</div>
+      <div v-else-if="filteredBookings.length === 0" class="empty-text">Нет бронирований</div>
+
+      <div v-else class="booking-list">
         <div
-          v-if="tripMap[b.trip_id]?.status === 'done'"
-          style="margin-top:8px;"
+          class="booking-card"
+          v-for="b in filteredBookings"
+          :key="b.id"
         >
+          <div class="row between bold">
+            {{ tripMap[b.trip_id]?.from_ || '—' }} — {{ tripMap[b.trip_id]?.to || '—' }}
+            <span>{{ tripMap[b.trip_id]?.price ? tripMap[b.trip_id].price + ' сомони (TJS)' : '' }}</span>
+          </div>
+          <div class="row">
+            <span v-if="tripMap[b.trip_id]?.date">🗓 {{ tripMap[b.trip_id].date }}</span>
+            <span v-if="tripMap[b.trip_id]?.time">⏰ {{ tripMap[b.trip_id].time }}</span>
+          </div>
+          <div class="row">
+            <span :class="['status', b.status]">{{ ruStatus(b.status) }}</span>
+          </div>
+          <div v-if="drivers[b.trip_id]" class="driver-info">
+            <div v-if="drivers[b.trip_id]?.username">
+              Telegram:
+              <a :href="'https://t.me/' + drivers[b.trip_id].username" target="_blank">
+                @{{ drivers[b.trip_id].username }}
+              </a>
+            </div>
+          </div>
+          <div>
+            <button class="btn-outline" @click="goToTripDetails(b.trip_id)">Подробнее</button>
+          </div>
         </div>
       </div>
     </div>
@@ -53,6 +48,7 @@
     <Toast ref="toastRef" />
   </div>
 </template>
+
 
 
 <script setup lang="ts">
@@ -157,10 +153,39 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .my-bookings-page {
-  padding: 16px;
-  min-height: 100vh;
-  background: var(--color-background, #fafbfc);
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  background: transparent;
 }
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.content-card {
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+  margin: 38px auto;
+  padding: 20px 16px 28px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
 .title {
   font-size: 20px;
   font-weight: bold;
@@ -168,19 +193,41 @@ onBeforeUnmount(() => {
   color: var(--color-text-primary, #232323);
   text-align: center;
 }
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.tabs button {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1.4px solid var(--color-primary, #007bff);
+  background: white;
+  color: var(--color-primary, #007bff);
+  cursor: pointer;
+  font-weight: 500;
+}
+.tabs button.active {
+  background: var(--color-primary, #007bff);
+  color: white;
+}
+
 .empty-text {
   color: var(--color-text-secondary, #888);
   font-size: 15px;
   text-align: center;
   margin-top: 32px;
 }
+
 .booking-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 .booking-card {
-  background: var(--color-surface, #fff);
+  background: rgba(255, 255, 255, 0.75);
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -233,26 +280,9 @@ onBeforeUnmount(() => {
   font-size: 15px;
   color: var(--color-text-secondary, #555);
 }
-.driver-info .bold {
-  color: var(--color-text-primary, #232323);
-}
 .driver-info a {
   color: var(--color-primary, #007bff);
   text-decoration: underline;
-}
-.rate-btn {
-  background: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 9px 18px;
-  font-size: 15px;
-  margin-top: 2px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.rate-btn:hover {
-  background: #065fc3;
 }
 .btn-outline {
   background: transparent;
@@ -265,26 +295,13 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: background 0.2s;
 }
-.tabs {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 18px;
+.btn-outline:hover {
+  background: rgba(0, 123, 255, 0.05);
 }
 
-.tabs button {
-  padding: 8px 18px;
-  border-radius: 8px;
-  border: 1.4px solid var(--color-primary, #007bff);
-  background: white;
-  color: var(--color-primary, #007bff);
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.tabs button.active {
-  background: var(--color-primary, #007bff);
-  color: white;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 </style>

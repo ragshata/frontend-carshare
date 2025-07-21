@@ -82,15 +82,18 @@ function go(path: string) {
   font-weight: 600;
   border: none;
   border-radius: 12px;
-  background: #fff;
-  color: #007bff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  transition: background 0.18s;
   width: 100%;
+  background: rgba(255, 255, 255, 0.45);
+  color: #007bff;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+  transition: background 0.18s;
 }
 .btn:active {
-  background: #e3eeff;
+  background: rgba(227, 238, 255, 0.6);
 }
+
 
 @keyframes bg-fade-in {
   from { opacity: 0; }

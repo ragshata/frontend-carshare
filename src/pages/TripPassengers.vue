@@ -1,45 +1,49 @@
 <template>
   <div class="trip-passengers-page">
-    <h2 class="title">Пассажиры поездки</h2>
+    <!-- Фоновое изображение -->
+    <div class="background-img"></div>
 
-    <div v-if="loading" class="empty-text">Загрузка...</div>
-    <div v-else-if="bookings.length === 0" class="empty-text">Нет пассажиров</div>
-    <div v-else>
-      <div v-for="booking in bookings" :key="booking.id" class="passenger-card">
-        <div class="row between bold">
-          <span>
-            {{ booking.user?.first_name }}
-            <template v-if="booking.user?.last_name"> {{ booking.user.last_name }}</template>
-          </span>
-          <span class="status" :class="booking.status">
-            {{ statusMap[booking.status] || booking.status }}
-          </span>
-        </div>
-        <div class="row">
-          <span v-if="booking.user?.username">
+    <!-- Полупрозрачная карточка -->
+    <div class="content-card">
+      <h2 class="title">Пассажиры поездки</h2>
+
+      <div v-if="loading" class="empty-text">Загрузка...</div>
+      <div v-else-if="bookings.length === 0" class="empty-text">Нет пассажиров</div>
+      <div v-else>
+        <div v-for="booking in bookings" :key="booking.id" class="passenger-card">
+          <div class="row between bold">
+            <span>
+              {{ booking.user?.first_name }}
+              <template v-if="booking.user?.last_name"> {{ booking.user.last_name }}</template>
+            </span>
+            <span class="status" :class="booking.status">
+              {{ statusMap[booking.status] || booking.status }}
+            </span>
+          </div>
+          <div class="row" v-if="booking.user?.username">
             Telegram:
             <a :href="`https://t.me/${booking.user.username}`" target="_blank">@{{ booking.user.username }}</a>
-          </span>
-        </div>
-        <div class="row">
-          <span>
+          </div>
+          <div class="row">
             Телефон:
             <b v-if="booking.user?.phone">{{ booking.user.phone }}</b>
             <span v-else class="empty-phone">—</span>
-          </span>
-        </div>
-        <div class="row">
-          <span>Telegram ID: <b>{{ booking.user?.telegram_id }}</b></span>
-        </div>
-        <div class="actions" v-if="booking.status === 'pending'">
-          <button class="btn" @click="confirm(booking.id)">Подтвердить</button>
-          <button class="btn btn-danger" @click="reject(booking.id)">Отклонить</button>
+          </div>
+          <div class="row">
+            Telegram ID: <b>{{ booking.user?.telegram_id }}</b>
+          </div>
+          <div class="actions" v-if="booking.status === 'pending'">
+            <button class="btn" @click="confirm(booking.id)">Подтвердить</button>
+            <button class="btn btn-danger" @click="reject(booking.id)">Отклонить</button>
+          </div>
         </div>
       </div>
+
+      <Toast ref="toastRef" />
     </div>
-    <Toast ref="toastRef" />
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
@@ -114,10 +118,39 @@ onMounted(loadBookings);
 
 <style scoped>
 .trip-passengers-page {
-  padding: 16px;
-  min-height: 100vh;
-  background: var(--color-background);
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  background: transparent;
 }
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.content-card {
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+  margin: 36px auto;
+  padding: 24px 18px 32px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
 .title {
   font-size: 20px;
   font-weight: bold;
@@ -125,25 +158,16 @@ onMounted(loadBookings);
   color: var(--color-text-primary);
   text-align: center;
 }
-.back-button {
-  background: transparent;
-  border: 1px solid var(--color-primary);
-  color: var(--color-primary);
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-bottom: 12px;
-  transition: background 0.2s ease;
-}
+
 .empty-text {
   color: var(--color-text-secondary);
   font-size: 16px;
   text-align: center;
   margin-top: 32px;
 }
+
 .passenger-card {
-  background: var(--color-surface);
+  background: rgba(255,255,255,0.65);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 12px;
@@ -152,6 +176,7 @@ onMounted(loadBookings);
   flex-direction: column;
   gap: 6px;
 }
+
 .row {
   font-size: 15px;
   color: var(--color-text-secondary);
@@ -204,4 +229,10 @@ onMounted(loadBookings);
 .btn-danger {
   background: #e53935;
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 </style>

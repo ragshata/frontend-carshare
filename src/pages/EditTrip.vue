@@ -1,58 +1,63 @@
 <template>
   <div class="edit-trip-page">
-    <h2 class="title">Редактировать поездку</h2>
-    <form class="form" @submit.prevent="save">
-      <label>Откуда</label>
-      <select v-model="selectedFrom" class="select">
-        <option value="">Выберите город</option>
-        <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
-        <option value="other">Другое…</option>
-      </select>
-      <input
-        v-if="selectedFrom === 'other'"
-        v-model="from_"
-        type="text"
-        placeholder="Введите город"
-        class="input"
-        required
-        maxlength="40"
-      />
-      <input v-else type="hidden" v-model="from_" />
+    <div class="background-img"></div>
 
-      <label>Куда</label>
-      <select v-model="selectedTo" class="select">
-        <option value="">Выберите город</option>
-        <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
-        <option value="other">Другое…</option>
-      </select>
-      <input
-        v-if="selectedTo === 'other'"
-        v-model="to"
-        type="text"
-        placeholder="Введите город"
-        class="input"
-        required
-        maxlength="40"
-      />
-      <input v-else type="hidden" v-model="to" />
+    <div class="form-card">
+      <h2 class="title">Редактировать поездку</h2>
+      <form class="form" @submit.prevent="save">
+        <label>Откуда</label>
+        <select v-model="selectedFrom" class="select">
+          <option value="">Выберите город</option>
+          <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
+          <option value="other">Другое…</option>
+        </select>
+        <input
+          v-if="selectedFrom === 'other'"
+          v-model="from_"
+          type="text"
+          placeholder="Введите город"
+          class="input"
+          required
+          maxlength="40"
+        />
+        <input v-else type="hidden" v-model="from_" />
 
-      <label>Дата</label>
-      <input v-model="date" type="date" required class="input" />
+        <label>Куда</label>
+        <select v-model="selectedTo" class="select">
+          <option value="">Выберите город</option>
+          <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
+          <option value="other">Другое…</option>
+        </select>
+        <input
+          v-if="selectedTo === 'other'"
+          v-model="to"
+          type="text"
+          placeholder="Введите город"
+          class="input"
+          required
+          maxlength="40"
+        />
+        <input v-else type="hidden" v-model="to" />
 
-      <label>Время</label>
-      <input v-model="time" type="time" required class="input" />
+        <label>Дата</label>
+        <input v-model="date" type="date" required class="input" />
 
-      <label>Свободных мест</label>
-      <input v-model.number="seats" type="number" min="1" required class="input" />
+        <label>Время</label>
+        <input v-model="time" type="time" required class="input" />
 
-      <label>Цена (сомони, TJS)</label>
-      <input v-model.number="price" type="number" min="0" required class="input" />
+        <label>Свободных мест</label>
+        <input v-model.number="seats" type="number" min="1" required class="input" />
 
-      <button class="btn" type="submit" :disabled="loading">Сохранить</button>
-    </form>
+        <label>Цена (сомони, TJS)</label>
+        <input v-model.number="price" type="number" min="0" required class="input" />
+
+        <button class="btn" type="submit" :disabled="loading">Сохранить</button>
+      </form>
+    </div>
     <Toast ref="toastRef" />
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, onMounted, watchEffect, onBeforeUnmount } from "vue";
@@ -157,32 +162,61 @@ async function save() {
 
 <style scoped>
 .edit-trip-page {
-  padding: 16px;
-  min-height: 100vh;
-  background: var(--color-background, #fafbfc);
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  background: transparent;
 }
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.form-card {
+  position: relative;
+  z-index: 2;
+  max-width: 420px;
+  margin: 40px auto;
+  padding: 24px 18px 28px 18px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
 .title {
   font-size: 20px;
   font-weight: bold;
   margin-bottom: 18px;
-  color: var(--color-text-primary, #232323);
+  color: #232323;
   text-align: center;
 }
+
 .form {
   display: flex;
   flex-direction: column;
   gap: 13px;
-  max-width: 380px;
-  margin: 0 auto;
 }
+
 .select, .input {
   padding: 9px 12px;
   border-radius: 7px;
   border: 1px solid var(--color-border, #bbb);
   font-size: 16px;
   outline: none;
-  margin-bottom: 6px;
 }
+
 .btn {
   background: var(--color-primary, #007bff);
   color: white;
@@ -194,4 +228,10 @@ async function save() {
   margin-top: 8px;
   transition: background 0.2s;
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 </style>

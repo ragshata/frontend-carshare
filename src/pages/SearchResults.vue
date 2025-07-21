@@ -1,27 +1,34 @@
 <template>
   <div class="search-results-page">
-    <h2 class="title">Результаты поиска</h2>
-    <div v-if="loading" class="empty-text">Загрузка...</div>
-    <div v-else-if="trips.length === 0" class="empty-text">Поездки не найдены</div>
-    <div v-else class="trip-list">
-      <div class="trip-card" v-for="trip in trips" :key="trip.id">
-        <div class="row between bold">{{ trip.from_ }} — {{ trip.to }}</div>
-        <div class="row">🗓 {{ trip.date }} &nbsp; ⏰ {{ trip.time }}</div>
-        <div class="row">💺 Мест: {{ trip.seats }} &nbsp; 💰 {{ trip.price }} сомони (TJS)</div>
-        <div class="row">📌 Статус: {{ trip.status }}</div>
-        <button
-          class="btn"
-          @click="book(trip)"
-          :disabled="isTripBooked(trip.id)"
-        >
-          {{ isTripBooked(trip.id) ? "Уже забронировано" : "Забронировать" }}
-        </button>
-        <button class="btn btn-outline" @click="goToDetails(trip.id)">Подробнее</button>
+    <!-- Фоновое изображение -->
+    <div class="background-img"></div>
+
+    <!-- Полупрозрачная карточка -->
+    <div class="content-card">
+      <h2 class="title">Результаты поиска</h2>
+      <div v-if="loading" class="empty-text">Загрузка...</div>
+      <div v-else-if="trips.length === 0" class="empty-text">Поездки не найдены</div>
+      <div v-else class="trip-list">
+        <div class="trip-card" v-for="trip in trips" :key="trip.id">
+          <div class="row between bold">{{ trip.from_ }} — {{ trip.to }}</div>
+          <div class="row">🗓 {{ trip.date }} &nbsp; ⏰ {{ trip.time }}</div>
+          <div class="row">💺 Мест: {{ trip.seats }} &nbsp; 💰 {{ trip.price }} сомони (TJS)</div>
+          <div class="row">📌 Статус: {{ trip.status }}</div>
+          <button
+            class="btn"
+            @click="book(trip)"
+            :disabled="isTripBooked(trip.id)"
+          >
+            {{ isTripBooked(trip.id) ? "Уже забронировано" : "Забронировать" }}
+          </button>
+          <button class="btn btn-outline" @click="goToDetails(trip.id)">Подробнее</button>
+        </div>
       </div>
+      <Toast ref="toastRef" />
     </div>
-    <Toast ref="toastRef" />
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
@@ -122,10 +129,39 @@ async function book(trip: any) {
 
 <style scoped>
 .search-results-page {
-  padding: 16px;
-  min-height: 100vh;
-  background: var(--color-background, #fafbfc);
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  background: transparent;
 }
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.content-card {
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+  margin: 36px auto;
+  padding: 24px 18px 32px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
 .title {
   font-size: 20px;
   font-weight: bold;
@@ -145,7 +181,7 @@ async function book(trip: any) {
   gap: 16px;
 }
 .trip-card {
-  background: var(--color-surface, #fff);
+  background: rgba(255, 255, 255, 0.65);
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -187,5 +223,10 @@ async function book(trip: any) {
   color: var(--color-primary, #007bff);
   border: 1px solid var(--color-primary, #007bff);
   margin-left: 10px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 </style>

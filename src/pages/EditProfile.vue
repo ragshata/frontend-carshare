@@ -1,59 +1,64 @@
 <template>
   <div class="edit-profile-page">
-    <h2 class="title">Редактировать профиль</h2>
-    <form @submit.prevent="submit">
-      <div class="input-group">
-        <label>Имя</label>
-        <input
-          v-model="form.first_name"
-          required
-          @input="onNameInput('first_name')"
-          pattern="[A-Za-zА-Яа-яЁё\s\-]+"
-          maxlength="30"
-        />
-      </div>
-      <div class="input-group">
-        <label>Фамилия</label>
-        <input
-          v-model="form.last_name"
-          @input="onNameInput('last_name')"
-          pattern="[A-Za-zА-Яа-яЁё\s\-]+"
-          maxlength="40"
-        />
-      </div>
-      <div class="input-group">
-        <label>Телефон</label>
-        <input
-          v-model="form.phone"
-          @input="onPhoneInput"
-          inputmode="numeric"
-          pattern="[0-9]+"
-          maxlength="15"
-        />
-      </div>
-      <template v-if="auth.user.is_driver">
+    <div class="background-img"></div>
+
+    <div class="form-card">
+      <h2 class="title">Редактировать профиль</h2>
+      <form @submit.prevent="submit">
         <div class="input-group">
-          <label>Номер машины</label>
-          <input v-model="form.car_number" placeholder="Например, 1234АБ-1" />
+          <label>Имя</label>
+          <input
+            v-model="form.first_name"
+            required
+            @input="onNameInput('first_name')"
+            pattern="[A-Za-zА-Яа-яЁё\s\-]+"
+            maxlength="30"
+          />
         </div>
         <div class="input-group">
-          <label>Марка машины</label>
-          <input v-model="form.car_brand" placeholder="Например, Toyota Prius" />
+          <label>Фамилия</label>
+          <input
+            v-model="form.last_name"
+            @input="onNameInput('last_name')"
+            pattern="[A-Za-zА-Яа-яЁё\s\-]+"
+            maxlength="40"
+          />
         </div>
         <div class="input-group">
-          <label>Фото машины</label>
-          <input type="file" accept="image/*" @change="onFileChange" />
-          <div v-if="showCarPhoto" class="car-photo-preview">
-            <img :src="showCarPhoto" alt="Фото машины" />
+          <label>Телефон</label>
+          <input
+            v-model="form.phone"
+            @input="onPhoneInput"
+            inputmode="numeric"
+            pattern="[0-9]+"
+            maxlength="15"
+          />
+        </div>
+        <template v-if="auth.user.is_driver">
+          <div class="input-group">
+            <label>Номер машины</label>
+            <input v-model="form.car_number" placeholder="Например, 1234АБ-1" />
           </div>
-        </div>
-      </template>
-      <button class="btn" type="submit">Сохранить</button>
-      <button class="btn btn-outline" type="button" @click="router.push('/profile')">Отмена</button>
-    </form>
+          <div class="input-group">
+            <label>Марка машины</label>
+            <input v-model="form.car_brand" placeholder="Например, Toyota Prius" />
+          </div>
+          <div class="input-group">
+            <label>Фото машины</label>
+            <input type="file" accept="image/*" @change="onFileChange" />
+            <div v-if="showCarPhoto" class="car-photo-preview">
+              <img :src="showCarPhoto" alt="Фото машины" />
+            </div>
+          </div>
+        </template>
+        <button class="btn" type="submit">Сохранить</button>
+        <button class="btn btn-outline" type="button" @click="router.push('/profile')">Отмена</button>
+      </form>
+    </div>
     <Toast ref="toastRef" />
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
@@ -165,13 +170,39 @@ async function submit() {
 
 <style scoped>
 .edit-profile-page {
-  max-width: 420px;
-  margin: 38px auto 0 auto;
-  padding: 18px 8px 28px 8px;
-  background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 2px 12px rgba(60,80,120,0.06);
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+  background: transparent;
 }
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.form-card {
+  position: relative;
+  z-index: 2;
+  max-width: 420px;
+  margin: 42px auto 0 auto;
+  padding: 24px 18px 28px 18px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
 .title {
   font-size: 23px;
   font-weight: bold;
@@ -189,7 +220,6 @@ label {
   font-size: 15px;
   font-weight: 500;
   color: #111;
-  margin-bottom: 2px;
 }
 input {
   padding: 8px 12px;
@@ -224,4 +254,10 @@ input:focus {
   border: 1.5px solid var(--color-primary, #007bff);
   margin-left: 12px;
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 </style>
