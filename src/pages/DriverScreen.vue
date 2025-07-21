@@ -76,7 +76,7 @@ function go(path: string) {
   inset: 0;
   width: 100vw;
   height: 100vh;
-  background: url('@/assets/main-bg.svg') center center / cover no-repeat;
+  background: url('@/assets/2.png') center center / cover no-repeat;
   z-index: 0;
   pointer-events: none;
   user-select: none;
