@@ -31,7 +31,7 @@ function go(path: string) {
 </script>
 
 <style scoped>
-.passenger-screen {
+.driver-screen {
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -39,7 +39,6 @@ function go(path: string) {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   background: transparent;
 }
 
@@ -55,47 +54,40 @@ function go(path: string) {
   animation: bg-fade-in 1s ease-in-out;
 }
 
-.passenger-content {
+.driver-content {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding: 28px 16px 36px;
+  height: 100%;
+  padding: 32px 16px;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   align-items: center;
-  justify-content: center;
-  height: 100%;
   box-sizing: border-box;
-}
-
-.title {
-  font-size: 22px;
-  font-weight: bold;
-  margin-bottom: 32px;
-  color: #222;
-  text-align: center;
 }
 
 .actions {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   width: 100%;
-  max-width: 340px;
+  max-width: 360px;
+  margin-bottom: 10vh;
 }
 
 .btn {
+  padding: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
   background: #fff;
   color: #007bff;
-  border: none;
-  padding: 15px 0;
-  border-radius: 12px;
-  font-size: 17px;
-  cursor: pointer;
-  transition: background 0.2s;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: background 0.18s;
+  width: 100%;
 }
-
 .btn:active {
   background: #e3eeff;
 }
