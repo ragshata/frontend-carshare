@@ -31,7 +31,7 @@ function go(path: string) {
 </script>
 
 <style scoped>
-.driver-screen {
+.passenger-screen {
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -54,7 +54,7 @@ function go(path: string) {
   animation: bg-fade-in 1s ease-in-out;
 }
 
-.driver-content {
+.passenger-content {
   position: relative;
   z-index: 2;
   width: 100%;
