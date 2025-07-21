@@ -3,7 +3,6 @@
     <div class="background-img"></div>
 
     <div class="driver-content">
-      <h2 class="title">Экран водителя</h2>
 
       <div class="actions">
         <button class="btn" @click="go('/offer-trip')">
