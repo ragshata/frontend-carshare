@@ -1,46 +1,54 @@
 <template>
   <div class="profile-page">
-    <div class="profile-card">
-      <div class="avatar-block">
-        <img
-          v-if="auth.user.photo_url"
-          class="avatar"
-          :src="auth.user.photo_url"
-          alt="avatar"
-        />
-        <div v-else class="avatar avatar-placeholder">
-          {{ getInitials(auth.user) }}
+    <div class="background-img"></div>
+
+    <div class="profile-content">
+      <div class="profile-card">
+        <div class="avatar-block">
+          <img
+            v-if="auth.user.photo_url"
+            class="avatar"
+            :src="auth.user.photo_url"
+            alt="avatar"
+          />
+          <div v-else class="avatar avatar-placeholder">
+            {{ getInitials(auth.user) }}
+          </div>
+        </div>
+        <div class="profile-info">
+          <div class="profile-name">
+            {{ user.first_name }}
+            <template v-if="user.last_name"> {{ user.last_name }}</template>
+          </div>
+          <div class="profile-username" v-if="user.username">
+            @{{ user.username }}
+          </div>
+          <div class="profile-phone" v-if="user.phone">
+            Телефон: {{ user.phone }}
+          </div>
+
+          <!-- Блок с рейтингом -->
+          <div class="rating-box">
+            <span v-if="avgRating > 0">{{ avgRating.toFixed(1) }}</span>
+            <span v-else>—</span>
+            <span class="star">⭐️</span>
+            <span class="reviews-count">({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})</span>
+          </div>
+
+          <button class="btn btn-outline" @click="router.push('/edit-profile')">
+            ✏️ Редактировать профиль
+          </button>
+          <button class="btn btn-outline" @click="changeRole" :disabled="roleLoading">
+            🔄 {{ user.is_driver ? 'Стать пассажиром' : 'Стать водителем' }}
+          </button>
         </div>
       </div>
-      <div class="profile-info">
-        <div class="profile-name">
-          {{ user.first_name }}
-          <template v-if="user.last_name"> {{ user.last_name }}</template>
-        </div>
-        <div class="profile-username" v-if="user.username">
-          @{{ user.username }}
-        </div>
-        <div class="profile-phone" v-if="user.phone">
-          Телефон: {{ user.phone }}
-        </div>
-        <!-- Блок с рейтингом -->
-        <div class="rating-box">
-          <span v-if="avgRating > 0">{{ avgRating.toFixed(1) }}</span>
-          <span v-else>—</span>
-          <span class="star">⭐️</span>
-          <span class="reviews-count">({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})</span>
-        </div>
-        <button class="btn btn-outline" @click="router.push('/edit-profile')">
-          ✏️ Редактировать профиль
-        </button>
-        <button class="btn btn-outline" @click="changeRole" :disabled="roleLoading">
-          🔄 {{ user.is_driver ? 'Стать пассажиром' : 'Стать водителем' }}
-        </button>
-      </div>
+
+      <Toast ref="toastRef" />
     </div>
-    <Toast ref="toastRef" />
   </div>
 </template>
+
 
 <script setup lang="ts">
 import Background from '@/components/Background.vue';
@@ -136,6 +144,38 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.profile-page {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: bg-fade-in 1s ease-in-out;
+}
+
+.profile-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  overflow-y: auto;
+  padding: 32px 16px;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  flex-direction: column;
+  box-sizing: border-box;
+}
 /* ... Твои стили без изменений ... */
 .profile-card {
   display: flex;
@@ -236,5 +276,9 @@ onBeforeUnmount(() => {
   background: transparent;
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
+}
+@keyframes bg-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 </style>
