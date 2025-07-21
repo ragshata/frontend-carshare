@@ -46,7 +46,6 @@
           v-if="tripMap[b.trip_id]?.status === 'done'"
           style="margin-top:8px;"
         >
-          <button class="btn rate-btn" @click="goToRate(b.trip_id)">Оценить водителя</button>
         </div>
       </div>
     </div>
