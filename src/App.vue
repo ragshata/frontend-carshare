@@ -5,6 +5,7 @@
     <div v-if="logMessage" class="tg-log">{{ logMessage }}</div>
   </div>
 </template>
+
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -17,26 +18,30 @@ const logMessage = ref('');
 const auth = useAuthStore();
 const router = useRouter();
 
-const initialRedirectHandled = ref(false); // Флаг, что переход через start_param уже был
+const initialRedirectHandled = ref(false); // Чтобы не было двойного перехода
 
 function log(msg: string) {
   logMessage.value = msg;
   setTimeout(() => (logMessage.value = ''), 4000);
 }
 
-// --- ОБРАБОТКА start_param (rate_x_y) ---
+// --- ОБРАБОТКА start_param ---
 onMounted(() => {
-  // Проверяем, есть ли start_param (мини-апп открыт с inline-кнопки)
   // @ts-ignore
   const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
-  if (startParam && startParam.startsWith('rate_')) {
+
+  if (startParam?.startsWith('rate_')) {
     const [, driverId, tripId] = startParam.split('_');
-    router.replace('/rate/${tripId}?driver=${driverId}');
-    initialRedirectHandled.value = true; // Отметили, что редирект уже был
+    router.replace(`/rate/${tripId}?driver=${driverId}`);
+    initialRedirectHandled.value = true;
+  }
+
+  if (startParam?.startsWith('trip_')) {
+    const [, tripId] = startParam.split('_');
+    router.replace(`/trip/${tripId}/passengers`);
+    initialRedirectHandled.value = true;
   }
 });
-
-
 
 const ADMIN_IDS = [363320196, 6931781449];
 
@@ -48,26 +53,26 @@ function redirectByRole() {
     return;
   }
 
-  // Потом остальные проверки по ролям
   if (typeof auth.user.is_driver !== 'boolean') {
     if (router.currentRoute.value.path !== '/main-screen') {
       router.replace('/main-screen');
     }
     return;
   }
+
   if (auth.user.is_driver) {
     if (router.currentRoute.value.path !== '/driver') {
       router.replace('/driver');
     }
     return;
   }
+
   if (router.currentRoute.value.path !== '/passenger') {
     router.replace('/passenger');
   }
 }
 
 async function onSplashDone() {
-  // Telegram WebApp SDK
   // @ts-ignore
   const tg = window.Telegram?.WebApp;
 
@@ -85,16 +90,14 @@ async function onSplashDone() {
     return;
   }
 
-  // Сохраняем аватар (если есть)
+  // Сохраняем аватар
   if (telegramUser.photo_url) {
     auth.user.photo_url = telegramUser.photo_url;
     localStorage.setItem('tg_user_photo_url', telegramUser.photo_url);
   }
 
-  // Авторизация и регистрация на бэкенде
   try {
     await authorizeViaTelegram(telegramUser);
-    // Только если не было редиректа через start_param — делаем обычный редирект
     if (!initialRedirectHandled.value) {
       redirectByRole();
     }
