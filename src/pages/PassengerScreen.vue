@@ -1,19 +1,22 @@
 <template>
   <div class="passenger-screen">
-    <h2 class="title">Экран пассажира</h2>
-    <div class="actions">
-      <button class="btn" @click="go('/find-trip')">
-        🔍 Найти поездку
-      </button>
-      <button class="btn" @click="go('/my-bookings')">
-        📋 Мои бронирования
-      </button>
-      <button class="btn" @click="go('/help')">
-        🛟 Помощь
-      </button>
-      <button class="btn" @click="go('/profile')">
-        👤 Мой профиль
-      </button>
+    <div class="background-img"></div>
+
+    <div class="passenger-content">
+      <div class="actions">
+        <button class="btn" @click="go('/find-trip')">
+          🔍 Найти поездку
+        </button>
+        <button class="btn" @click="go('/my-bookings')">
+          📋 Мои бронирования
+        </button>
+        <button class="btn" @click="go('/help')">
+          🛟 Помощь
+        </button>
+        <button class="btn" @click="go('/profile')">
+          👤 Мой профиль
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -29,21 +32,50 @@ function go(path: string) {
 
 <style scoped>
 .passenger-screen {
-  min-height: 100vh;
-  background: var(--color-background, #fafbfc);
-  padding: 24px;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: transparent;
+}
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/main.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: bg-fade-in 1s ease-in-out;
+}
+
+.passenger-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 28px 16px 36px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  height: 100%;
+  box-sizing: border-box;
 }
+
 .title {
   font-size: 22px;
   font-weight: bold;
   margin-bottom: 32px;
-  color: var(--color-text-primary, #232323);
+  color: #222;
   text-align: center;
 }
+
 .actions {
   display: flex;
   flex-direction: column;
@@ -51,18 +83,25 @@ function go(path: string) {
   width: 100%;
   max-width: 340px;
 }
+
 .btn {
-  background: var(--color-primary, #007bff);
-  color: white;
+  background: #fff;
+  color: #007bff;
   border: none;
   padding: 15px 0;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 17px;
   cursor: pointer;
   transition: background 0.2s;
-  width: 100%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
-.btn:hover {
-  background: #0069d9;
+
+.btn:active {
+  background: #e3eeff;
+}
+
+@keyframes bg-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 </style>

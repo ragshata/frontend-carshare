@@ -47,7 +47,7 @@ function go(path: string) {
   inset: 0;
   width: 100%;
   height: 100%;
-  background: url('@/assets/main-bg.webp') center center / cover no-repeat;
+  background: url('@/assets/main.webp') center center / cover no-repeat;
   z-index: 0;
   pointer-events: none;
   user-select: none;

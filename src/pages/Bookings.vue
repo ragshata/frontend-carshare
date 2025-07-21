@@ -1,41 +1,46 @@
 <template>
-  <div class="bookings-page">
-    <div class="top-row">
-      <button class="btn-back" @click="goBack">← Назад</button>
-      <h2 class="title">Мои бронирования</h2>
-    </div>
+  <div class="bookings-wrapper">
+    <div class="background-img"></div>
 
-    <div v-if="loading" class="empty-text">
-      Загрузка...
-    </div>
-    <div v-else-if="bookings.length === 0" class="empty-text">
-      Нет активных бронирований
-    </div>
-
-    <div v-else class="bookings-list">
-      <div
-        class="booking-card"
-        v-for="booking in bookings"
-        :key="booking.id"
-      >
-        <div class="row bold">
-          {{ booking.trip?.from_city || "?" }} — {{ booking.trip?.to_city || "?" }}
-        </div>
-        <div class="row">
-          🗓 {{ booking.trip?.date || "?" }} &nbsp;&nbsp; ⏰ {{ booking.trip?.time || "?" }}
-        </div>
-        <div class="row">
-          💸 {{ booking.trip?.price || "?" }}сомони (TJS) &nbsp; 👥 {{ booking.trip?.seats || "?" }} мест
-        </div>
-        <div class="row">
-          👤 Водитель: {{ booking.trip?.driver_name || "?" }}
-        </div>
-        <button class="btn-cancel" @click="confirmCancel(booking.id)">
-          Отменить бронь
-        </button>
+    <div class="bookings-page">
+      <div class="top-row">
+        <button class="btn-back" @click="goBack">← Назад</button>
+        <h2 class="title">Мои бронирования</h2>
       </div>
+
+      <div v-if="loading" class="empty-text">
+        Загрузка...
+      </div>
+      <div v-else-if="bookings.length === 0" class="empty-text">
+        Нет активных бронирований
+      </div>
+
+      <div v-else class="bookings-list">
+        <div
+          class="booking-card"
+          v-for="booking in bookings"
+          :key="booking.id"
+        >
+          <div class="row bold">
+            {{ booking.trip?.from_city || "?" }} — {{ booking.trip?.to_city || "?" }}
+          </div>
+          <div class="row">
+            🗓 {{ booking.trip?.date || "?" }} &nbsp;&nbsp; ⏰ {{ booking.trip?.time || "?" }}
+          </div>
+          <div class="row">
+            💸 {{ booking.trip?.price || "?" }}сомони (TJS) &nbsp; 👥 {{ booking.trip?.seats || "?" }} мест
+          </div>
+          <div class="row">
+            👤 Водитель: {{ booking.trip?.driver_name || "?" }}
+          </div>
+          <button class="btn-cancel" @click="confirmCancel(booking.id)">
+            Отменить бронь
+          </button>
+        </div>
+      </div>
+
+      <Toast ref="toastRef" />
     </div>
-    <Toast ref="toastRef" />
   </div>
 </template>
 
@@ -60,7 +65,6 @@ function goBack() {
 async function loadBookings() {
   loading.value = true;
   try {
-    // Подгружаем бронирования пользователя (user_id)
     const result = await getBookings(auth.user.id);
     bookings.value = Array.isArray(result) ? result : [];
   } catch (err) {
@@ -71,7 +75,6 @@ async function loadBookings() {
   }
 }
 
-// Подтверждение и удаление бронирования
 async function confirmCancel(id: number) {
   if (window.confirm("Вы точно хотите отменить это бронирование?")) {
     await handleCancel(id);
@@ -91,11 +94,36 @@ onMounted(loadBookings);
 </script>
 
 <style scoped>
-.bookings-page {
-  padding: 16px;
-  background: var(--color-background);
-  min-height: 100vh;
+.bookings-wrapper {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/main-bg.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: bg-fade-in 1s ease-in-out;
+}
+
+.bookings-page {
+  position: relative;
+  z-index: 2;
+  padding: 16px;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
 .top-row {
   display: flex;
   align-items: center;
@@ -162,5 +190,10 @@ onMounted(loadBookings);
 }
 .btn-cancel:hover {
   background: #c62828;
+}
+
+@keyframes bg-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 </style>

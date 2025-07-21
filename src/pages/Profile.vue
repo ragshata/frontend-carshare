@@ -43,6 +43,7 @@
 </template>
 
 <script setup lang="ts">
+import Background from '@/components/Background.vue';
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
