@@ -181,15 +181,22 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: var(--color-surface);
+
+  /* Новый фон: полупрозрачный с блюром */
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
   border-radius: 18px;
   padding: 22px 16px 18px 16px;
   margin-bottom: 28px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
   max-width: 320px;
   margin-left: auto;
   margin-right: auto;
+  transition: background 0.3s ease;
 }
+
 .avatar-block {
   display: flex;
   flex-direction: column;
