@@ -1,7 +1,6 @@
 <template>
   <div class="driver-screen">
     <div class="driver-content">
-      <h2 class="title">Экран водителя</h2>
 
       <div class="actions">
         <button class="btn" @click="go('/offer-trip')">
@@ -37,6 +36,7 @@ function go(path: string) {
 }
 .driver-content {
   position: relative;
+  z-index: 2;
   padding: 24px 16px;
   text-align: center;
 }
