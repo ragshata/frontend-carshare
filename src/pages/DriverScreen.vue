@@ -37,7 +37,6 @@ function go(path: string) {
 }
 .driver-content {
   position: relative;
-  z-index: 2;
   padding: 24px 16px;
   text-align: center;
 }
