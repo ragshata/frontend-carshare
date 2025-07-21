@@ -127,27 +127,31 @@ onBeforeUnmount(() => {
   color: var(--color-text-primary);
   text-align: center;
 }
-
 .tabs {
   display: flex;
   flex-wrap: nowrap;
-  overflow-x: auto;
-  gap: 12px;
+  justify-content: center;
+  gap: 8px;
   margin-bottom: 20px;
   padding-bottom: 4px;
 }
 
 .tab {
-  padding: 10px 16px;
+  padding: 6px 10px;
+  font-size: 13px;
   border: 1px solid var(--color-primary);
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: var(--color-primary);
   cursor: pointer;
-  font-size: 14px;
   transition: all 0.2s ease;
   white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 48%;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
+
 
 .tab.active {
   background: var(--color-primary);
