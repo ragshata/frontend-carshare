@@ -1,7 +1,7 @@
 <template>
   <div class="driver-screen">
     <h2 class="title">Экран водителя</h2>
-    <div class="background-img"></div>
+
     <div class="actions">
       <button class="btn" @click="go('/offer-trip')">
         🚗 Создать поездку
@@ -17,6 +17,7 @@
       </button>
     </div>
   </div>
+  <div class="background-img"></div>
 </template>
 
 <script setup lang="ts">
