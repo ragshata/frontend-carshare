@@ -3,7 +3,6 @@
     <div class="background-img"></div>
 
     <div class="driver-content">
-
       <div class="actions">
         <button class="btn" @click="go('/offer-trip')">
           🚗 Создать поездку
@@ -40,7 +39,6 @@ function go(path: string) {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   background: transparent;
 }
 
@@ -49,7 +47,7 @@ function go(path: string) {
   inset: 0;
   width: 100%;
   height: 100%;
-  background: url('@/assets/main-bg.svg') center center / cover no-repeat;
+  background: url('@/assets/main-bg.webp') center center / cover no-repeat;
   z-index: 0;
   pointer-events: none;
   user-select: none;
@@ -60,27 +58,21 @@ function go(path: string) {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding: 28px 16px 36px;
+  height: 100%;
+  padding: 32px 16px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
+  justify-content: flex-end;
+  align-items: center;
   box-sizing: border-box;
-}
-
-.title {
-  font-size: 22px;
-  font-weight: bold;
-  color: #222;
-  text-align: center;
-  margin-top: 20px;
 }
 
 .actions {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  align-items: stretch;
+  width: 100%;
+  max-width: 360px;
   margin-bottom: 10vh;
 }
 
@@ -94,6 +86,7 @@ function go(path: string) {
   color: #007bff;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   transition: background 0.18s;
+  width: 100%;
 }
 .btn:active {
   background: #e3eeff;
