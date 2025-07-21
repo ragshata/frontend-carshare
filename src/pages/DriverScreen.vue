@@ -1,23 +1,25 @@
 <template>
   <div class="driver-screen">
-    <h2 class="title">Экран водителя</h2>
+    <div class="driver-content">
+      <h2 class="title">Экран водителя</h2>
 
-    <div class="actions">
-      <button class="btn" @click="go('/offer-trip')">
-        🚗 Создать поездку
-      </button>
-      <button class="btn" @click="go('/manage-trips')">
-        📋 Мои поездки
-      </button>
-      <button class="btn" @click="go('/help')">
-        🛟 Помощь
-      </button>
-      <button class="btn" @click="go('/profile')">
-        👤 Профиль
-      </button>
+      <div class="actions">
+        <button class="btn" @click="go('/offer-trip')">
+          🚗 Создать поездку
+        </button>
+        <button class="btn" @click="go('/manage-trips')">
+          📋 Мои поездки
+        </button>
+        <button class="btn" @click="go('/help')">
+          🛟 Помощь
+        </button>
+        <button class="btn" @click="go('/profile')">
+          👤 Профиль
+        </button>
+      </div>
     </div>
+    <div class="background-img"></div>
   </div>
-  <div class="background-img"></div>
 </template>
 
 <script setup lang="ts">
@@ -27,59 +29,63 @@ function go(path: string) {
   router.push(path);
 }
 </script>
-
 <style scoped>
 .driver-screen {
+  position: relative;
   min-height: 100vh;
-  background: var(--color-background, #fafbfc);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
 }
+.driver-content {
+  position: relative;
+  z-index: 2;
+  padding: 24px 16px;
+  text-align: center;
+}
+
 .title {
   font-size: 22px;
   font-weight: bold;
-  margin-bottom: 32px;
-  color: var(--color-text-primary, #232323);
-  text-align: center;
+  margin-bottom: 24px;
+  color: #222;
 }
+
 .actions {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  width: 100%;
-  max-width: 340px;
+  gap: 14px;
+  align-items: stretch;
+  justify-content: center;
 }
+
 .btn {
-  background: var(--color-primary, #007bff);
-  color: white;
-  border: none;
-  padding: 15px 0;
-  border-radius: 10px;
+  padding: 14px;
   font-size: 17px;
-  cursor: pointer;
-  transition: background 0.2s;
-  width: 100%;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: #fff;
+  color: #007bff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: background 0.18s;
 }
-.btn:hover {
-  background: #0069d9;
+.btn:active {
+  background: #e3eeff;
 }
+
 .background-img {
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
-  background: url('@/assets/2.png') center center / cover no-repeat;
+  background: url('@/assets/main-bg.svg') center center / cover no-repeat;
   z-index: 0;
   pointer-events: none;
   user-select: none;
   animation: bg-fade-in 1.1s;
 }
+
 @keyframes bg-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
 </style>
