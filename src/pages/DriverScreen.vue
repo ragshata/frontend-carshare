@@ -1,6 +1,7 @@
 <template>
   <div class="driver-screen">
     <h2 class="title">Экран водителя</h2>
+    <div class="background-img"></div>
     <div class="actions">
       <button class="btn" @click="go('/offer-trip')">
         🚗 Создать поездку
@@ -64,4 +65,20 @@ function go(path: string) {
 .btn:hover {
   background: #0069d9;
 }
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: url('@/assets/2.png') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: bg-fade-in 1.1s;
+}
+@keyframes bg-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 </style>
