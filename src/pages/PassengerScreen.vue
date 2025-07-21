@@ -8,6 +8,9 @@
       <button class="btn" @click="go('/my-bookings')">
         📋 Мои бронирования
       </button>
+      <button class="btn" @click="go('/help')">
+        🛟 Помощь
+      </button>
       <button class="btn" @click="go('/profile')">
         👤 Мой профиль
       </button>

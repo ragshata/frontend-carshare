@@ -2,14 +2,22 @@
   <div class="my-bookings-page">
     <h2 class="title">Мои бронирования</h2>
 
+    <div class="tabs">
+      <button :class="{ active: currentTab === 'active' }" @click="currentTab = 'active'">Активные</button>
+      <button :class="{ active: currentTab === 'done' }" @click="currentTab = 'done'">Завершённые</button>
+    </div>
+
     <div v-if="loading" class="empty-text">Загрузка...</div>
-    <div v-else-if="confirmedBookings.length === 0" class="empty-text">
-      Нет подтвержденных бронирований
+    <div
+      v-else-if="filteredBookings.length === 0"
+      class="empty-text"
+    >
+      Нет бронирований
     </div>
     <div v-else class="booking-list">
       <div
         class="booking-card"
-        v-for="b in confirmedBookings"
+        v-for="b in filteredBookings"
         :key="b.id"
       >
         <div class="row between bold">
@@ -31,24 +39,25 @@
             </a>
           </div>
         </div>
-        <!-- Кнопка "Подробнее" -->
         <div>
           <button class="btn btn-outline" @click="goToTripDetails(b.trip_id)">Подробнее</button>
         </div>
-        <!-- Кнопка "Оценить" если поездка завершена -->
-        <div v-if="tripMap[b.trip_id]?.status === 'done'" style="margin-top:8px;">
-          <button class="btn rate-btn" @click="goToRate(b.trip_id)">
-            Оценить водителя
-          </button>
+        <div
+          v-if="tripMap[b.trip_id]?.status === 'done'"
+          style="margin-top:8px;"
+        >
+          <button class="btn rate-btn" @click="goToRate(b.trip_id)">Оценить водителя</button>
         </div>
       </div>
     </div>
+
     <Toast ref="toastRef" />
   </div>
 </template>
 
+
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { useAuthStore } from "@/store/auth";
 import { getMyBookings } from "@/api/bookings";
 import { getTripById } from "@/api/trips";
@@ -65,6 +74,19 @@ const confirmedBookings = ref<any[]>([]);
 const tripMap = ref<Record<number, any>>({});
 const drivers = ref<Record<number, any>>({});
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
+
+const currentTab = ref<'active' | 'done'>('active');
+
+const filteredBookings = computed(() =>
+  confirmedBookings.value.filter(b => {
+    const trip = tripMap.value[b.trip_id];
+    if (!trip) return false;
+    return currentTab.value === 'active'
+      ? trip.status !== 'done'
+      : trip.status === 'done';
+  })
+);
+
 
 function ruStatus(status: string) {
   switch (status) {
@@ -244,4 +266,26 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: background 0.2s;
 }
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.tabs button {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1.4px solid var(--color-primary, #007bff);
+  background: white;
+  color: var(--color-primary, #007bff);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.tabs button.active {
+  background: var(--color-primary, #007bff);
+  color: white;
+}
+
 </style>

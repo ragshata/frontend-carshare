@@ -8,6 +8,9 @@
       <button class="btn" @click="go('/manage-trips')">
         📋 Мои поездки
       </button>
+      <button class="btn" @click="go('/help')">
+        🛟 Помощь
+      </button>
       <button class="btn" @click="go('/profile')">
         👤 Профиль
       </button>
