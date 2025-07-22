@@ -231,10 +231,12 @@ async function deleteUserById(telegram_id: number) {
     users.value = users.value.filter(u => u.telegram_id !== telegram_id);
     closeModal();
     toastRef.value?.show('Пользователь удалён!');
-  } catch {
+  } catch (e) {
     toastRef.value?.show('Ошибка удаления пользователя!');
+    console.error('Ошибка удаления:', e);
   }
 }
+
 
 async function deleteTrip(tripId: number) {
   if (!confirm("Удалить поездку? Это действие необратимо!")) return;
