@@ -20,3 +20,7 @@ export async function getAllReviews() {
   const res = await axios.get(`${API_BASE}/reviews/`);
   return res.data;
 }
+
+export async function deleteTripById(tripId: number) {
+  return axios.delete(`${API_BASE}/admin/trips/${tripId}`);
+}

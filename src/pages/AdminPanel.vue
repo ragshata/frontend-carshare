@@ -35,25 +35,30 @@
 
       <!-- Поездки -->
       <div v-else-if="tab === 'trips'">
-        <table class="data-table">
+        <table class="trips-table">
           <thead>
             <tr>
               <th>ID</th>
               <th>Имя водителя</th>
-              <th>Подробнее</th>
+              <th>Действия</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="trip in trips" :key="trip.id">
               <td>{{ trip.id }}</td>
-              <td>{{ getDriverName(trip.owner_id) || '—' }}</td>
+              <td>
+                <span v-if="getDriverName(trip.owner_id)">{{ getDriverName(trip.owner_id) }}</span>
+                <span v-else>—</span>
+              </td>
               <td>
                 <button class="info-btn" @click="showTrip(trip)">Подробнее</button>
+                <button class="delete-btn small" @click="deleteTripById(trip.id)">Удалить</button>
               </td>
             </tr>
           </tbody>
         </table>
-      </div>
+</div>
+
 
       <!-- Аналитика -->
       <div v-else-if="tab === 'stats'" class="stats-section">
@@ -136,6 +141,8 @@ import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'vue-router';
 import { getAllUsers, updateUserRole, updateUserActiveDriver, deleteUserByTelegramId } from '@/api/admin';
 import { getAllTrips, getAdminStats } from '@/api/admin-trips';
+import { deleteTripById } from '@/api/admin-trips';
+
 import Toast from '@/components/Toast.vue';
 
 const router = useRouter();
@@ -228,6 +235,17 @@ async function deleteUserById(telegram_id: number) {
   }
 }
 
+async function deleteTrip(tripId: number) {
+  if (!confirm("Удалить поездку? Это действие необратимо!")) return;
+  try {
+    await deleteTripById(tripId);
+    trips.value = trips.value.filter(t => t.id !== tripId);
+    toastRef.value?.show("Поездка удалена");
+  } catch {
+    toastRef.value?.show("Ошибка при удалении поездки!");
+  }
+}
+
 onMounted(() => {
   if (tab.value === 'users') loadUsers();
   if (tab.value === 'trips') loadTrips();
@@ -238,6 +256,7 @@ watch(tab, (newTab) => {
   if (newTab === 'trips') loadTrips();
   if (newTab === 'stats') loadStats();
 });
+
 </script>
 
 <style scoped>
@@ -256,6 +275,12 @@ watch(tab, (newTab) => {
   color: #232323;
   text-align: center;
 }
+.delete-btn.small {
+  font-size: 13px;
+  padding: 6px 10px;
+  min-width: auto;
+}
+
 
 /* Маленькие tabs, в строку и с прокруткой */
 .admin-tabs.small {
