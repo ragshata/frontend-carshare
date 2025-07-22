@@ -51,9 +51,10 @@
                 <span v-else>—</span>
               </td>
               <td>
-                <button class="info-btn" @click="showTrip(trip)">Подробнее</button>
-                <button class="delete-btn small" @click="deleteTripById(trip.id)">Удалить</button>
+                <button class="btn" @click="showTrip(trip)">Подробнее</button>
+                <button class="btn btn-danger" @click="deleteTrip(trip.id)">Удалить</button>
               </td>
+
             </tr>
           </tbody>
         </table>
@@ -240,11 +241,13 @@ async function deleteTrip(tripId: number) {
   try {
     await deleteTripById(tripId);
     trips.value = trips.value.filter(t => t.id !== tripId);
+    closeModal();
     toastRef.value?.show("Поездка удалена");
   } catch {
     toastRef.value?.show("Ошибка при удалении поездки!");
   }
 }
+
 
 onMounted(() => {
   if (tab.value === 'users') loadUsers();
@@ -275,11 +278,7 @@ watch(tab, (newTab) => {
   color: #232323;
   text-align: center;
 }
-.delete-btn.small {
-  font-size: 13px;
-  padding: 6px 10px;
-  min-width: auto;
-}
+
 
 
 /* Маленькие tabs, в строку и с прокруткой */
@@ -367,6 +366,11 @@ watch(tab, (newTab) => {
   min-width: 280px;
   max-width: 99vw;
   text-align: left;
+}
+.delete-btn.small {
+  font-size: 13px;
+  padding: 6px 10px;
+  min-width: auto;
 }
 .modal-content p {
   margin: 10px 0 10px 0;
@@ -546,6 +550,34 @@ watch(tab, (newTab) => {
 @keyframes bg-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+.btn {
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #007bff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: background 0.18s;
+  cursor: pointer;
+  min-width: 90px;
+}
+.btn:hover {
+  background: rgba(255, 255, 255, 0.8);
+}
+.btn:active {
+  background: #e3eeff;
+}
+.btn-danger {
+  background: rgba(229, 57, 53, 0.85);
+  color: white;
+}
+.btn-danger:hover {
+  background: rgba(198, 40, 40, 0.9);
 }
 
 </style>
