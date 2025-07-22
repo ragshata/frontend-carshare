@@ -52,7 +52,8 @@
               </td>
               <td>
                 <button class="btn" @click="showTrip(trip)">Подробнее</button>
-                <button class="btn btn-danger" @click="deleteTrip(trip.id)">Удалить</button>
+                <button class="delete-btn" @click="deleteUserById(modalUser.id)">Удалить</button>
+
               </td>
 
             </tr>
@@ -140,9 +141,10 @@
 import { ref, onMounted, watch } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'vue-router';
-import { getAllUsers, updateUserRole, updateUserActiveDriver, deleteUserByTelegramId } from '@/api/admin';
+import { getAllUsers, updateUserRole, updateUserActiveDriver } from '@/api/admin';
 import { getAllTrips, getAdminStats } from '@/api/admin-trips';
 import { deleteTripById } from '@/api/admin-trips';
+import { deleteUserById as deleteUserByIdAPI } from '@/api/admin';
 
 import Toast from '@/components/Toast.vue';
 
@@ -224,11 +226,11 @@ async function toggleActive(user: any) {
     toastRef.value?.show('Ошибка обновления статуса!');
   }
 }
-async function deleteUserById(telegram_id: number) {
+async function deleteUserById(userId: number) {
   if (!confirm('Удалить пользователя? Это действие необратимо!')) return;
   try {
-    await deleteUserByTelegramId(telegram_id);
-    users.value = users.value.filter(u => u.telegram_id !== telegram_id);
+    await deleteUserByIdAPI(userId); // вызываем правильный метод
+    users.value = users.value.filter(u => u.id !== userId);
     closeModal();
     toastRef.value?.show('Пользователь удалён!');
   } catch (e) {
@@ -236,6 +238,7 @@ async function deleteUserById(telegram_id: number) {
     console.error('Ошибка удаления:', e);
   }
 }
+
 
 
 async function deleteTrip(tripId: number) {
