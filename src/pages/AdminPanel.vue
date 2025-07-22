@@ -1,135 +1,132 @@
 <template>
-  <div class="admin-wrap">
-    <h2 class="title">Админ-панель</h2>
-    <!-- Tabs с малым размером и прокруткой -->
-    <div class="admin-tabs small">
-      <button :class="{active: tab === 'users'}" @click="tab = 'users'">Пользователи</button>
-      <button :class="{active: tab === 'trips'}" @click="tab = 'trips'">Поездки</button>
-      <button :class="{active: tab === 'stats'}" @click="tab = 'stats'">Аналитика</button>
-    </div>
+  <div class="admin-page">
+    <div class="background-img"></div>
 
-    <!-- Пользователи -->
-    <div v-if="tab === 'users'">
-      <table class="users-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Имя</th>
-            <th>Подробнее</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="user in users" :key="user.id">
-            <td>{{ user.id }}</td>
-            <td>{{ user.first_name }} <span v-if="user.last_name">{{ user.last_name }}</span></td>
-            <td>
-              <button class="info-btn" @click="showUser(user)">Подробнее</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="admin-content">
+      <h2 class="title">Админ-панель</h2>
 
-    <!-- Поездки -->
-    <div v-else-if="tab === 'trips'">
-      <table class="trips-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Имя водителя</th>
-            <th>Подробнее</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="trip in trips" :key="trip.id">
-            <td>{{ trip.id }}</td>
-            <td>
-              <span v-if="getDriverName(trip.owner_id)">{{ getDriverName(trip.owner_id) }}</span>
-              <span v-else>—</span>
-            </td>
-            <td>
-              <button class="info-btn" @click="showTrip(trip)">Подробнее</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="tabs">
+        <button :class="['tab', { active: tab === 'users' }]" @click="tab = 'users'">Пользователи</button>
+        <button :class="['tab', { active: tab === 'trips' }]" @click="tab = 'trips'">Поездки</button>
+        <button :class="['tab', { active: tab === 'stats' }]" @click="tab = 'stats'">Аналитика</button>
+      </div>
 
-    <!-- Аналитика -->
-    <div v-else-if="tab === 'stats'">
-      <div class="stats-section">
+      <!-- Пользователи -->
+      <div v-if="tab === 'users'">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Имя</th>
+              <th>Подробнее</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in users" :key="user.id">
+              <td>{{ user.id }}</td>
+              <td>{{ user.first_name }} <span v-if="user.last_name">{{ user.last_name }}</span></td>
+              <td>
+                <button class="info-btn" @click="showUser(user)">Подробнее</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
+      <!-- Поездки -->
+      <div v-else-if="tab === 'trips'">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Имя водителя</th>
+              <th>Подробнее</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="trip in trips" :key="trip.id">
+              <td>{{ trip.id }}</td>
+              <td>{{ getDriverName(trip.owner_id) || '—' }}</td>
+              <td>
+                <button class="info-btn" @click="showTrip(trip)">Подробнее</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Аналитика -->
+      <div v-else-if="tab === 'stats'" class="stats-section">
         <div>🚗 Всего поездок: <b>{{ stats.trips_count ?? '—' }}</b></div>
         <div>👥 Всего бронирований: <b>{{ stats.bookings_count ?? '—' }}</b></div>
-        <div>⭐️ Средний рейтинг пользователей: <b>{{ stats.avg_driver_rating !== undefined ? stats.avg_driver_rating.toFixed(2) : '—' }}</b></div>
+        <div>⭐️ Средний рейтинг пользователей: <b>{{ stats.avg_driver_rating?.toFixed(2) ?? '—' }}</b></div>
       </div>
-    </div>
 
-    <!-- Модальное окно пользователя -->
-    <div v-if="modalUser" class="modal-overlay" @click.self="closeModal">
-      <div class="modal">
-        <h3>Пользователь #{{ modalUser.id }}</h3>
-        <div class="modal-content">
-          <p><b>Имя:</b> {{ modalUser.first_name }} <span v-if="modalUser.last_name">{{ modalUser.last_name }}</span></p>
-          <p><b>Telegram ID:</b> {{ modalUser.telegram_id }}</p>
-          <p><b>Telegram:</b>
-            <a v-if="modalUser.username" :href="`https://t.me/${modalUser.username}`" target="_blank">@{{ modalUser.username }}</a>
-            <span v-else>—</span>
-          </p>
-          <p>
-            <b>Роль:</b>
-            <span class="role-select">
-              <button
-                :class="['role-option', modalUser.is_driver ? 'selected' : '']"
-                @click="setRole(true)"
-              >Водитель</button>
-              <button
-                :class="['role-option', !modalUser.is_driver ? 'selected' : '']"
-                @click="setRole(false)"
-              >Пассажир</button>
-            </span>
-          </p>
-          <p>
-            <b>Может создавать:</b>
-            <label class="switch">
-              <input type="checkbox" v-model="modalUser.active_driver" @change="toggleActive(modalUser)">
-              <span class="slider"></span>
-            </label>
-          </p>
-          <p><b>Номер машины:</b> {{ modalUser.car_number || '—' }}</p>
-          <p><b>Марка машины:</b> {{ modalUser.car_brand || '—' }}</p>
-        </div>
-        <div class="modal-actions">
-          <button class="delete-btn" @click="deleteUserById(modalUser.telegram_id)">Удалить</button>
-          <button class="btn close-btn" @click="closeModal">Закрыть</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Модальное окно поездки -->
-    <div v-if="modalTrip" class="modal-overlay" @click.self="closeModal">
-      <div class="modal">
-        <h3>Поездка #{{ modalTrip.id }}</h3>
-        <div class="modal-content">
-          <p><b>Маршрут:</b> {{ modalTrip.from_ }} — {{ modalTrip.to }}</p>
-          <p><b>Дата:</b> {{ modalTrip.date }} {{ modalTrip.time }}</p>
-          <p><b>Статус:</b> {{ modalTrip.status }}</p>
-          <p><b>Водитель (ID):</b> {{ modalTrip.owner_id }}</p>
-          <p v-if="modalTrip.description"><b>Особенности:</b> {{ modalTrip.description }}</p>
-          <p v-if="modalTrip.car_brand || modalTrip.car_number">
-            <b>Машина:</b>
-            <span v-if="modalTrip.car_brand">{{ modalTrip.car_brand }}</span>
-            <span v-if="modalTrip.car_brand && modalTrip.car_number">,</span>
-            <span v-if="modalTrip.car_number"> номер {{ modalTrip.car_number }}</span>
-          </p>
-        </div>
-        <div class="modal-actions">
-          <button class="btn close-btn" @click="closeModal">Закрыть</button>
+      <!-- Модалки -->
+      <div v-if="modalUser" class="modal-overlay" @click.self="closeModal">
+        <div class="modal">
+          <h3>Пользователь #{{ modalUser.id }}</h3>
+          <div class="modal-content">
+            <p><b>Имя:</b> {{ modalUser.first_name }} <span v-if="modalUser.last_name">{{ modalUser.last_name }}</span></p>
+            <p><b>Telegram ID:</b> {{ modalUser.telegram_id }}</p>
+            <p><b>Telegram:</b>
+              <a v-if="modalUser.username" :href="`https://t.me/${modalUser.username}`" target="_blank">@{{ modalUser.username }}</a>
+              <span v-else>—</span>
+            </p>
+            <p>
+              <b>Роль:</b>
+              <span class="role-select">
+                <button
+                  :class="['role-option', modalUser.is_driver ? 'selected' : '']"
+                  @click="setRole(true)"
+                >Водитель</button>
+                <button
+                  :class="['role-option', !modalUser.is_driver ? 'selected' : '']"
+                  @click="setRole(false)"
+                >Пассажир</button>
+              </span>
+            </p>
+            <p>
+              <b>Может создавать:</b>
+              <label class="switch">
+                <input type="checkbox" v-model="modalUser.active_driver" @change="toggleActive(modalUser)">
+                <span class="slider"></span>
+              </label>
+            </p>
+            <p><b>Номер машины:</b> {{ modalUser.car_number || '—' }}</p>
+            <p><b>Марка машины:</b> {{ modalUser.car_brand || '—' }}</p>
+          </div>
+          <div class="modal-actions">
+            <button class="delete-btn" @click="deleteUserById(modalUser.telegram_id)">Удалить</button>
+            <button class="btn close-btn" @click="closeModal">Закрыть</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <Toast ref="toastRef" />
+      <div v-if="modalTrip" class="modal-overlay" @click.self="closeModal">
+        <div class="modal">
+          <h3>Поездка #{{ modalTrip.id }}</h3>
+          <div class="modal-content">
+            <p><b>Маршрут:</b> {{ modalTrip.from_ }} — {{ modalTrip.to }}</p>
+            <p><b>Дата:</b> {{ modalTrip.date }} {{ modalTrip.time }}</p>
+            <p><b>Статус:</b> {{ modalTrip.status }}</p>
+            <p><b>Водитель (ID):</b> {{ modalTrip.owner_id }}</p>
+            <p v-if="modalTrip.description"><b>Особенности:</b> {{ modalTrip.description }}</p>
+            <p v-if="modalTrip.car_brand || modalTrip.car_number">
+              <b>Машина:</b>
+              <span v-if="modalTrip.car_brand">{{ modalTrip.car_brand }}</span>
+              <span v-if="modalTrip.car_brand && modalTrip.car_number">,</span>
+              <span v-if="modalTrip.car_number"> номер {{ modalTrip.car_number }}</span>
+            </p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn close-btn" @click="closeModal">Закрыть</button>
+          </div>
+        </div>
+      </div>
+
+      <Toast ref="toastRef" />
+    </div>
   </div>
 </template>
 
@@ -449,4 +446,81 @@ watch(tab, (newTab) => {
 .switch input:checked + .slider:before {
   transform: translateX(28px);
 }
+.admin-page {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent;
+}
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: bg-fade-in 1s ease-in-out;
+}
+
+.admin-content {
+  position: relative;
+  z-index: 2;
+  max-width: 360px;
+  margin: 32px auto;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 24px 20px;
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  max-height: calc(100vh - 64px);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+.admin-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 4px;
+}
+
+.tab {
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid var(--color-primary);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 48%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.tab.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+@keyframes bg-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 </style>
