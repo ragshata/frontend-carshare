@@ -144,7 +144,8 @@ import { useRouter } from 'vue-router';
 import { getAllUsers, updateUserRole, updateUserActiveDriver } from '@/api/admin';
 import { getAllTrips, getAdminStats } from '@/api/admin-trips';
 import { deleteTripById } from '@/api/admin-trips';
-import { deleteUserById as deleteUserByIdAPI } from '@/api/admin';
+import { deleteUserByTelegramId } from '@/api/admin';
+
 
 import Toast from '@/components/Toast.vue';
 
@@ -226,11 +227,11 @@ async function toggleActive(user: any) {
     toastRef.value?.show('Ошибка обновления статуса!');
   }
 }
-async function deleteUserById(userId: number) {
-  if (!confirm('Удалить пользователя? Это действие необратимо!')) return;
+async function deleteUserById(telegram_id: number) {
+  if (!confirm('Удалить пользователя?')) return;
   try {
-    await deleteUserByIdAPI(userId); // вызываем правильный метод
-    users.value = users.value.filter(u => u.id !== userId);
+    await deleteUserByTelegramId(telegram_id);
+    users.value = users.value.filter(u => u.telegram_id !== telegram_id);
     closeModal();
     toastRef.value?.show('Пользователь удалён!');
   } catch (e) {
