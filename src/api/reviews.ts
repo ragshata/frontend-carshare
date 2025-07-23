@@ -16,3 +16,12 @@ export async function createReview(payload: {
 }) {
   return axios.post(`${API_BASE}/reviews/`, payload); // <- обязательно слэш!
 }
+
+export async function getAllReviews() {
+  const res = await axios.get(`${API_BASE}/reviews/`);
+  return res.data;
+}
+
+export async function deleteReviewById(reviewId: number) {
+  return axios.delete(`${API_BASE}/reviews/${reviewId}`);
+}

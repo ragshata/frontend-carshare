@@ -8,6 +8,7 @@
       <div class="tabs">
         <button :class="['tab', { active: tab === 'users' }]" @click="tab = 'users'">Пользователи</button>
         <button :class="['tab', { active: tab === 'trips' }]" @click="tab = 'trips'">Поездки</button>
+        <button :class="['tab', { active: tab === 'reviews' }]" @click="tab = 'reviews'">Отзывы</button>
         <button :class="['tab', { active: tab === 'stats' }]" @click="tab = 'stats'">Аналитика</button>
       </div>
 
@@ -56,6 +57,33 @@
                 <button class="btn btn-danger" @click="deleteTrip(trip.id)">Удалить</button>
               </td>
 
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Отзывы -->
+      <div v-else-if="tab === 'reviews'">
+        <table class="trips-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Водитель</th>
+              <th>Автор</th>
+              <th>Оценка</th>
+              <th>Текст</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="review in reviews" :key="review.id">
+              <td>{{ review.id }}</td>
+              <td>{{ getUserName(review.driver_id) }}</td>
+              <td>{{ getUserName(review.author_id) }}</td>
+              <td>{{ review.rating }}</td>
+              <td>{{ review.text || '—' }}</td>
+              <td>
+                <button class="btn" @click="deleteReview(review.id)">Удалить</button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -142,6 +170,7 @@
 import { ref, onMounted, watch } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'vue-router';
+import { getDriverReviews, deleteReviewById } from '@/api/reviews';
 import Toast from '@/components/Toast.vue';
 
 import {
@@ -158,6 +187,7 @@ import {
 
 const router = useRouter();
 const auth = useAuthStore();
+const reviews = ref<any[]>([]);
 
 const ADMIN_IDS = [363320196, 6931781449];
 if (!ADMIN_IDS.includes(auth.user?.telegram_id)) {
@@ -184,6 +214,22 @@ function closeModal() {
   modalTrip.value = null;
 }
 
+async function loadReviews() {
+  try {
+    const allReviews = await getDriverReviews(0); // 0 вернёт ВСЕ отзывы
+    reviews.value = allReviews;
+  } catch {
+    toastRef.value?.show('Ошибка загрузки отзывов!');
+  }
+}
+watch(tab, (newTab) => {
+  if (newTab === 'users') loadUsers();
+  if (newTab === 'trips') loadTrips();
+  if (newTab === 'stats') loadStats();
+  if (newTab === 'reviews') loadReviews();
+});
+
+
 function getDriverName(owner_id: number) {
   const user = users.value.find(u => u.id === owner_id);
   return user ? `${user.first_name} ${user.last_name || ''}` : null;
@@ -208,6 +254,20 @@ async function loadStats() {
     stats.value = await getAdminStats();
   } catch {
     toastRef.value?.show('Ошибка загрузки статистики!');
+  }
+}
+function getUserName(userId: number) {
+  const user = users.value.find(u => u.id === userId);
+  return user ? `${user.first_name} ${user.last_name || ''}` : `ID ${userId}`;
+}
+async function deleteReview(id: number) {
+  if (!confirm('Удалить отзыв?')) return;
+  try {
+    await deleteReviewById(id);
+    reviews.value = reviews.value.filter(r => r.id !== id);
+    toastRef.value?.show('Отзыв удалён');
+  } catch {
+    toastRef.value?.show('Ошибка при удалении отзыва!');
   }
 }
 
