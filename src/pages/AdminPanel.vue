@@ -55,11 +55,9 @@
                 <button class="delete-btn" @click="deleteTrip(trip.id)">Удалить</button>
               </td>
             </tr>
-
           </tbody>
         </table>
-</div>
-
+      </div>
 
       <!-- Аналитика -->
       <div v-else-if="tab === 'stats'" class="stats-section">
@@ -68,7 +66,7 @@
         <div>⭐️ Средний рейтинг пользователей: <b>{{ stats.avg_driver_rating?.toFixed(2) ?? '—' }}</b></div>
       </div>
 
-      <!-- Модалки -->
+      <!-- Модалка пользователя -->
       <div v-if="modalUser" class="modal-overlay" @click.self="closeModal">
         <div class="modal">
           <h3>Пользователь #{{ modalUser.id }}</h3>
@@ -103,12 +101,12 @@
             <p><b>Марка машины:</b> {{ modalUser.car_brand || '—' }}</p>
           </div>
           <div class="modal-actions">
-            <button class="delete-btn" @click="deleteTrip(modalTrip.id)">Удалить</button>
             <button class="btn close-btn" @click="closeModal">Закрыть</button>
           </div>
         </div>
       </div>
 
+      <!-- Модалка поездки -->
       <div v-if="modalTrip" class="modal-overlay" @click.self="closeModal">
         <div class="modal">
           <h3>Поездка #{{ modalTrip.id }}</h3>
@@ -126,6 +124,7 @@
             </p>
           </div>
           <div class="modal-actions">
+            <button class="delete-btn" @click="deleteTrip(modalTrip.id)">Удалить</button>
             <button class="btn close-btn" @click="closeModal">Закрыть</button>
           </div>
         </div>
@@ -135,6 +134,7 @@
     </div>
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
