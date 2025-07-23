@@ -1,9 +1,4 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-import AdminPage from '@/pages/admin/AdminPage.vue';
-import AdminUsers from '@/pages/admin/AdminUsers.vue';
-import AdminTrips from '@/pages/admin/AdminTrips.vue';
-import AdminReviews from '@/pages/admin/AdminReviews.vue';
-import AdminStats from '@/pages/admin/AdminStats.vue';
 
 const routes: Array<RouteRecordRaw> = [
   { path: '/',      name: 'Home',     component: () => import('@/pages/MainScreen.vue') },
@@ -22,8 +17,7 @@ const routes: Array<RouteRecordRaw> = [
   { path: '/user-edit-trip', name: 'UserEditTrip', component: () => import('@/pages/UserEditTrip.vue')},
   { path: '/driver', name: 'DriverScreen', component: () => import('@/pages/DriverScreen.vue')},
   { path: '/passenger', name: 'PassengerScreen', component: () => import('@/pages/PassengerScreen.vue')},
-  { path: '/admin', component: AdminPage, children: [{ path: 'users', component: AdminUsers }, { path: 'trips', component: AdminTrips }, { path: 'reviews', component: AdminReviews }, { path: 'stats', component: AdminStats }]},
-
+  { path: '/admin', name: 'AdminPanel', component: () => import('@/pages/AdminPanel.vue')},
   { path: '/:catchAll(.*)', redirect: '/' },
 ];
 
