@@ -33,5 +33,6 @@ export async function patchUser(id: number, data: any, telegram_id: number) {
 }
 
 export async function deleteUserByTelegramId(telegram_id: number) {
+  console.log('Отправка запроса на удаление:', telegram_id);
   return axios.delete(`${API_BASE}/users/by_telegram/${telegram_id}`);
 }

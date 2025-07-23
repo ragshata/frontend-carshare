@@ -104,7 +104,7 @@
             <p><b>Марка машины:</b> {{ modalUser.car_brand || '—' }}</p>
           </div>
           <div class="modal-actions">
-            <button class="delete-btn" @click="deleteUserById(modalUser.telegram_id)">Удалить</button>
+            <button class="delete-btn" @click="deleteTrip(modalTrip.id)">Удалить</button>
             <button class="btn close-btn" @click="closeModal">Закрыть</button>
           </div>
         </div>
@@ -228,9 +228,12 @@ async function toggleActive(user: any) {
   }
 }
 async function deleteUserById(telegram_id: number) {
+  console.log('Пытаюсь удалить пользователя с telegram_id:', telegram_id);
   if (!confirm('Удалить пользователя?')) return;
+
   try {
-    await deleteUserByTelegramId(telegram_id);
+    const res = await deleteUserByTelegramId(telegram_id);
+    console.log('Ответ от сервера:', res.data);
     users.value = users.value.filter(u => u.telegram_id !== telegram_id);
     closeModal();
     toastRef.value?.show('Пользователь удалён!');
@@ -239,6 +242,7 @@ async function deleteUserById(telegram_id: number) {
     console.error('Ошибка удаления:', e);
   }
 }
+
 
 
 
