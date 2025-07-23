@@ -52,11 +52,10 @@
               </td>
               <td>
                 <button class="btn" @click="showTrip(trip)">Подробнее</button>
-                <button class="delete-btn" @click="deleteUserById(modalUser.id)">Удалить</button>
-
+                <button class="delete-btn" @click="deleteTrip(trip.id)">Удалить</button>
               </td>
-
             </tr>
+
           </tbody>
         </table>
 </div>
