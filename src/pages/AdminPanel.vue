@@ -52,10 +52,11 @@
               </td>
               <td>
                 <button class="btn" @click="showTrip(trip)">Подробнее</button>
-                <button class="delete-btn" @click="deleteTrip(trip.id)">Удалить</button>
-              </td>
-            </tr>
+                <button class="delete-btn" @click="deleteUserById(modalUser.id)">Удалить</button>
 
+              </td>
+
+            </tr>
           </tbody>
         </table>
 </div>
@@ -103,7 +104,7 @@
             <p><b>Марка машины:</b> {{ modalUser.car_brand || '—' }}</p>
           </div>
           <div class="modal-actions">
-            <button class="delete-btn" @click="deleteTrip(modalTrip.id)">Удалить</button>
+            <button class="delete-btn" @click="deleteUserById(modalUser.telegram_id)">Удалить</button>
             <button class="btn close-btn" @click="closeModal">Закрыть</button>
           </div>
         </div>
