@@ -62,32 +62,28 @@
         </table>
       </div>
       <!-- Отзывы -->
-      <div v-else-if="tab === 'reviews'">
+      <div v-else-if="tab === 'reviews'" class="transparent-section">
         <table class="trips-table">
           <thead>
             <tr>
               <th>ID</th>
-              <th>Водитель</th>
-              <th>Автор</th>
-              <th>Оценка</th>
-              <th>Текст</th>
+              <th>Имя</th>
               <th>Действия</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="review in reviews" :key="review.id">
               <td>{{ review.id }}</td>
-              <td>{{ getUserName(review.driver_id) }}</td>
               <td>{{ getUserName(review.author_id) }}</td>
-              <td>{{ review.rating }}</td>
-              <td>{{ review.text || '—' }}</td>
               <td>
-                <button class="btn" @click="deleteReview(review.id)">Удалить</button>
+                <button class="btn" @click="showReview(review)">Подробнее</button>
+                <button class="btn btn-danger" @click="deleteReview(review.id)">Удалить</button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+      
 
       <!-- Аналитика -->
       <div v-else-if="tab === 'stats'" class="stats-section">
@@ -160,6 +156,21 @@
           </div>
         </div>
       </div>
+      <!-- Модалка отзыва -->
+      <div v-if="modalReview" class="modal-overlay" @click.self="closeModal">
+        <div class="modal">
+          <h3>Отзыв #{{ modalReview.id }}</h3>
+          <div class="modal-content">
+            <p><b>Автор:</b> {{ getUserName(modalReview.author_id) }}</p>
+            <p><b>Водитель:</b> {{ getUserName(modalReview.driver_id) }}</p>
+            <p><b>Оценка:</b> {{ modalReview.rating }}</p>
+            <p><b>Комментарий:</b> {{ modalReview.text || '—' }}</p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn close-btn" @click="closeModal">Закрыть</button>
+          </div>
+        </div>
+      </div>
 
       <Toast ref="toastRef" />
     </div>
@@ -202,6 +213,8 @@ const stats = ref({ trips_count: 0, bookings_count: 0, avg_driver_rating: 0 });
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const modalUser = ref<any | null>(null);
 const modalTrip = ref<any | null>(null);
+const modalReview = ref<any | null>(null);
+
 
 function showUser(user: any) {
   modalUser.value = { ...user };
@@ -213,7 +226,9 @@ function closeModal() {
   modalUser.value = null;
   modalTrip.value = null;
 }
-
+function showReview(review: any) {
+  modalReview.value = { ...review };
+}
 async function loadReviews() {
   try {
     const allReviews = await getDriverReviews(0); // 0 вернёт ВСЕ отзывы
