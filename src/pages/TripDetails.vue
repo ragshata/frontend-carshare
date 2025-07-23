@@ -49,27 +49,40 @@
             <span>Рейтинг:</span>
             <b>{{ avgRating > 0 ? avgRating.toFixed(1) : "—" }}</b> ⭐️ ({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})
           </div>
+
           <div v-if="reviews.length === 0" class="empty-text">Нет отзывов</div>
-          <div v-for="review in reviews.slice(0,3)" :key="review.id" class="review-card">
-            <div class="review-rating">{{ review.rating }} ⭐️</div>
-            <div class="review-text" v-if="review.text">{{ review.text }}</div>
-            <div class="review-meta">
-              Поездка: #{{ review.trip_id }}
-              <span class="review-date">{{ formatDate(review.created_at) }}</span>
+          <div v-else class="review-list-wrapper">
+            <div v-for="review in reviews" :key="review.id" class="review-card">
+              <div class="review-rating">{{ review.rating }} ⭐️</div>
+              <div class="review-text" v-if="review.text">{{ review.text }}</div>
+              <div class="review-meta">
+                Поездка: #{{ review.trip_id }}
+                <span class="review-date">{{ formatDate(review.created_at) }}</span>
+              </div>
             </div>
           </div>
         </div>
 
+        <!-- Кнопки действий -->
         <div class="actions">
-          <button v-if="!isOwner" class="btn" @click="bookTrip" :disabled="booking">Забронировать</button>
-          <button v-if="isOwner" class="btn btn-outline" @click="router.push(`/trip/${trip.id}/passengers`)">👥 Пассажиры поездки</button>
+          <button v-if="!isOwner && !hasBooking" class="btn" @click="bookTrip" :disabled="booking">
+            Забронировать
+          </button>
+
+          <button
+            v-if="isOwner"
+            class="btn btn-outline"
+            @click="router.push(`/trip/${trip.id}/passengers`)"
+          >
+            👥 Пассажиры поездки
+          </button>
         </div>
       </div>
+
       <Toast ref="toastRef" />
     </div>
   </div>
 </template>
-
 
 <script setup lang="ts">
 import { ref, onMounted, computed, onBeforeUnmount } from "vue";
@@ -92,6 +105,7 @@ const driver = ref<any | null>(null);
 const reviews = ref<any[]>([]);
 const avgRating = ref(0);
 const booking = ref(false);
+const hasBooking = ref(false);
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 const statusMap: Record<string, string> = {
@@ -101,6 +115,7 @@ const statusMap: Record<string, string> = {
 };
 
 const isOwner = computed(() => trip.value && driver.value && driver.value.id === auth.user.id);
+
 onMounted(async () => {
   const tg = (window as any).Telegram?.WebApp;
 
@@ -121,9 +136,12 @@ onMounted(async () => {
     trip.value = await getTripById(tripId);
     driver.value = await getUserById(trip.value.owner_id);
 
-    console.log("DRIVER DATA:", driver.value);
+    // Проверка, есть ли у пользователя бронь
+    hasBooking.value = trip.value.passengers?.some((p: any) => p.user_id === auth.user.id) ?? false;
 
-    reviews.value = await getDriverReviews(trip.value.owner_id);
+
+    reviews.value = (await getDriverReviews(trip.value.owner_id)).reverse();
+
     avgRating.value = reviews.value.length
       ? reviews.value.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.value.length
       : 0;
@@ -131,9 +149,6 @@ onMounted(async () => {
     toastRef.value?.show("Ошибка при загрузке поездки или водителя");
   }
 });
-
-
-
 
 async function bookTrip() {
   if (!trip.value) return;
@@ -144,6 +159,7 @@ async function bookTrip() {
       user_id: auth.user.id,
       status: "pending"
     });
+    hasBooking.value = true;
     toastRef.value?.show("Вы успешно забронировали поездку!");
   } catch (e) {
     toastRef.value?.show("Мест нет!");
@@ -156,13 +172,13 @@ function formatDate(dt: string | null) {
   return new Date(dt).toLocaleDateString('ru-RU');
 }
 
-
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
   tg?.BackButton?.hide();
   tg?.BackButton?.offClick?.();
 });
 </script>
+
 
 <style scoped>
 .trip-details-page {
@@ -343,4 +359,20 @@ onBeforeUnmount(() => {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+.review-list-wrapper {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-top: 10px;
+}
+
+/* Добавить скроллбар стиль — по желанию */
+.review-list-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+.review-list-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 4px;
+}
+
 </style>
