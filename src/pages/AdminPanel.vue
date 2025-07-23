@@ -181,8 +181,9 @@
 import { ref, onMounted, watch } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'vue-router';
-import { getDriverReviews, deleteReviewById } from '@/api/reviews';
+import { getDriverReviews, deleteReviewById, getAllReviews } from '@/api/reviews';
 import Toast from '@/components/Toast.vue';
+
 
 import {
   getAllUsers,
@@ -231,7 +232,7 @@ function showReview(review: any) {
 }
 async function loadReviews() {
   try {
-    const allReviews = await getDriverReviews(0); // 0 вернёт ВСЕ отзывы
+    const allReviews = await getAllReviews(); // 0 вернёт ВСЕ отзывы
     reviews.value = allReviews;
   } catch {
     toastRef.value?.show('Ошибка загрузки отзывов!');
