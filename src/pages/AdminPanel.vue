@@ -34,8 +34,9 @@
       </div>
 
       <!-- Поездки -->
-      <div v-else-if="tab === 'trips'">
+      <div v-else-if="tab === 'trips'" class="transparent-section">
         <table class="trips-table">
+
           <thead>
             <tr>
               <th>ID</th>
@@ -51,10 +52,10 @@
                 <span v-else>—</span>
               </td>
               <td>
-                <button class="info-btn" @click="showTrip(trip)">Подробнее</button>
-                <button class="delete-btn" @click="deleteTrip(trip.id)">Удалить</button>
-
+                <button class="btn" @click="showTrip(trip)">Подробнее</button>
+                <button class="btn btn-danger" @click="deleteTrip(trip.id)">Удалить</button>
               </td>
+
             </tr>
           </tbody>
         </table>
@@ -312,6 +313,15 @@ watch(tab, (newTab) => {
 .admin-tabs.small button.active,
 .admin-tabs.small button:hover {
   background: #e8f1ff;
+}
+.transparent-section {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 16px;
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
+  margin-top: 16px;
 }
 
 /* Таблицы */
@@ -584,6 +594,29 @@ watch(tab, (newTab) => {
 }
 .btn-danger:hover {
   background: rgba(198, 40, 40, 0.9);
+}
+.trips-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.trips-table th, .trips-table td {
+  padding: 10px;
+  font-size: 15px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  color: #222;
+  background: transparent; /* убираем белую подложку */
+  text-align: center;
+}
+
+.trips-table th {
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 </style>
