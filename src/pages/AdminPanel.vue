@@ -52,15 +52,12 @@
               </td>
               <td>
                 <button class="btn" @click="showTrip(trip)">Подробнее</button>
-                <button class="delete-btn" @click="deleteUserById(modalUser.id)">Удалить</button>
-
+                <button class="delete-btn" @click="deleteTrip(trip.id)">Удалить</button>
               </td>
-
             </tr>
           </tbody>
         </table>
-</div>
-
+      </div>
 
       <!-- Аналитика -->
       <div v-else-if="tab === 'stats'" class="stats-section">
@@ -69,7 +66,7 @@
         <div>⭐️ Средний рейтинг пользователей: <b>{{ stats.avg_driver_rating?.toFixed(2) ?? '—' }}</b></div>
       </div>
 
-      <!-- Модалки -->
+      <!-- Модалка пользователя -->
       <div v-if="modalUser" class="modal-overlay" @click.self="closeModal">
         <div class="modal">
           <h3>Пользователь #{{ modalUser.id }}</h3>
@@ -110,6 +107,7 @@
         </div>
       </div>
 
+      <!-- Модалка поездки -->
       <div v-if="modalTrip" class="modal-overlay" @click.self="closeModal">
         <div class="modal">
           <h3>Поездка #{{ modalTrip.id }}</h3>
@@ -127,6 +125,7 @@
             </p>
           </div>
           <div class="modal-actions">
+            <button class="delete-btn" @click="deleteTrip(modalTrip.id)">Удалить</button>
             <button class="btn close-btn" @click="closeModal">Закрыть</button>
           </div>
         </div>
@@ -141,19 +140,24 @@
 import { ref, onMounted, watch } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'vue-router';
-import { getAllUsers, updateUserRole, updateUserActiveDriver } from '@/api/admin';
-import { getAllTrips, getAdminStats } from '@/api/admin-trips';
-import { deleteTripById } from '@/api/admin-trips';
-import { deleteUserByTelegramId } from '@/api/admin';
-
-
 import Toast from '@/components/Toast.vue';
+
+import {
+  getAllUsers,
+  updateUserRole,
+  updateUserActiveDriver,
+  deleteUserByTelegramId
+} from '@/api/admin';
+import {
+  getAllTrips,
+  getAdminStats,
+  deleteTripById
+} from '@/api/admin-trips';
 
 const router = useRouter();
 const auth = useAuthStore();
 
 const ADMIN_IDS = [363320196, 6931781449];
-
 if (!ADMIN_IDS.includes(auth.user?.telegram_id)) {
   router.replace('/main-screen');
 }
@@ -167,11 +171,20 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const modalUser = ref<any | null>(null);
 const modalTrip = ref<any | null>(null);
 
-// Получаем имя водителя по owner_id поездки
+function showUser(user: any) {
+  modalUser.value = { ...user };
+}
+function showTrip(trip: any) {
+  modalTrip.value = { ...trip };
+}
+function closeModal() {
+  modalUser.value = null;
+  modalTrip.value = null;
+}
+
 function getDriverName(owner_id: number) {
   const user = users.value.find(u => u.id === owner_id);
-  if (!user) return null;
-  return user.first_name + (user.last_name ? ' ' + user.last_name : '');
+  return user ? `${user.first_name} ${user.last_name || ''}` : null;
 }
 
 async function loadUsers() {
@@ -192,20 +205,10 @@ async function loadStats() {
   try {
     stats.value = await getAdminStats();
   } catch {
-    toastRef.value?.show('Ошибка аналитики!');
+    toastRef.value?.show('Ошибка загрузки статистики!');
   }
 }
 
-function showUser(user: any) {
-  modalUser.value = { ...user };
-}
-function showTrip(trip: any) {
-  modalTrip.value = { ...trip };
-}
-function closeModal() {
-  modalUser.value = null;
-  modalTrip.value = null;
-}
 async function setRole(isDriver: boolean) {
   if (!modalUser.value) return;
   try {
@@ -222,42 +225,34 @@ async function toggleActive(user: any) {
     user.active_driver = !!user.active_driver;
     await updateUserActiveDriver(user.id, user.active_driver);
     await loadUsers();
-    toastRef.value?.show('Статус обновлен');
+    toastRef.value?.show('Статус обновлён');
   } catch {
     toastRef.value?.show('Ошибка обновления статуса!');
   }
 }
 async function deleteUserById(telegram_id: number) {
-  console.log('Пытаюсь удалить пользователя с telegram_id:', telegram_id);
   if (!confirm('Удалить пользователя?')) return;
-
   try {
-    const res = await deleteUserByTelegramId(telegram_id);
-    console.log('Ответ от сервера:', res.data);
+    await deleteUserByTelegramId(telegram_id);
     users.value = users.value.filter(u => u.telegram_id !== telegram_id);
     closeModal();
-    toastRef.value?.show('Пользователь удалён!');
+    toastRef.value?.show('Пользователь удалён');
   } catch (e) {
     toastRef.value?.show('Ошибка удаления пользователя!');
     console.error('Ошибка удаления:', e);
   }
 }
-
-
-
-
 async function deleteTrip(tripId: number) {
-  if (!confirm("Удалить поездку? Это действие необратимо!")) return;
+  if (!confirm('Удалить поездку?')) return;
   try {
     await deleteTripById(tripId);
     trips.value = trips.value.filter(t => t.id !== tripId);
     closeModal();
-    toastRef.value?.show("Поездка удалена");
+    toastRef.value?.show('Поездка удалена');
   } catch {
-    toastRef.value?.show("Ошибка при удалении поездки!");
+    toastRef.value?.show('Ошибка при удалении поездки!');
   }
 }
-
 
 onMounted(() => {
   if (tab.value === 'users') loadUsers();
@@ -269,8 +264,8 @@ watch(tab, (newTab) => {
   if (newTab === 'trips') loadTrips();
   if (newTab === 'stats') loadStats();
 });
-
 </script>
+
 
 <style scoped>
 .admin-wrap {
