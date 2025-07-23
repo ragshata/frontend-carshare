@@ -226,6 +226,7 @@ function showTrip(trip: any) {
 function closeModal() {
   modalUser.value = null;
   modalTrip.value = null;
+  modalReview.value = null;
 }
 function showReview(review: any) {
   modalReview.value = { ...review };
@@ -281,6 +282,7 @@ async function deleteReview(id: number) {
   try {
     await deleteReviewById(id);
     reviews.value = reviews.value.filter(r => r.id !== id);
+    closeModal();
     toastRef.value?.show('Отзыв удалён');
   } catch {
     toastRef.value?.show('Ошибка при удалении отзыва!');
