@@ -35,7 +35,7 @@
 
       <!-- Поездки -->
       <div v-else-if="tab === 'trips'" class="transparent-section">
-        <table class="trips-table">
+      <table class="trips-table">
 
           <thead>
             <tr>
@@ -268,7 +268,220 @@ watch(tab, (newTab) => {
 });
 </script>
 
+
 <style scoped>
+.admin-wrap {
+  max-width: 900px;
+  margin: 36px auto 0 auto;
+  padding: 24px 8px 44px 8px;
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 2px 12px rgba(60,80,120,0.06);
+}
+.title {
+  font-size: 25px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #232323;
+  text-align: center;
+}
+
+
+
+/* Маленькие tabs, в строку и с прокруткой */
+.admin-tabs.small {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 7px;
+  justify-content: flex-start;
+  margin-bottom: 15px;
+}
+.admin-tabs.small button {
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  min-width: 92px;
+  background: #fff;
+  border: 1.5px solid #007bff;
+  color: #007bff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.14s;
+  white-space: nowrap;
+}
+.admin-tabs.small button.active,
+.admin-tabs.small button:hover {
+  background: #e8f1ff;
+}
+
+/* Таблицы */
+.users-table, .trips-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  margin-top: 12px;
+}
+.users-table th, .users-table td,
+.trips-table th, .trips-table td {
+  padding: 11px 10px;
+  font-size: 15px;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+.users-table th, .trips-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #222;
+}
+.users-table td, .trips-table td {
+  background: #fff;
+}
+.info-btn {
+  background: #fff;
+  color: #007bff;
+  border: 1.5px solid #007bff;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 5px 18px;
+  cursor: pointer;
+  transition: background 0.14s;
+}
+.info-btn:hover {
+  background: #e8f1ff;
+}
+.stats-section {
+  padding: 40px;
+  text-align: center;
+  font-size: 17px;
+}
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30,30,30,0.14);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal {
+  background: #fff;
+  border-radius: 20px;
+  padding: 35px 26px 28px 26px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.09);
+  min-width: 280px;
+  max-width: 99vw;
+  text-align: left;
+}
+.delete-btn.small {
+  font-size: 13px;
+  padding: 6px 10px;
+  min-width: auto;
+}
+.modal-content p {
+  margin: 10px 0 10px 0;
+  font-size: 15px;
+}
+.modal-actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 19px;
+  justify-content: flex-end;
+}
+.btn, .close-btn {
+  background: #fff;
+  color: #007bff;
+  border: 1.5px solid #007bff;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 9px 22px;
+  cursor: pointer;
+  transition: background 0.17s;
+}
+.btn:hover, .close-btn:hover {
+  background: #e8f1ff;
+}
+.delete-btn {
+  background: #e53935;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  font-size: 15px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.13s;
+  min-width: 80px;
+}
+.delete-btn:hover {
+  background: #c62828;
+}
+.role-select {
+  display: inline-flex;
+  border-radius: 11px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1.5px #007bff inset;
+  margin-left: 12px;
+  vertical-align: middle;
+}
+.role-option {
+  border: none;
+  padding: 6px 18px;
+  font-size: 15px;
+  font-weight: 500;
+  background: #fff;
+  color: #007bff;
+  cursor: pointer;
+  transition: background 0.17s, color 0.13s;
+  outline: none;
+}
+.role-option.selected {
+  background: #007bff;
+  color: #fff;
+}
+.role-option:not(.selected):hover {
+  background: #e6f8ff;
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 32px;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #EEE;
+  border-radius: 32px;
+  transition: .4s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: .4s;
+  box-shadow: 0 1px 3px rgba(30,30,30,0.07);
+}
+.switch input:checked + .slider {
+  background-color: #007bff;
+}
+.switch input:checked + .slider:before {
+  transform: translateX(28px);
+}
 .admin-page {
   position: fixed;
   inset: 0;
@@ -286,11 +499,6 @@ watch(tab, (newTab) => {
   pointer-events: none;
   user-select: none;
   animation: bg-fade-in 1s ease-in-out;
-}
-
-@keyframes bg-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 .admin-content {
@@ -316,14 +524,15 @@ watch(tab, (newTab) => {
   text-align: center;
 }
 
-/* Tabs */
 .admin-tabs {
   display: flex;
+  flex-wrap: nowrap;
   justify-content: center;
   gap: 8px;
   margin-bottom: 20px;
   padding-bottom: 4px;
 }
+
 .tab {
   padding: 6px 10px;
   font-size: 13px;
@@ -335,173 +544,70 @@ watch(tab, (newTab) => {
   transition: all 0.2s ease;
   white-space: nowrap;
   flex-shrink: 0;
+  max-width: 48%;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
+
 .tab.active {
   background: var(--color-primary);
   color: white;
 }
 
-/* Таблицы */
-.users-table, .trips-table {
+@keyframes bg-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.btn {
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #007bff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: background 0.18s;
+  cursor: pointer;
+  min-width: 90px;
+}
+.btn:hover {
+  background: rgba(255, 255, 255, 0.8);
+}
+.btn:active {
+  background: #e3eeff;
+}
+.btn-danger {
+  background: rgba(229, 57, 53, 0.85);
+  color: white;
+}
+.btn-danger:hover {
+  background: rgba(198, 40, 40, 0.9);
+}
+.trips-table {
   width: 100%;
   border-collapse: collapse;
   background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
-  margin-top: 16px;
 }
-.users-table th, .users-table td,
+
 .trips-table th, .trips-table td {
   padding: 10px;
   font-size: 15px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  text-align: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   color: #222;
+  background: transparent; /* убираем белую подложку */
+  text-align: center;
 }
-.users-table th, .trips-table th {
+
+.trips-table th {
   font-weight: bold;
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Кнопки */
-.btn, .close-btn, .info-btn {
-  padding: 9px 18px;
-  font-size: 14px;
-  font-weight: 500;
-  border: 1.5px solid #007bff;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.6);
-  color: #007bff;
-  cursor: pointer;
-  transition: background 0.17s;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-.btn:hover, .info-btn:hover, .close-btn:hover {
-  background: rgba(255, 255, 255, 0.8);
-}
-.btn:active, .info-btn:active {
-  background: #e3eeff;
-}
-
-.delete-btn {
-  background: rgba(229, 57, 53, 0.85);
-  color: white;
-  border: none;
-  border-radius: 7px;
-  font-size: 15px;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: background 0.13s;
-}
-.delete-btn:hover {
-  background: rgba(198, 40, 40, 0.9);
-}
-
-/* Модалка */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(30,30,30,0.14);
-  z-index: 99999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.modal {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  padding: 35px 26px 28px 26px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.09);
-  min-width: 280px;
-  max-width: 99vw;
-  text-align: left;
-}
-.modal-content p {
-  margin: 10px 0;
-  font-size: 15px;
-}
-.modal-actions {
-  display: flex;
-  gap: 14px;
-  margin-top: 19px;
-  justify-content: flex-end;
-}
-
-/* Статистика */
-.stats-section {
-  padding: 40px;
-  text-align: center;
-  font-size: 17px;
-}
-
-/* Роль пользователя */
-.role-select {
-  display: inline-flex;
-  border-radius: 11px;
-  overflow: hidden;
-  box-shadow: 0 0 0 1.5px #007bff inset;
-  margin-left: 12px;
-}
-.role-option {
-  border: none;
-  padding: 6px 18px;
-  font-size: 15px;
-  font-weight: 500;
-  background: #fff;
-  color: #007bff;
-  cursor: pointer;
-  transition: background 0.17s, color 0.13s;
-}
-.role-option.selected {
-  background: #007bff;
-  color: #fff;
-}
-.role-option:not(.selected):hover {
-  background: #e6f8ff;
-}
-
-/* Переключатель */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 32px;
-  margin-left: 10px;
-}
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-.slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background-color: #EEE;
-  border-radius: 32px;
-  transition: .4s;
-}
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 3px;
-  bottom: 3px;
-  background-color: #fff;
-  border-radius: 50%;
-  transition: .4s;
-  box-shadow: 0 1px 3px rgba(30,30,30,0.07);
-}
-.switch input:checked + .slider {
-  background-color: #007bff;
-}
-.switch input:checked + .slider:before {
-  transform: translateX(28px);
-}
 </style>
