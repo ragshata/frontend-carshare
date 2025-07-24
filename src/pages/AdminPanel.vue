@@ -283,13 +283,14 @@ async function deleteReview(id: number) {
   if (!confirm('Удалить отзыв?')) return;
   try {
     await deleteReviewById(id);
-    reviews.value = reviews.value.filter(r => r.id !== id);
+    await loadReviews(); // <--- вот ключ
     closeModal();
     toastRef.value?.show('Отзыв удалён');
   } catch {
     toastRef.value?.show('Ошибка при удалении отзыва!');
   }
 }
+
 
 async function setRole(isDriver: boolean) {
   if (!modalUser.value) return;
