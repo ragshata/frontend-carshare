@@ -4,6 +4,9 @@
 
     <div class="driver-content">
       <div class="actions">
+        <button class="btn btn-access" @click="go('/buy-access')">
+          💳 Купить доступ
+        </button>
         <button class="btn" @click="go('/offer-trip')">
           🚗 Создать поездку
         </button>
@@ -94,6 +97,13 @@ function go(path: string) {
   background: rgba(227, 238, 255, 0.6);
 }
 
+.btn-access {
+  background: #ff9800;
+  color: white;
+}
+.btn-access:active {
+  background: #fb8c00;
+}
 
 @keyframes bg-fade-in {
   from { opacity: 0; }
