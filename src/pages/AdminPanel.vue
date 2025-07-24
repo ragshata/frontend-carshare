@@ -9,7 +9,7 @@
         <button :class="['tab', { active: tab === 'users' }]" @click="tab = 'users'">Пользователи</button>
         <button :class="['tab', { active: tab === 'trips' }]" @click="tab = 'trips'">Поездки</button>
         <button :class="['tab', { active: tab === 'reviews' }]" @click="tab = 'reviews'">Отзывы</button>
-        <button :class="['tab', { active: tab === 'stats' }]" @click="tab = 'stats'">Аналитика</button>
+        <button :class="['tab', { active: tab === 'stats' }]" @click="tab = 'stats'">Ааналитика</button>
       </div>
 
       <!-- Пользователи -->

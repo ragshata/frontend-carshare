@@ -23,5 +23,5 @@ export async function getAllReviews() {
 }
 
 export async function deleteReviewById(reviewId: number) {
-  return axios.delete(`${API_BASE}/reviews/${reviewId}`);
+  return axios.delete(`${API_BASE}/reviews/${reviewId}/`);
 }
