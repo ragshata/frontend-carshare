@@ -9,7 +9,7 @@
         <button :class="['tab', { active: tab === 'users' }]" @click="tab = 'users'">Пользователи</button>
         <button :class="['tab', { active: tab === 'trips' }]" @click="tab = 'trips'">Поездки</button>
         <button :class="['tab', { active: tab === 'reviews' }]" @click="tab = 'reviews'">Отзывы</button>
-        <button :class="['tab', { active: tab === 'stats' }]" @click="tab = 'stats'">Ааналитика</button>
+        <button :class="['tab', { active: tab === 'stats' }]" @click="tab = 'stats'">Аналитика</button>
       </div>
 
       <!-- Пользователи -->
@@ -167,10 +167,12 @@
             <p><b>Комментарий:</b> {{ modalReview.text || '—' }}</p>
           </div>
           <div class="modal-actions">
+            <button class="delete-btn" @click="deleteReview(modalReview.id)">Удалить</button>
             <button class="btn close-btn" @click="closeModal">Закрыть</button>
           </div>
         </div>
       </div>
+
 
       <Toast ref="toastRef" />
     </div>
