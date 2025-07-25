@@ -10,6 +10,7 @@
         <button :class="['tab', { active: tab === 'trips' }]" @click="tab = 'trips'">Поездки</button>
         <button :class="['tab', { active: tab === 'reviews' }]" @click="tab = 'reviews'">Отзывы</button>
         <button :class="['tab', { active: tab === 'stats' }]" @click="tab = 'stats'">Аналитика</button>
+        <button :class="['tab', { active: tab === 'tariffs' }]" @click="tab = 'tariffs'">Тарифы</button>
       </div>
 
       <!-- Пользователи -->
@@ -83,6 +84,19 @@
           </tbody>
         </table>
       </div>
+      <!-- Вкладка Тарифы -->
+      <div v-else-if="tab === 'tariffs'" class="transparent-section">
+        <div v-for="tariff in tariffs" :key="tariff.id" class="tariff-editor">
+          <h3>{{ tariff.name }} ({{ tariff.duration_days }} дн.)</h3>
+          <label>Цена</label>
+          <input type="number" v-model.number="tariff.price" />
+          <label>Описание</label>
+          <textarea v-model="tariff.description" rows="2"></textarea>
+          <button class="btn" @click="saveTariff(tariff)">Сохранить</button>
+        </div>
+      </div>
+
+
       
 
       <!-- Аналитика -->
@@ -184,6 +198,7 @@ import { ref, onMounted, watch } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'vue-router';
 import { getDriverReviews, deleteReviewById, getAllReviews } from '@/api/reviews';
+import { getAdminTariffs, updateTariff, Tariff } from '@/api/admin-tariffs';
 import Toast from '@/components/Toast.vue';
 
 
@@ -217,7 +232,7 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const modalUser = ref<any | null>(null);
 const modalTrip = ref<any | null>(null);
 const modalReview = ref<any | null>(null);
-
+const tariffs = ref<Tariff[]>([]);
 
 function showUser(user: any) {
   modalUser.value = { ...user };
@@ -290,6 +305,28 @@ async function deleteReview(id: number) {
     toastRef.value?.show('Ошибка при удалении отзыва!');
   }
 }
+async function loadTariffs() {
+  try {
+    tariffs.value = await getAdminTariffs(); // API: /admin/tariffs
+  } catch {
+    toastRef.value?.show("Ошибка загрузки тарифов");
+  }
+}
+
+async function saveTariff(tariff: Tariff) {
+  try {
+    await updateTariff(tariff.id, {
+      price: tariff.price,
+      description: tariff.description,
+    });
+    toastRef.value?.show('Тариф обновлён');
+  } catch {
+    toastRef.value?.show('Ошибка обновления тарифа!');
+  }
+}
+watch(tab, (newTab) => {
+  if (newTab === "tariffs") loadTariffs();
+});
 
 
 async function setRole(isDriver: boolean) {
