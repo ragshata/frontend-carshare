@@ -3,7 +3,7 @@
     <div class="background-img"></div>
 
     <div class="content-card">
-      <h2 class="title">Мои бронирования</h2>
+      <h2 class="title">Мои бронирования (debug)</h2>
 
       <div class="tabs">
         <button :class="{ active: currentTab === 'active' }" @click="currentTab = 'active'">Активные</button>
@@ -23,13 +23,16 @@
             {{ tripMap[b.trip_id]?.from_ || '—' }} — {{ tripMap[b.trip_id]?.to || '—' }}
             <span>{{ tripMap[b.trip_id]?.price ? tripMap[b.trip_id].price + ' сомони (TJS)' : '' }}</span>
           </div>
+
           <div class="row">
             <span v-if="tripMap[b.trip_id]?.date">🗓 {{ tripMap[b.trip_id].date }}</span>
             <span v-if="tripMap[b.trip_id]?.time">⏰ {{ tripMap[b.trip_id].time }}</span>
           </div>
+
           <div class="row">
             <span :class="['status', b.status]">{{ ruStatus(b.status) }}</span>
           </div>
+
           <div v-if="drivers[b.trip_id]" class="driver-info">
             <div v-if="drivers[b.trip_id]?.username">
               Telegram:
@@ -39,10 +42,17 @@
             </div>
           </div>
 
+          <!-- DEBUG INFO -->
+          <div class="debug-box">
+            <div>confirmed_at: {{ b.confirmed_at }}</div>
+            <div>secondsPassed: {{ secondsPassed(b) }}</div>
+            <div>remainingSeconds: {{ remainingSeconds(b) }}</div>
+            <div>now: {{ new Date(now).toISOString() }}</div>
+          </div>
+
           <div class="actions">
             <button class="btn-outline" @click="goToTripDetails(b.trip_id)">Подробнее</button>
 
-            <!-- Блок кнопки отмены -->
             <template v-if="b.status === 'confirmed'">
               <template v-if="remainingSeconds(b) > 0">
                 <button
@@ -57,7 +67,6 @@
               </template>
             </template>
           </div>
-
         </div>
       </div>
     </div>
@@ -90,12 +99,10 @@ const currentTab = ref<'active' | 'done'>('active');
 
 const now = ref(Date.now());
 let timer: any = null;
-
-// обновляем каждую секунду, чтобы таймер был точным
 onMounted(() => {
   timer = setInterval(() => {
     now.value = Date.now();
-  }, 1000);
+  }, 1000); // каждую секунду
 });
 onBeforeUnmount(() => {
   clearInterval(timer);
@@ -128,18 +135,20 @@ function goToTripDetails(tripId: number) {
   router.push(`/trip/${tripId}`);
 }
 
-// сколько секунд осталось до конца 30-минутного окна
-function remainingSeconds(b: any): number {
-  if (!b.confirmed_at) return 0; // пока не подтвердили
-  const confirmedTime = new Date(b.confirmed_at).getTime();
-  const elapsed = (now.value - confirmedTime) / 1000;
-  const remaining = 30 * 60 - elapsed;
-  return remaining > 0 ? Math.floor(remaining) : 0;
+function secondsPassed(b: any) {
+  const base = b.confirmed_at || b.created_at;
+  if (!base) return 999999;
+  const start = new Date(base).getTime();
+  return Math.floor((now.value - start) / 1000);
 }
 
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
+function remainingSeconds(b: any) {
+  return Math.max(30 * 60 - secondsPassed(b), 0);
+}
+
+function formatTime(sec: number) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
@@ -202,6 +211,7 @@ onBeforeUnmount(() => {
   tg?.BackButton?.offClick?.();
 });
 </script>
+
 
 
 
