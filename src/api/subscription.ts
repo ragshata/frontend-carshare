@@ -16,13 +16,3 @@ export async function startDriverTrial(userId: number) {
   return res.data;
 }
 
-// Купить тариф
-export async function buyTariff(userId: number, tariffId: number) {
-  const res = await axios.post(`${API_BASE}/subscriptions/buy`, null, {
-    params: {
-      user_id: userId,
-      tariff_id: tariffId,
-    },
-  });
-  return res.data;
-}

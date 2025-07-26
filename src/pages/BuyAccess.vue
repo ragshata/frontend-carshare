@@ -24,15 +24,12 @@
 
       <!-- Покупка тарифа -->
       <div v-if="!hasPaidSubscription">
-        <p class="desc">📦 Выберите подходящий тариф</p>
+        <p class="desc">📦 Или выберите подходящий тариф</p>
         <div class="tariff-list">
           <div v-for="tariff in tariffs" :key="tariff.id" class="tariff-card">
             <div class="tariff-name">{{ tariff.name }}</div>
             <div class="tariff-price">{{ tariff.price }} сомони</div>
             <div v-if="tariff.description" class="tariff-desc">{{ tariff.description }}</div>
-            <button class="btn buy-btn" @click="buy(tariff)" :disabled="loadingBuy">
-              {{ loadingBuy ? '...' : 'Купить' }}
-            </button>
           </div>
         </div>
       </div>
