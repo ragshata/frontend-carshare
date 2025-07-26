@@ -110,7 +110,11 @@ function goToTripDetails(tripId: number) {
 function canCancel(b: any) {
   if (b.status !== "confirmed") return false;
   if (!b.created_at) return false;
-  const created = new Date(b.created_at);
+
+  // Нормализуем строку даты: "2025-07-26 20:10:00" → "2025-07-26T20:10:00Z"
+  const normalized = b.created_at.replace(" ", "T") + "Z";
+  const created = new Date(normalized);
+
   const diffMinutes = (Date.now() - created.getTime()) / 60000;
   return diffMinutes < 30;
 }
@@ -171,6 +175,7 @@ onBeforeUnmount(() => {
   tg?.BackButton?.offClick?.();
 });
 </script>
+
 
 <style scoped>
 .my-bookings-page {
