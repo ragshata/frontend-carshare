@@ -22,9 +22,9 @@
         </button>
       </div>
 
-      <!-- Покупка тарифа -->
+      <!-- Просмотр тарифов (без покупки) -->
       <div v-if="!hasPaidSubscription">
-        <p class="desc">📦 Или выберите подходящий тариф</p>
+        <p class="desc">📦 Доступные тарифы:</p>
         <div class="tariff-list">
           <div v-for="tariff in tariffs" :key="tariff.id" class="tariff-card">
             <div class="tariff-name">{{ tariff.name }}</div>
@@ -45,7 +45,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { getTariffs, buyTariff, startDriverTrial } from '@/api/subscription';
+import { getTariffs, startDriverTrial } from '@/api/subscription';
 import Toast from '@/components/Toast.vue';
 
 const router = useRouter();
@@ -54,7 +54,6 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 const tariffs = ref<{ id: number; name: string; price: number; description?: string }[]>([]);
 const loadingTrial = ref(false);
-const loadingBuy = ref(false);
 
 // Может ли активировать пробный период
 const canActivateTrial = computed(() => !auth.user?.driver_trial_end);
@@ -85,19 +84,6 @@ async function startTrial() {
     toastRef.value?.show(e.response?.data?.detail || 'Ошибка!');
   }
   loadingTrial.value = false;
-}
-
-async function buy(tariff: { id: number }) {
-  loadingBuy.value = true;
-  try {
-    await buyTariff(auth.user.id, tariff.id);
-    auth.user.active_driver = true;
-    toastRef.value?.show('Подписка активирована!');
-    router.replace('/offer-trip');
-  } catch (e: any) {
-    toastRef.value?.show(e.response?.data?.detail || 'Ошибка покупки');
-  }
-  loadingBuy.value = false;
 }
 </script>
 
