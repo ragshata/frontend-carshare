@@ -38,8 +38,17 @@
               </a>
             </div>
           </div>
-          <div>
+
+          <div class="actions">
             <button class="btn-outline" @click="goToTripDetails(b.trip_id)">Подробнее</button>
+            <!-- Кнопка отмены, если доступна -->
+            <button
+              v-if="canCancel(b)"
+              class="btn-cancel"
+              @click="cancelBookingClick(b)"
+            >
+              Отменить
+            </button>
           </div>
         </div>
       </div>
@@ -49,12 +58,10 @@
   </div>
 </template>
 
-
-
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { useAuthStore } from "@/store/auth";
-import { getMyBookings } from "@/api/bookings";
+import { getMyBookings, cancelBooking } from "@/api/bookings";
 import { getTripById } from "@/api/trips";
 import { getUserById } from "@/api/users";
 import Toast from "@/components/Toast.vue";
@@ -82,7 +89,6 @@ const filteredBookings = computed(() =>
   })
 );
 
-
 function ruStatus(status: string) {
   switch (status) {
     case "confirmed":
@@ -96,13 +102,28 @@ function ruStatus(status: string) {
   }
 }
 
-function goToRate(tripId: number) {
-  router.push(`/rate/${tripId}`);
-}
-
-// Новая функция — переход на детали поездки
 function goToTripDetails(tripId: number) {
   router.push(`/trip/${tripId}`);
+}
+
+// === Проверка на отмену (30 минут с момента бронирования) ===
+function canCancel(b: any) {
+  if (b.status !== "confirmed") return false;
+  if (!b.created_at) return false;
+  const created = new Date(b.created_at);
+  const diffMinutes = (Date.now() - created.getTime()) / 60000;
+  return diffMinutes < 30;
+}
+
+async function cancelBookingClick(b: any) {
+  if (!confirm("Отменить бронирование?")) return;
+  try {
+    await cancelBooking(b.id, auth.user.id);
+    toastRef.value?.show("Бронирование отменено");
+    confirmedBookings.value = confirmedBookings.value.filter(x => x.id !== b.id);
+  } catch (e: any) {
+    toastRef.value?.show(e.response?.data?.detail || "Ошибка отмены");
+  }
 }
 
 onMounted(async () => {
@@ -159,6 +180,24 @@ onBeforeUnmount(() => {
   height: 100vh;
   overflow-y: auto;
   background: transparent;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-cancel {
+  background: #e53935;
+  color: white;
+  border: none;
+  padding: 9px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn-cancel:hover {
+  background: #c62828;
 }
 
 .background-img {
