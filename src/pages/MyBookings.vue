@@ -21,15 +21,20 @@
         >
           <div class="row between bold">
             {{ tripMap[b.trip_id]?.from_ || '—' }} — {{ tripMap[b.trip_id]?.to || '—' }}
-            <span>{{ tripMap[b.trip_id]?.price ? tripMap[b.trip_id].price + ' сомони (TJS)' : '' }}</span>
+            <span>
+              {{ tripMap[b.trip_id]?.price ? tripMap[b.trip_id].price + ' сомони (TJS)' : '' }}
+            </span>
           </div>
+
           <div class="row">
             <span v-if="tripMap[b.trip_id]?.date">🗓 {{ tripMap[b.trip_id].date }}</span>
             <span v-if="tripMap[b.trip_id]?.time">⏰ {{ tripMap[b.trip_id].time }}</span>
           </div>
+
           <div class="row">
             <span :class="['status', b.status]">{{ ruStatus(b.status) }}</span>
           </div>
+
           <div v-if="drivers[b.trip_id]" class="driver-info">
             <div v-if="drivers[b.trip_id]?.username">
               Telegram:
@@ -42,7 +47,7 @@
           <div class="actions">
             <button class="btn-outline" @click="goToTripDetails(b.trip_id)">Подробнее</button>
 
-            <!-- Кнопка отмены или таймер -->
+            <!-- Отмена бронирования с таймером -->
             <template v-if="b.status === 'confirmed'">
               <template v-if="remainingSeconds(b) > 0">
                 <button
@@ -65,7 +70,6 @@
     <Toast ref="toastRef" />
   </div>
 </template>
-
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { useAuthStore } from "@/store/auth";
@@ -87,10 +91,10 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 const currentTab = ref<'active' | 'done'>('active');
 
+// время обновляется каждую секунду для таймера
 const now = ref(Date.now());
 let timer: any = null;
 
-// обновляем каждую секунду для более плавного таймера
 onMounted(() => {
   timer = setInterval(() => {
     now.value = Date.now();
@@ -100,6 +104,7 @@ onBeforeUnmount(() => {
   clearInterval(timer);
 });
 
+// фильтруем брони
 const filteredBookings = computed(() =>
   confirmedBookings.value.filter(b => {
     const trip = tripMap.value[b.trip_id];
@@ -127,20 +132,22 @@ function goToTripDetails(tripId: number) {
   router.push(`/trip/${tripId}`);
 }
 
-// оставшееся время (в секундах)
-function remainingSeconds(b: any) {
-  const createdStr = b.created_at_for_timer || b.created_at;
-  if (!createdStr) return 0;
-  const created = new Date(createdStr).getTime();
-  const diffSec = 30 * 60 - Math.floor((now.value - created) / 1000);
-  return diffSec > 0 ? diffSec : 0;
+/**
+ * Вычисляет, сколько секунд осталось до конца 30 минут
+ */
+function remainingSeconds(b: any): number {
+  const created = new Date(b.created_at_for_timer || b.created_at).getTime();
+  const diff = 30 * 60 - Math.floor((now.value - created) / 1000);
+  return diff > 0 ? diff : 0;
 }
 
-// форматируем время mm:ss
-function formatTime(seconds: number) {
-  const m = Math.floor(seconds / 60).toString().padStart(2, "0");
-  const s = (seconds % 60).toString().padStart(2, "0");
-  return `${m}:${s}`;
+/**
+ * Форматирование секунд в ММ:СС
+ */
+function formatTime(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 async function cancelBookingClick(b: any) {
@@ -148,6 +155,7 @@ async function cancelBookingClick(b: any) {
   try {
     await cancelBooking(b.id, auth.user.id);
     toastRef.value?.show("Бронирование отменено");
+    // обновляем статус без перезагрузки
     const booking = confirmedBookings.value.find(x => x.id === b.id);
     if (booking) booking.status = "cancelled";
   } catch (e: any) {
@@ -159,9 +167,11 @@ onMounted(async () => {
   loading.value = true;
   try {
     const all = await getMyBookings(auth.user.id);
-    confirmedBookings.value = all.filter((b: any) =>
-      ["confirmed", "cancelled"].includes(b.status)
+    // показываем confirmed и cancelled
+    confirmedBookings.value = all.filter(
+      (b: any) => b.status === "confirmed" || b.status === "cancelled"
     );
+
     for (const b of confirmedBookings.value) {
       if (!tripMap.value[b.trip_id]) {
         try {
@@ -187,6 +197,7 @@ onMounted(async () => {
   loading.value = false;
 });
 
+// поддержка кнопки назад в Telegram
 onMounted(() => {
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
