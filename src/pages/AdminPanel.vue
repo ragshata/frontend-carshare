@@ -89,24 +89,30 @@
         <table class="trips-table">
           <thead>
             <tr>
-              <th>ID</th>
               <th>Название</th>
               <th>Длительность (дней)</th>
-              <th>Цена</th>
-              <th>Описание</th>
-              <th>Действия</th>
+              <th>Цена (сомони)</th>
+              <th>Реквизиты/описание</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="tariff in tariffs" :key="tariff.id">
-              <td>{{ tariff.id }}</td>
               <td>{{ tariff.name }}</td>
               <td>{{ tariff.duration_days }}</td>
               <td>
-                <input type="number" v-model.number="tariff.price" style="width:80px;" />
+                <input
+                  type="number"
+                  v-model.number="tariff.price"
+                  style="width:80px; padding: 4px;"
+                />
               </td>
               <td>
-                <textarea v-model="tariff.description" rows="2" style="width:160px;"></textarea>
+                <textarea
+                  v-model="tariff.description"
+                  rows="2"
+                  style="width:180px; padding: 4px;"
+                ></textarea>
               </td>
               <td>
                 <button class="btn" @click="saveTariff(tariff)">Сохранить</button>
@@ -115,6 +121,7 @@
           </tbody>
         </table>
       </div>
+
 
 
       
@@ -328,8 +335,10 @@ async function deleteReview(id: number) {
 }
 async function loadTariffs() {
   try {
-    tariffs.value = await getAdminTariffs();
-  } catch (e) {
+    const data = await getAdminTariffs();
+    // Подстрахуемся: берём только первые 3
+    tariffs.value = data.slice(0, 3);
+  } catch {
     toastRef.value?.show("Ошибка загрузки тарифов!");
   }
 }
@@ -340,12 +349,13 @@ async function saveTariff(tariff: any) {
       price: tariff.price,
       description: tariff.description,
     });
-    toastRef.value?.show("Тариф обновлен");
+    toastRef.value?.show("Тариф обновлён");
     await loadTariffs();
-  } catch (e) {
+  } catch {
     toastRef.value?.show("Ошибка сохранения тарифа!");
   }
 }
+
 
 watch(tab, (newTab) => {
   if (newTab === "tariffs") loadTariffs();
