@@ -42,16 +42,22 @@
           <div class="actions">
             <button class="btn-outline" @click="goToTripDetails(b.trip_id)">Подробнее</button>
 
-            <!-- Таймер и кнопка -->
+            <!-- Кнопка отмены или таймер -->
             <template v-if="b.status === 'confirmed'">
-              <template v-if="remainingMinutes(b) > 0">
-                <button class="btn-cancel" @click="cancelBookingClick(b)">
-                  Отменить ({{ remainingMinutes(b) }} мин)
+              <template v-if="remainingSeconds(b) > 0">
+                <button
+                  class="btn-cancel"
+                  @click="cancelBookingClick(b)"
+                >
+                  Отменить ({{ formatTime(remainingSeconds(b)) }})
                 </button>
               </template>
-              <span v-else class="expired-text">⏳ Отменить уже нельзя</span>
+              <template v-else>
+                <span class="cancel-expired">Отменить уже нельзя</span>
+              </template>
             </template>
           </div>
+
         </div>
       </div>
     </div>
@@ -84,11 +90,11 @@ const currentTab = ref<'active' | 'done'>('active');
 const now = ref(Date.now());
 let timer: any = null;
 
-// обновляем "текущее время" каждую минуту для пересчета таймера
+// обновляем каждую секунду для более плавного таймера
 onMounted(() => {
   timer = setInterval(() => {
     now.value = Date.now();
-  }, 60000);
+  }, 1000);
 });
 onBeforeUnmount(() => {
   clearInterval(timer);
@@ -121,12 +127,20 @@ function goToTripDetails(tripId: number) {
   router.push(`/trip/${tripId}`);
 }
 
-// вычисляем, сколько минут осталось до истечения 30 мин
-function remainingMinutes(b: any) {
-  if (!b.created_at) return 0;
-  const created = new Date(b.created_at).getTime();
-  const diff = 30 - Math.floor((now.value - created) / 60000);
-  return diff > 0 ? diff : 0;
+// оставшееся время (в секундах)
+function remainingSeconds(b: any) {
+  const createdStr = b.created_at_for_timer || b.created_at;
+  if (!createdStr) return 0;
+  const created = new Date(createdStr).getTime();
+  const diffSec = 30 * 60 - Math.floor((now.value - created) / 1000);
+  return diffSec > 0 ? diffSec : 0;
+}
+
+// форматируем время mm:ss
+function formatTime(seconds: number) {
+  const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+  const s = (seconds % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
 }
 
 async function cancelBookingClick(b: any) {
@@ -134,7 +148,6 @@ async function cancelBookingClick(b: any) {
   try {
     await cancelBooking(b.id, auth.user.id);
     toastRef.value?.show("Бронирование отменено");
-    // обновляем статус без перезагрузки
     const booking = confirmedBookings.value.find(x => x.id === b.id);
     if (booking) booking.status = "cancelled";
   } catch (e: any) {
@@ -146,7 +159,9 @@ onMounted(async () => {
   loading.value = true;
   try {
     const all = await getMyBookings(auth.user.id);
-    confirmedBookings.value = all.filter((b: any) => b.status === "confirmed" || b.status === "cancelled");
+    confirmedBookings.value = all.filter((b: any) =>
+      ["confirmed", "cancelled"].includes(b.status)
+    );
     for (const b of confirmedBookings.value) {
       if (!tripMap.value[b.trip_id]) {
         try {
