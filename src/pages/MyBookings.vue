@@ -135,11 +135,14 @@ function goToTripDetails(tripId: number) {
 /**
  * Вычисляет, сколько секунд осталось до конца 30 минут
  */
+// вычисляет оставшееся время (секунды)
 function remainingSeconds(b: any): number {
-  const created = new Date(b.created_at_for_timer || b.created_at).getTime();
+  if (!b.created_at) return 0;
+  const created = new Date(b.created_at).getTime();
   const diff = 30 * 60 - Math.floor((now.value - created) / 1000);
   return diff > 0 ? diff : 0;
 }
+
 
 /**
  * Форматирование секунд в ММ:СС
