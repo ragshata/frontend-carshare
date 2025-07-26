@@ -137,11 +137,12 @@ function goToTripDetails(tripId: number) {
  */
 // вычисляет оставшееся время (секунды)
 function remainingSeconds(b: any): number {
-  if (!b.created_at) return 0;
-  const created = new Date(b.created_at).getTime();
-  const diff = 30 * 60 - Math.floor((now.value - created) / 1000);
+  if (!b.confirmed_at) return 0;
+  const confirmed = new Date(b.confirmed_at).getTime();
+  const diff = 30 * 60 - Math.floor((now.value - confirmed) / 1000);
   return diff > 0 ? diff : 0;
 }
+
 
 
 /**
