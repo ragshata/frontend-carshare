@@ -86,14 +86,34 @@
       </div>
       <!-- Вкладка Тарифы -->
       <div v-else-if="tab === 'tariffs'" class="transparent-section">
-        <div v-for="tariff in tariffs" :key="tariff.id" class="tariff-editor">
-          <h3>{{ tariff.name }} ({{ tariff.duration_days }} дн.)</h3>
-          <label>Цена</label>
-          <input type="number" v-model.number="tariff.price" />
-          <label>Описание</label>
-          <textarea v-model="tariff.description" rows="2"></textarea>
-          <button class="btn" @click="saveTariff(tariff)">Сохранить</button>
-        </div>
+        <table class="trips-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Название</th>
+              <th>Длительность (дней)</th>
+              <th>Цена</th>
+              <th>Описание</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="tariff in tariffs" :key="tariff.id">
+              <td>{{ tariff.id }}</td>
+              <td>{{ tariff.name }}</td>
+              <td>{{ tariff.duration_days }}</td>
+              <td>
+                <input type="number" v-model.number="tariff.price" style="width:80px;" />
+              </td>
+              <td>
+                <textarea v-model="tariff.description" rows="2" style="width:160px;"></textarea>
+              </td>
+              <td>
+                <button class="btn" @click="saveTariff(tariff)">Сохранить</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
 
@@ -217,6 +237,8 @@ import {
 const router = useRouter();
 const auth = useAuthStore();
 const reviews = ref<any[]>([]);
+const tariffs = ref<any[]>([]);
+
 
 const ADMIN_IDS = [363320196, 6931781449];
 if (!ADMIN_IDS.includes(auth.user?.telegram_id)) {
@@ -232,7 +254,6 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const modalUser = ref<any | null>(null);
 const modalTrip = ref<any | null>(null);
 const modalReview = ref<any | null>(null);
-const tariffs = ref<Tariff[]>([]);
 
 function showUser(user: any) {
   modalUser.value = { ...user };
@@ -307,23 +328,25 @@ async function deleteReview(id: number) {
 }
 async function loadTariffs() {
   try {
-    tariffs.value = await getAdminTariffs(); // API: /admin/tariffs
-  } catch {
-    toastRef.value?.show("Ошибка загрузки тарифов");
+    tariffs.value = await getAdminTariffs();
+  } catch (e) {
+    toastRef.value?.show("Ошибка загрузки тарифов!");
   }
 }
 
-async function saveTariff(tariff: Tariff) {
+async function saveTariff(tariff: any) {
   try {
     await updateTariff(tariff.id, {
       price: tariff.price,
       description: tariff.description,
     });
-    toastRef.value?.show('Тариф обновлён');
-  } catch {
-    toastRef.value?.show('Ошибка обновления тарифа!');
+    toastRef.value?.show("Тариф обновлен");
+    await loadTariffs();
+  } catch (e) {
+    toastRef.value?.show("Ошибка сохранения тарифа!");
   }
 }
+
 watch(tab, (newTab) => {
   if (newTab === "tariffs") loadTariffs();
 });
