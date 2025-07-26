@@ -27,8 +27,9 @@
         <p class="desc">📦 Выберите подходящий тариф</p>
         <div class="tariff-list">
           <div v-for="tariff in tariffs" :key="tariff.id" class="tariff-card">
-            <div class="tariff-name">{{ tariff.title }}</div>
+            <div class="tariff-name">{{ tariff.name }}</div>
             <div class="tariff-price">{{ tariff.price }} сомони</div>
+            <div v-if="tariff.description" class="tariff-desc">{{ tariff.description }}</div>
             <button class="btn buy-btn" @click="buy(tariff)" :disabled="loadingBuy">
               {{ loadingBuy ? '...' : 'Купить' }}
             </button>
@@ -54,13 +55,13 @@ const router = useRouter();
 const auth = useAuthStore();
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
-const tariffs = ref<{ id: number; title: string; price: number }[]>([]);
+const tariffs = ref<{ id: number; name: string; price: number; description?: string }[]>([]);
 const loadingTrial = ref(false);
 const loadingBuy = ref(false);
 
-// ✅ может ли активировать пробный период
+// Может ли активировать пробный период
 const canActivateTrial = computed(() => !auth.user?.driver_trial_end);
-// ✅ есть ли активная подписка (НЕ триал)
+// Есть ли активная подписка (НЕ триал)
 const hasPaidSubscription = computed(() => {
   return !!auth.user?.active_driver && !!auth.user?.subscription_end;
 });
@@ -160,6 +161,11 @@ async function buy(tariff: { id: number }) {
   font-size: 15px;
   color: #333;
   margin: 6px 0;
+}
+.tariff-desc {
+  font-size: 14px;
+  color: #555;
+  margin-top: 4px;
 }
 .btn {
   background: #007bff;
