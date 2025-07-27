@@ -3,7 +3,7 @@
     <div class="background-img"></div>
 
     <div class="content-card">
-      <h2 class="title">Мои  (debug)</h2>
+      <h2 class="title">Мои Заказы</h2>
 
       <div class="tabs">
         <button :class="{ active: currentTab === 'active' }" @click="currentTab = 'active'">Активные</button>
@@ -40,14 +40,6 @@
                 @{{ drivers[b.trip_id].username }}
               </a>
             </div>
-          </div>
-
-          <!-- DEBUG INFO -->
-          <div class="debug-box">
-            <div>confirmed_at: {{ b.confirmed_at }}</div>
-            <div>secondsPassed: {{ secondsPassed(b) }}</div>
-            <div>remainingSeconds: {{ remainingSeconds(b) }}</div>
-            <div>now: {{ new Date(now).toISOString() }}</div>
           </div>
 
           <div class="actions">
@@ -112,11 +104,17 @@ const filteredBookings = computed(() =>
   confirmedBookings.value.filter(b => {
     const trip = tripMap.value[b.trip_id];
     if (!trip) return false;
-    return currentTab.value === 'active'
-      ? trip.status !== 'done'
-      : trip.status === 'done';
+
+    if (currentTab.value === 'active') {
+      // Активные: не завершенные и не отмененные
+      return b.status !== 'done' && b.status !== 'cancelled';
+    } else {
+      // Завершенные: либо done, либо cancelled
+      return b.status === 'done' || b.status === 'cancelled';
+    }
   })
 );
+
 
 function ruStatus(status: string) {
   switch (status) {
@@ -173,9 +171,9 @@ onMounted(async () => {
   loading.value = true;
   try {
     const all = await getMyBookings(auth.user.id);
-    confirmedBookings.value = all.filter((b: any) =>
-      ["confirmed", "cancelled"].includes(b.status)
-    );
+    // раньше было: confirmedBookings.value = all.filter((b: any) => ["confirmed", "cancelled"].includes(b.status))
+    confirmedBookings.value = all;
+
     for (const b of confirmedBookings.value) {
       if (!tripMap.value[b.trip_id]) {
         try {
