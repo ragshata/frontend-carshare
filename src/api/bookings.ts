@@ -57,8 +57,8 @@ export async function getMyBookings(user_id: number) {
 }
 
 export async function cancelBooking(bookingId: number, userId: number) {
-  const res = await axios.delete(`${API_BASE}/bookings/${bookingId}/cancel`, {
+  return axios.delete(`${API_BASE}/bookings/${bookingId}/cancel`, {
     params: { user_id: userId }
   });
-  return res.data;
 }
+
