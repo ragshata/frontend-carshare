@@ -143,7 +143,12 @@ function secondsPassed(b: any) {
 }
 
 function remainingSeconds(b: any) {
-  return Math.max(30 * 60 - secondsPassed(b), 0);
+  if (!b.confirmed_at) return 0;
+  // Принудительно парсим как UTC
+  const confirmed = new Date(b.confirmed_at + "Z").getTime();
+  const diff = (Date.now() - confirmed) / 1000;
+  const remaining = 1800 - diff; // 30 минут = 1800 сек
+  return remaining > 0 ? Math.floor(remaining) : 0;
 }
 
 function formatTime(sec: number) {
