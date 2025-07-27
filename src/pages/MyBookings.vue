@@ -3,7 +3,7 @@
     <div class="background-img"></div>
 
     <div class="content-card">
-      <h2 class="title">Мои бронирования (debug)</h2>
+      <h2 class="title">Мои  (debug)</h2>
 
       <div class="tabs">
         <button :class="{ active: currentTab === 'active' }" @click="currentTab = 'active'">Активные</button>
