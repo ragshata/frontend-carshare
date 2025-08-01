@@ -316,10 +316,6 @@ async function loadTrips() {
   try {
     const res = await getAllTrips();
     trips.value = res;
-
-    // Покажем логи на экране
-    alert("DEBUG trips count: " + trips.value.length);
-
   } catch (e) {
     alert("Ошибка загрузки поездок");
   }
