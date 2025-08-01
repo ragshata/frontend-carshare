@@ -264,19 +264,20 @@ const modalReview = ref<any | null>(null);
 
 const activeTrips = computed(() => {
   return trips.value.filter(t => {
-    // Условие 1: статус активный
-    const isActiveStatus = t.status === "active";
+    // Исключаем завершённые поездки
+    const isNotDone = t.status !== "done";
 
-    // Условие 2: дата поездки в будущем (если поле date есть)
+    // Проверяем дату: если в будущем или сегодня
     let isFuture = true;
     if (t.date) {
-      const tripDate = new Date(t.date + "T" + (t.time || "00:00"));
+      const tripDate = new Date(`${t.date}T${t.time || "00:00"}`);
       isFuture = tripDate >= new Date();
     }
 
-    return isActiveStatus && isFuture;
+    return isNotDone && isFuture;
   });
 });
+
 
 function showUser(user: any) {
   modalUser.value = { ...user };
