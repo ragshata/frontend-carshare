@@ -47,7 +47,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="trip in trips" :key="trip.id">
+            <tr v-for="trip in activeTrips" :key="trip.id">
               <td>{{ trip.id }}</td>
               <td>
                 <span v-if="getDriverName(trip.owner_id)">{{ getDriverName(trip.owner_id) }}</span>
@@ -221,7 +221,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'vue-router';
 import { getDriverReviews, deleteReviewById, getAllReviews } from '@/api/reviews';
@@ -261,6 +261,22 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const modalUser = ref<any | null>(null);
 const modalTrip = ref<any | null>(null);
 const modalReview = ref<any | null>(null);
+
+const activeTrips = computed(() => {
+  return trips.value.filter(t => {
+    // Условие 1: статус активный
+    const isActiveStatus = t.status === "active";
+
+    // Условие 2: дата поездки в будущем (если поле date есть)
+    let isFuture = true;
+    if (t.date) {
+      const tripDate = new Date(t.date + "T" + (t.time || "00:00"));
+      isFuture = tripDate >= new Date();
+    }
+
+    return isActiveStatus && isFuture;
+  });
+});
 
 function showUser(user: any) {
   modalUser.value = { ...user };
