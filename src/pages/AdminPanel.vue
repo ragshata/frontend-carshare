@@ -332,14 +332,17 @@ async function loadUsers() {
 }
 async function loadTrips() {
   try {
-    const result = await getAllTrips();
-    console.log("DEBUG: getAllTrips() result =", result);
-    trips.value = result;
+    const res = await getAllTrips();
+    trips.value = res;
+
+    // Покажем логи на экране
+    alert("DEBUG trips count: " + trips.value.length);
+
   } catch (e) {
-    console.error("DEBUG: Ошибка загрузки поездок", e);
-    toastRef.value?.show('Ошибка загрузки поездок!');
+    alert("Ошибка загрузки поездок");
   }
 }
+
 async function loadStats() {
   try {
     stats.value = await getAdminStats();
