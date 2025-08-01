@@ -263,15 +263,11 @@ const modalTrip = ref<any | null>(null);
 const modalReview = ref<any | null>(null);
 
 const activeTrips = computed(() => {
-  console.log("DEBUG: получено поездок:", trips.value.length);
-
-  // Временно показываем все поездки без фильтра, чтобы убедиться, что данные есть
-  return trips.value;
+  return trips.value.filter(t => {
+    // показываем только активные поездки, игнорируя дату
+    return t.status === "active";
+  });
 });
-
-
-
-
 
 
 function showUser(user: any) {
