@@ -111,9 +111,12 @@ async function startTrial() {
   padding: 30px 20px;
   width: 100%;
   max-width: 400px;
+  max-height: 90vh; /* ограничиваем высоту */
+  overflow-y: auto; /* появляется прокрутка при переполнении */
   text-align: center;
   box-shadow: 0 6px 14px rgba(0,0,0,0.1);
 }
+
 .title {
   font-size: 20px;
   font-weight: bold;
