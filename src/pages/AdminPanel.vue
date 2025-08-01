@@ -263,28 +263,12 @@ const modalTrip = ref<any | null>(null);
 const modalReview = ref<any | null>(null);
 
 const activeTrips = computed(() => {
-  const now = new Date();
-  console.log("DEBUG сейчас:", now.toISOString());
+  console.log("DEBUG: получено поездок:", trips.value.length);
 
-  return trips.value.filter(t => {
-    console.log("DEBUG поездка:", t);
-
-    if (!t.date) return true; // показываем, если даты нет
-    let isoDate = t.date.replace(/\./g, "-"); // если вдруг формат 26.07.2025 → 26-07-2025
-    if (/^\d{2}-\d{2}-\d{4}$/.test(isoDate)) {
-      // превратим 26-07-2025 в 2025-07-26
-      const [d, m, y] = isoDate.split("-");
-      isoDate = `${y}-${m}-${d}`;
-    }
-
-    const tripDate = new Date(`${isoDate}T${t.time || "00:00"}`);
-    console.log("DEBUG parsed:", isoDate, t.time, "->", tripDate);
-
-    if (isNaN(tripDate.getTime())) return true; // если не парсится — показываем
-
-    return tripDate >= now;
-  });
+  // Временно показываем все поездки без фильтра, чтобы убедиться, что данные есть
+  return trips.value;
 });
+
 
 
 
