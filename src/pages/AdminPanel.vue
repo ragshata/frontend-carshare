@@ -263,19 +263,28 @@ const modalTrip = ref<any | null>(null);
 const modalReview = ref<any | null>(null);
 
 const activeTrips = computed(() => {
-  return trips.value.filter(t => {
-    // Исключаем завершённые поездки
+  console.log("DEBUG: trips.value =", trips.value);
+  const filtered = trips.value.filter(t => {
+    console.log("DEBUG: проверяю поездку", t);
+
+    // Исключаем завершённые
     const isNotDone = t.status !== "done";
 
-    // Проверяем дату: если в будущем или сегодня
+    // Проверяем дату
     let isFuture = true;
     if (t.date) {
       const tripDate = new Date(`${t.date}T${t.time || "00:00"}`);
       isFuture = tripDate >= new Date();
     }
 
-    return isNotDone && isFuture;
+    const pass = isNotDone && isFuture;
+    console.log(
+      `DEBUG: trip #${t.id} status=${t.status}, date=${t.date} -> ${pass}`
+    );
+    return pass;
   });
+  console.log("DEBUG: activeTrips =", filtered);
+  return filtered;
 });
 
 
@@ -323,8 +332,11 @@ async function loadUsers() {
 }
 async function loadTrips() {
   try {
-    trips.value = await getAllTrips();
-  } catch {
+    const result = await getAllTrips();
+    console.log("DEBUG: getAllTrips() result =", result);
+    trips.value = result;
+  } catch (e) {
+    console.error("DEBUG: Ошибка загрузки поездок", e);
     toastRef.value?.show('Ошибка загрузки поездок!');
   }
 }
