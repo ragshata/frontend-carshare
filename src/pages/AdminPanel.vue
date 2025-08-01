@@ -3,7 +3,7 @@
     <div class="background-img"></div>
 
     <div class="admin-content">
-      <h2 class="title">Аадмин-панель</h2>
+      <h2 class="title">Админ-панель</h2>
 
       <div class="tabs">
         <button :class="['tab', { active: tab === 'users' }]" @click="tab = 'users'">Пользователи</button>
@@ -264,22 +264,28 @@ const modalReview = ref<any | null>(null);
 
 const activeTrips = computed(() => {
   const now = new Date();
-  console.log("DEBUG now:", now.toISOString());
+  console.log("DEBUG сейчас:", now.toISOString());
 
   return trips.value.filter(t => {
-    console.log("DEBUG trip:", t);
+    console.log("DEBUG поездка:", t);
 
-    // Если нет даты – пропускаем
-    if (!t.date) return false;
+    if (!t.date) return true; // показываем, если даты нет
+    let isoDate = t.date.replace(/\./g, "-"); // если вдруг формат 26.07.2025 → 26-07-2025
+    if (/^\d{2}-\d{2}-\d{4}$/.test(isoDate)) {
+      // превратим 26-07-2025 в 2025-07-26
+      const [d, m, y] = isoDate.split("-");
+      isoDate = `${y}-${m}-${d}`;
+    }
 
-    const iso = `${t.date}T${t.time || "00:00"}`;
-    const tripDate = new Date(iso);
+    const tripDate = new Date(`${isoDate}T${t.time || "00:00"}`);
+    console.log("DEBUG parsed:", isoDate, t.time, "->", tripDate);
 
-    console.log(`DEBUG compare: ${iso} -> ${tripDate.toISOString()} >= ${now.toISOString()} ?`, tripDate >= now);
+    if (isNaN(tripDate.getTime())) return true; // если не парсится — показываем
 
     return tripDate >= now;
   });
 });
+
 
 
 
