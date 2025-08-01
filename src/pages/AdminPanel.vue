@@ -3,7 +3,7 @@
     <div class="background-img"></div>
 
     <div class="admin-content">
-      <h2 class="title">Админ-панель</h2>
+      <h2 class="title">Аадмин-панель</h2>
 
       <div class="tabs">
         <button :class="['tab', { active: tab === 'users' }]" @click="tab = 'users'">Пользователи</button>
