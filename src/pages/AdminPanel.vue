@@ -263,12 +263,24 @@ const modalTrip = ref<any | null>(null);
 const modalReview = ref<any | null>(null);
 
 const activeTrips = computed(() => {
+  const now = new Date();
+  console.log("DEBUG now:", now.toISOString());
+
   return trips.value.filter(t => {
+    console.log("DEBUG trip:", t);
+
+    // Если нет даты – пропускаем
     if (!t.date) return false;
-    const tripDate = new Date(t.date + "T" + (t.time || "00:00"));
-    return tripDate >= new Date();
+
+    const iso = `${t.date}T${t.time || "00:00"}`;
+    const tripDate = new Date(iso);
+
+    console.log(`DEBUG compare: ${iso} -> ${tripDate.toISOString()} >= ${now.toISOString()} ?`, tripDate >= now);
+
+    return tripDate >= now;
   });
 });
+
 
 
 
