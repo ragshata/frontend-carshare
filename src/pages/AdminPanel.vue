@@ -263,29 +263,13 @@ const modalTrip = ref<any | null>(null);
 const modalReview = ref<any | null>(null);
 
 const activeTrips = computed(() => {
-  console.log("DEBUG: trips.value =", trips.value);
-  const filtered = trips.value.filter(t => {
-    console.log("DEBUG: проверяю поездку", t);
-
-    // Исключаем завершённые
-    const isNotDone = t.status !== "done";
-
-    // Проверяем дату
-    let isFuture = true;
-    if (t.date) {
-      const tripDate = new Date(`${t.date}T${t.time || "00:00"}`);
-      isFuture = tripDate >= new Date();
-    }
-
-    const pass = isNotDone && isFuture;
-    console.log(
-      `DEBUG: trip #${t.id} status=${t.status}, date=${t.date} -> ${pass}`
-    );
-    return pass;
+  return trips.value.filter(t => {
+    if (!t.date) return false;
+    const tripDate = new Date(t.date + "T" + (t.time || "00:00"));
+    return tripDate >= new Date();
   });
-  console.log("DEBUG: activeTrips =", filtered);
-  return filtered;
 });
+
 
 
 function showUser(user: any) {
