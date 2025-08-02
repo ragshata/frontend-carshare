@@ -68,13 +68,12 @@
     <Toast ref="toastRef" />
   </div>
 </template>
-
 <script setup lang="ts">
 import { reactive, ref, onMounted, onBeforeUnmount, watchEffect, computed } from 'vue';
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { createTrip } from "@/api/trips";
-import { getCities } from "@/api/cities"; // ручка загрузки городов
+import { getCities } from "@/api/cities";
 import { useSmartBack } from "@/utils/navigation";
 import Toast from "@/components/Toast.vue";
 
@@ -84,24 +83,23 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const loading = ref(false);
 
 const defaultCities = [
-  "Бохтар", "Бустон", "Вахдат", "Душанбе", "Истаравшан", "Истиклол", "Исфара",
-  "Гиссар", "Гулистон", "Канибадам", "Куляб", "Левакант", "Нурек", "Пенджикент",
-  "Рогун", "Турсунзаде", "Хорог", "Худжанд",
-  "Мургаб", "Фархор", "Шахритус", "Зафарабад", "Балх", "Гарм", "Гафуров", "Яван",
-  "Шарора", "Абдурахмони Джоми", "Дангара", "Дусти", "Кубодиён", "Московский",
-  "Муминабад", "Пяндж", "Ховалинг", "Хулбук", "20-летия Независимости", "Вахш",
-  "Кировский", "Обикиик", "Орзу", "Пархар", "Хаётинав", "Навкат", "Мехнатобод",
-  "Адрасман", "Зарнисор", "Зеравшан", "Кансай", "Варзоб", "Чорбог", "Такоб",
-  "Симиганч", "Дехмой", "Навобод", "Сангтуда", "Чилгази", "Кухистони Мастчох",
-  "Патрук", "Поршинев", "Ванж", "Рушан", "Дарвоз", "Шахринав", "Лахш", "Файзабад",
-  "Джиликуль", "Джайхун", "Хуросон", "Хамадони", "Восе", "Дангарин", "Темурмалик",
-  "Балджуван", "Муминобод", "Носири Хусрав", "Джалолиддин Балхи", "Спитамен",
-  "Мастчох", "Ашт", "Бободжон Гафуров", "Джаббор Расулов", "Деваштич", "Шахристан", "Айни"
+  "Бохтар","Бустон","Вахдат","Душанбе","Истаравшан","Истиклол","Исфара",
+  "Гиссар","Гулистон","Канибадам","Куляб","Левакант","Нурек","Пенджикент",
+  "Рогун","Турсунзаде","Хорог","Худжанд","Мургаб","Фархор","Шахритус",
+  "Зафарабад","Балх","Гарм","Гафуров","Яван","Шарора","Абдурахмони Джоми",
+  "Дангара","Дусти","Кубодиён","Московский","Муминабад","Пяндж","Ховалинг",
+  "Хулбук","20-летия Независимости","Вахш","Кировский","Обикиик","Орзу",
+  "Пархар","Хаётинав","Навкат","Мехнатобод","Адрасман","Зарнисор","Зеравшан",
+  "Кансай","Варзоб","Чорбог","Такоб","Симиганч","Дехмой","Навобод","Сангтуда",
+  "Чилгази","Кухистони Мастчох","Патрук","Поршинев","Ванж","Рушан","Дарвоз",
+  "Шахринав","Лахш","Файзабад","Джиликуль","Джайхун","Хуросон","Хамадони",
+  "Восе","Дангарин","Темурмалик","Балджуван","Муминобод","Носири Хусрав",
+  "Джалолиддин Балхи","Спитамен","Мастчох","Ашт","Бободжон Гафуров",
+  "Джаббор Расулов","Деваштич","Шахристан","Айни"
 ];
 
 const extraCities = ref<string[]>([]);
 
-// объединённый список городов
 const allCities = computed(() => {
   const lowerDefaults = defaultCities.map(c => c.toLowerCase());
   const filteredExtra = extraCities.value.filter(
@@ -124,7 +122,6 @@ const form = reactive({
   description: "",
 });
 
-// Подстановка выбранных значений
 watchEffect(() => {
   form.from_ = selectedFrom.value === 'other' ? form.from_ : selectedFrom.value;
 });
@@ -132,25 +129,25 @@ watchEffect(() => {
   form.to = selectedTo.value === 'other' ? form.to : selectedTo.value;
 });
 
-// Загружаем актуальные города с сервера
-async function loadCities() {
+async function loadCities(showToast = false) {
   try {
     const list = await getCities();
-    console.log("Загруженные города из API:", list);
     extraCities.value = list;
+    if (showToast) {
+      toastRef.value?.show(`Города обновлены (${list.length} шт.)`);
+    }
   } catch (e) {
-    console.warn("Не удалось загрузить города:", e);
+    toastRef.value?.show("Не удалось загрузить дополнительные города");
   }
 }
 
 onMounted(() => {
-  // всегда подгружаем актуальные города
-  loadCities();
-
   if (!auth.user?.active_driver) {
     router.replace("/buy-access");
     return;
   }
+
+  loadCities(true);
 
   const tg = (window as any).Telegram?.WebApp;
   tg?.BackButton?.show?.();
@@ -171,20 +168,28 @@ async function save() {
     return;
   }
 
+  toastRef.value?.show("Создаем поездку...");
   loading.value = true;
   try {
-    await createTrip({
+    const res = await createTrip({
       ...form,
       owner_id: auth.user.id,
     });
-    toastRef.value?.show("Поездка создана!");
-    setTimeout(() => router.push("/manage-trips"), 700);
+
+    toastRef.value?.show(`Поездка создана! (${res.from_} → ${res.to})`);
+
+    // обновляем список городов сразу после добавления
+    await loadCities(true);
+
+    toastRef.value?.show("Список городов обновлён. Перенаправление...");
+    setTimeout(() => router.push("/manage-trips"), 1500);
   } catch (e) {
-    toastRef.value?.show("Ошибка создания поездки!");
+    toastRef.value?.show("Ошибка при создании поездки!");
   }
   loading.value = false;
 }
 </script>
+
 
 
 
