@@ -20,19 +20,31 @@
               {{ statusMap[booking.status] || booking.status }}
             </span>
           </div>
-          <div class="row" v-if="booking.user?.username">
-            Telegram:
-            <a :href="`https://t.me/${booking.user.username}`" target="_blank">@{{ booking.user.username }}</a>
-          </div>
-          <div class="row">
-            Телефон:
-            <b v-if="booking.user?.phone">{{ booking.user.phone }}</b>
-            <span v-else class="empty-phone">—</span>
-          </div>
-          <div class="row">
-            Telegram ID: <b>{{ booking.user?.telegram_id }}</b>
-          </div>
-          <div class="actions" v-if="booking.status === 'pending'">
+
+          <!-- Если владелец поездки (isOwner) -->
+          <template v-if="isOwner">
+            <div class="row" v-if="booking.user?.username">
+              Telegram:
+              <a :href="`https://t.me/${booking.user.username}`" target="_blank">@{{ booking.user.username }}</a>
+            </div>
+            <div class="row">
+              Телефон:
+              <b v-if="booking.user?.phone">{{ booking.user.phone }}</b>
+              <span v-else class="empty-phone">—</span>
+            </div>
+            <div class="row">
+              Telegram ID: <b>{{ booking.user?.telegram_id }}</b>
+            </div>
+          </template>
+
+          <!-- Если не владелец — только пол -->
+          <template v-else>
+            <div class="row" v-if="booking.user?.gender">
+              Пол: <b>{{ genderLabel(booking.user.gender) }}</b>
+            </div>
+          </template>
+
+          <div class="actions" v-if="isOwner && booking.status === 'pending'">
             <button class="btn" @click="confirm(booking.id)">Подтвердить</button>
             <button class="btn btn-danger" @click="reject(booking.id)">Отклонить</button>
           </div>
@@ -44,20 +56,23 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getBookingsByTrip, confirmBooking, rejectBooking } from "@/api/bookings";
+import { getTripById } from "@/api/trips";
+import { useAuthStore } from "@/store/auth";
 import Toast from "@/components/Toast.vue";
 
 const route = useRoute();
 const router = useRouter();
 const tripId = Number(route.params.id);
+const auth = useAuthStore();
 
 const bookings = ref<any[]>([]);
 const loading = ref(true);
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
+const trip = ref<any | null>(null);
 
 const statusMap: Record<string, string> = {
   "pending": "Ожидает",
@@ -65,6 +80,14 @@ const statusMap: Record<string, string> = {
   "rejected": "Отклонён",
   "cancelled": "Отменён"
 };
+
+const isOwner = computed(() => trip.value && trip.value.owner_id === auth.user.id);
+
+function genderLabel(g: string) {
+  if (g === "male") return "Мужской";
+  if (g === "female") return "Женский";
+  return "Не указан";
+}
 
 onMounted(() => {
   const tg = (window as any).Telegram?.WebApp;
@@ -85,6 +108,7 @@ onBeforeUnmount(() => {
 async function loadBookings() {
   loading.value = true;
   try {
+    trip.value = await getTripById(tripId);
     bookings.value = await getBookingsByTrip(tripId);
   } catch {
     toastRef.value?.show("Ошибка загрузки пассажиров!");
