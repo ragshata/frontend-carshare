@@ -7,38 +7,32 @@
 
       <form class="form" @submit.prevent="save">
         <label>Откуда</label>
-        <select v-model="selectedFrom" class="select">
-          <option value="">Выберите город</option>
-          <option v-for="city in allCities" :key="city" :value="city">{{ city }}</option>
-          <option value="other">Другое…</option>
-        </select>
         <input
-          v-if="selectedFrom === 'other'"
+          list="city-list-from"
           v-model="form.from_"
           type="text"
-          placeholder="Введите город"
+          placeholder="Начните вводить город"
           class="input"
           required
           maxlength="40"
         />
-        <input v-else type="hidden" v-model="form.from_" />
+        <datalist id="city-list-from">
+          <option v-for="city in allCities" :key="city" :value="city"></option>
+        </datalist>
 
         <label>Куда</label>
-        <select v-model="selectedTo" class="select">
-          <option value="">Выберите город</option>
-          <option v-for="city in allCities" :key="city" :value="city">{{ city }}</option>
-          <option value="other">Другое…</option>
-        </select>
         <input
-          v-if="selectedTo === 'other'"
+          list="city-list-to"
           v-model="form.to"
           type="text"
-          placeholder="Введите город"
+          placeholder="Начните вводить город"
           class="input"
           required
           maxlength="40"
         />
-        <input v-else type="hidden" v-model="form.to" />
+        <datalist id="city-list-to">
+          <option v-for="city in allCities" :key="city" :value="city"></option>
+        </datalist>
 
         <label>Дата</label>
         <input v-model="form.date" type="date" required class="input" />
@@ -70,11 +64,11 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, onBeforeUnmount, watchEffect, computed } from 'vue';
+import { reactive, ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { createTrip } from "@/api/trips";
-import { getCities } from "@/api/cities"; // API для получения дополнительных городов
+import { getCities } from "@/api/cities";
 import { useSmartBack } from "@/utils/navigation";
 import Toast from "@/components/Toast.vue";
 
@@ -101,7 +95,6 @@ const defaultCities = [
 
 const extraCities = ref<string[]>([]);
 
-// объединённый список городов
 const allCities = computed(() => {
   const lowerDefaults = defaultCities.map(c => c.toLowerCase());
   const filteredExtra = extraCities.value.filter(
@@ -109,9 +102,6 @@ const allCities = computed(() => {
   );
   return [...defaultCities, ...filteredExtra];
 });
-
-const selectedFrom = ref('');
-const selectedTo = ref('');
 
 const form = reactive({
   from_: "",
@@ -122,14 +112,6 @@ const form = reactive({
   price: 0,
   status: "active",
   description: "",
-});
-
-// Автоматическая подстановка в поля
-watchEffect(() => {
-  form.from_ = selectedFrom.value === 'other' ? form.from_ : selectedFrom.value;
-});
-watchEffect(() => {
-  form.to = selectedTo.value === 'other' ? form.to : selectedTo.value;
 });
 
 // Загрузка городов с сервера
@@ -143,7 +125,6 @@ async function loadCities() {
   }
 }
 
-// Проверка доступа и загрузка городов
 onMounted(() => {
   if (!auth.user?.active_driver) {
     router.replace("/buy-access");

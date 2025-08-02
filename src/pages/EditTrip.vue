@@ -6,38 +6,32 @@
       <h2 class="title">Редактировать поездку</h2>
       <form class="form" @submit.prevent="save">
         <label>Откуда</label>
-        <select v-model="selectedFrom" class="select">
-          <option value="">Выберите город</option>
-          <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
-          <option value="other">Другое…</option>
-        </select>
         <input
-          v-if="selectedFrom === 'other'"
+          list="city-list-from"
           v-model="from_"
           type="text"
-          placeholder="Введите город"
+          placeholder="Начните вводить город"
           class="input"
           required
           maxlength="40"
         />
-        <input v-else type="hidden" v-model="from_" />
+        <datalist id="city-list-from">
+          <option v-for="city in cities" :key="city" :value="city"></option>
+        </datalist>
 
         <label>Куда</label>
-        <select v-model="selectedTo" class="select">
-          <option value="">Выберите город</option>
-          <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
-          <option value="other">Другое…</option>
-        </select>
         <input
-          v-if="selectedTo === 'other'"
+          list="city-list-to"
           v-model="to"
           type="text"
-          placeholder="Введите город"
+          placeholder="Начните вводить город"
           class="input"
           required
           maxlength="40"
         />
-        <input v-else type="hidden" v-model="to" />
+        <datalist id="city-list-to">
+          <option v-for="city in cities" :key="city" :value="city"></option>
+        </datalist>
 
         <label>Дата</label>
         <input v-model="date" type="date" required class="input" />
@@ -59,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watchEffect, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { getTrip, updateTrip } from "@/api/trips";
 import { getCities } from "@/api/cities";
@@ -73,22 +67,12 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 const loading = ref(false);
 
-const selectedFrom = ref('');
-const selectedTo = ref('');
 const from_ = ref('');
 const to = ref('');
 const date = ref('');
 const time = ref('');
 const seats = ref(1);
 const price = ref(0);
-
-// Синхронизируем select/input
-watchEffect(() => {
-  from_.value = selectedFrom.value === 'other' ? from_.value : selectedFrom.value;
-});
-watchEffect(() => {
-  to.value = selectedTo.value === 'other' ? to.value : selectedTo.value;
-});
 
 onMounted(async () => {
   const tg = (window as any).Telegram?.WebApp;
@@ -101,8 +85,7 @@ onMounted(async () => {
 
   // Подгружаем список городов с сервера
   try {
-    const cityList = await getCities();
-    cities.value = cityList;
+    cities.value = await getCities();
   } catch (e) {
     console.error("Ошибка загрузки городов:", e);
     toastRef.value?.show("Не удалось загрузить города");
@@ -116,19 +99,8 @@ onMounted(async () => {
   }
   try {
     const trip = await getTrip(tripId);
-    // Автовыбор города в списке
-    if (cities.value.includes(trip.from_)) {
-      selectedFrom.value = trip.from_;
-    } else {
-      selectedFrom.value = 'other';
-      from_.value = trip.from_;
-    }
-    if (cities.value.includes(trip.to)) {
-      selectedTo.value = trip.to;
-    } else {
-      selectedTo.value = 'other';
-      to.value = trip.to;
-    }
+    from_.value = trip.from_;
+    to.value = trip.to;
     date.value = trip.date || "";
     time.value = trip.time || "";
     seats.value = trip.seats || 1;
@@ -164,6 +136,7 @@ async function save() {
   loading.value = false;
 }
 </script>
+
 
 <style scoped>
 .edit-trip-page {

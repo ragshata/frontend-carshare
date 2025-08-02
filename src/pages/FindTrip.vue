@@ -6,34 +6,28 @@
       <h2 class="title">Поиск поездок</h2>
       <form class="form" @submit.prevent="goToResults">
         <label for="from_">Откуда</label>
-        <select v-model="selectedFrom" id="from_" class="select">
-          <option value="">Выберите город</option>
-          <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
-          <option value="other">Другое…</option>
-        </select>
         <input
-          v-if="selectedFrom === 'other'"
+          list="city-list-from"
           v-model="form.from_"
           type="text"
-          placeholder="Введите город"
+          placeholder="Начните вводить город"
           class="input"
         />
-        <input v-else type="hidden" v-model="form.from_" />
+        <datalist id="city-list-from">
+          <option v-for="city in cities" :key="city" :value="city"></option>
+        </datalist>
 
         <label for="to">Куда</label>
-        <select v-model="selectedTo" id="to" class="select">
-          <option value="">Выберите город</option>
-          <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
-          <option value="other">Другое…</option>
-        </select>
         <input
-          v-if="selectedTo === 'other'"
+          list="city-list-to"
           v-model="form.to"
           type="text"
-          placeholder="Введите город"
+          placeholder="Начните вводить город"
           class="input"
         />
-        <input v-else type="hidden" v-model="form.to" />
+        <datalist id="city-list-to">
+          <option v-for="city in cities" :key="city" :value="city"></option>
+        </datalist>
 
         <label for="date">Дата</label>
         <input v-model="form.date" id="date" type="date" class="input" />
@@ -51,7 +45,7 @@
 
 <script setup lang="ts">
 import { useSmartBack } from '@/utils/navigation';
-import { reactive, ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { reactive, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { getCities } from '@/api/cities';
 
@@ -64,16 +58,6 @@ const form = reactive({
   to: '',
   date: ''
 });
-const selectedFrom = ref('');
-const selectedTo = ref('');
-
-// Синхронизация select/input
-watch(selectedFrom, (val) => {
-  form.from_ = val === 'other' ? '' : val;
-});
-watch(selectedTo, (val) => {
-  form.to = val === 'other' ? '' : val;
-});
 
 onMounted(async () => {
   const tg = (window as any).Telegram?.WebApp;
@@ -84,7 +68,6 @@ onMounted(async () => {
     });
   }
 
-  // Загружаем список городов
   try {
     const cityList = await getCities();
     cities.value = cityList;
@@ -100,8 +83,6 @@ onBeforeUnmount(() => {
 });
 
 function resetFilters() {
-  selectedFrom.value = '';
-  selectedTo.value = '';
   Object.assign(form, { from_: '', to: '', date: '' });
 }
 
@@ -118,6 +99,7 @@ function goToResults() {
   router.push({ path: '/search-results', query });
 }
 </script>
+
 
 <style scoped>
 .find-trip-page {
