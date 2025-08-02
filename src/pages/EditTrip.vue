@@ -38,12 +38,13 @@
         <!-- Новое поле: Пол -->
         <div class="input-group">
           <label>Пол</label>
-          <select v-model="form.gender">
+          <select v-model="form.gender" class="select">
             <option value="">Не указан</option>
             <option value="male">Мужской</option>
             <option value="female">Женский</option>
           </select>
         </div>
+
 
         <template v-if="auth.user.is_driver">
           <div class="input-group">
@@ -88,7 +89,7 @@ const form = ref({
   first_name: auth.user.first_name || '',
   last_name: auth.user.last_name || '',
   phone: auth.user.phone || '',
-  gender: auth.user.gender || '',   // <-- добавили сюда
+  gender: auth.user.gender || '',
   car_number: auth.user.car_number || '',
   car_brand: auth.user.car_brand || '',
 });
@@ -230,6 +231,7 @@ async function submit() {
   font-size: 16px;
   outline: none;
 }
+
 
 .btn {
   background: var(--color-primary, #007bff);
