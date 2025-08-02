@@ -8,24 +8,30 @@
       <h2 class="title">Пассажиры поездки</h2>
 
       <div v-if="loading" class="empty-text">Загрузка...</div>
-      <div v-else-if="bookings.length === 0" class="empty-text">Нет пассажиров</div>
-      <div v-else>
+      <div v-else-if="trip && bookings.length === 0" class="empty-text">
+        Нет пассажиров
+      </div>
+      <div v-else-if="trip">
         <div v-for="booking in bookings" :key="booking.id" class="passenger-card">
           <div class="row between bold">
             <span>
               {{ booking.user?.first_name }}
-              <template v-if="booking.user?.last_name"> {{ booking.user.last_name }}</template>
+              <template v-if="booking.user?.last_name">
+                {{ booking.user.last_name }}
+              </template>
             </span>
             <span class="status" :class="booking.status">
               {{ statusMap[booking.status] || booking.status }}
             </span>
           </div>
 
-          <!-- Если владелец поездки (isOwner) -->
+          <!-- Если владелец поездки -->
           <template v-if="isOwner">
             <div class="row" v-if="booking.user?.username">
               Telegram:
-              <a :href="`https://t.me/${booking.user.username}`" target="_blank">@{{ booking.user.username }}</a>
+              <a :href="`https://t.me/${booking.user.username}`" target="_blank">
+                @{{ booking.user.username }}
+              </a>
             </div>
             <div class="row">
               Телефон:
@@ -37,7 +43,7 @@
             </div>
           </template>
 
-          <!-- Если не владелец — только пол -->
+          <!-- Если не владелец -->
           <template v-else>
             <div class="row" v-if="booking.user?.gender">
               Пол: <b>{{ genderLabel(booking.user.gender) }}</b>
@@ -66,44 +72,31 @@ import Toast from "@/components/Toast.vue";
 
 const route = useRoute();
 const router = useRouter();
-const tripId = Number(route.params.id);
 const auth = useAuthStore();
 
+const tripId = Number(route.params.id);
+
 const bookings = ref<any[]>([]);
+const trip = ref<any | null>(null);
 const loading = ref(true);
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
-const trip = ref<any | null>(null);
 
 const statusMap: Record<string, string> = {
-  "pending": "Ожидает",
-  "confirmed": "Подтвержден",
-  "rejected": "Отклонён",
-  "cancelled": "Отменён"
+  pending: "Ожидает",
+  confirmed: "Подтвержден",
+  rejected: "Отклонён",
+  cancelled: "Отменён",
 };
 
-const isOwner = computed(() => trip.value && trip.value.owner_id === auth.user.id);
+const isOwner = computed(() => {
+  return trip.value?.owner_id === auth.user?.id;
+});
 
 function genderLabel(g: string) {
   if (g === "male") return "Мужской";
   if (g === "female") return "Женский";
   return "Не указан";
 }
-
-onMounted(() => {
-  const tg = (window as any).Telegram?.WebApp;
-  if (tg?.BackButton) {
-    tg.BackButton.show();
-    tg.BackButton.onClick(() => {
-      router.back();
-    });
-  }
-});
-
-onBeforeUnmount(() => {
-  const tg = (window as any).Telegram?.WebApp;
-  tg?.BackButton?.hide();
-  tg?.BackButton?.offClick?.();
-});
 
 async function loadBookings() {
   loading.value = true;
@@ -137,7 +130,21 @@ async function reject(id: number) {
   }
 }
 
-onMounted(loadBookings);
+onMounted(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  tg?.BackButton?.show();
+  tg?.BackButton?.onClick(() => {
+    router.back();
+  });
+
+  loadBookings();
+});
+
+onBeforeUnmount(() => {
+  const tg = (window as any).Telegram?.WebApp;
+  tg?.BackButton?.hide();
+  tg?.BackButton?.offClick?.();
+});
 </script>
 
 <style scoped>
@@ -155,7 +162,7 @@ onMounted(loadBookings);
   inset: 0;
   width: 100%;
   height: 100%;
-  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  background: url("@/assets/secondary.webp") center center / cover no-repeat;
   z-index: 0;
   pointer-events: none;
   user-select: none;
@@ -191,11 +198,11 @@ onMounted(loadBookings);
 }
 
 .passenger-card {
-  background: rgba(255,255,255,0.65);
+  background: rgba(255, 255, 255, 0.65);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -255,8 +262,11 @@ onMounted(loadBookings);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
-
 </style>
