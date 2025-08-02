@@ -200,6 +200,8 @@ onBeforeUnmount(() => {
   tg?.BackButton?.offClick?.();
 });
 </script>
+
+
 <style scoped>
 .manage-trips-page {
   position: fixed;
