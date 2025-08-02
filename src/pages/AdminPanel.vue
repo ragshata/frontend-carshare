@@ -12,6 +12,7 @@
         <button :class="['tab', { active: tab === 'stats' }]" @click="tab = 'stats'">Аналитика</button>
         <button :class="['tab', { active: tab === 'tariffs' }]" @click="tab = 'tariffs'">Тарифы</button>
         <button :class="['tab', { active: tab === 'cities' }]" @click="tab = 'cities'">Города</button>
+
       </div>
 
       <!-- Пользователи -->
@@ -129,11 +130,11 @@
           <thead>
             <tr>
               <th>Город</th>
-              <th>Действие</th>
+              <th>Действия</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="city in cities" :key="city">
+            <tr v-for="city in customCities" :key="city">
               <td>{{ city }}</td>
               <td>
                 <button class="btn btn-danger" @click="deleteCity(city)">Удалить</button>
@@ -142,6 +143,7 @@
           </tbody>
         </table>
       </div>
+
 
       <!-- Аналитика -->
       <div v-else-if="tab === 'stats'" class="stats-section">
@@ -302,28 +304,29 @@ function showReview(review: any) {
   modalReview.value = { ...review };
 }
 
-import { getCities, deleteCityByName } from '@/api/cities';
+import { getCustomCities, deleteCityByName } from "@/api/cities"; // нужно создать в api
 
-const cities = ref<string[]>([]);
+const customCities = ref<string[]>([]);
 
-async function loadCities() {
+async function loadCustomCities() {
   try {
-    cities.value = await getCities();
+    customCities.value = await getCustomCities();
   } catch {
-    toastRef.value?.show("Ошибка загрузки городов!");
+    toastRef.value?.show('Ошибка загрузки городов');
   }
 }
 
-async function deleteCity(name: string) {
-  if (!confirm(`Удалить город "${name}"?`)) return;
+async function deleteCity(city: string) {
+  if (!confirm(`Удалить город "${city}"?`)) return;
   try {
-    await deleteCityByName(name);
-    toastRef.value?.show("Город удалён");
-    await loadCities();
+    await deleteCityByName(city);
+    await loadCustomCities();
+    toastRef.value?.show('Город удалён');
   } catch {
-    toastRef.value?.show("Ошибка удаления города!");
+    toastRef.value?.show('Ошибка удаления города');
   }
 }
+
 
 async function loadReviews() {
   try {
@@ -334,7 +337,7 @@ async function loadReviews() {
   }
 }
 watch(tab, (newTab) => {
-  if (newTab === 'cities') loadCities();
+  if (newTab === 'cities') loadCustomCities();
   if (newTab === 'users') loadUsers();
   if (newTab === 'trips') loadTrips();
   if (newTab === 'stats') loadStats();
