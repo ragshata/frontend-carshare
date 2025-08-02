@@ -9,7 +9,7 @@
         <label>Откуда</label>
         <select v-model="selectedFrom" class="select">
           <option value="">Выберите город</option>
-          <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
+          <option v-for="city in allCities" :key="city" :value="city">{{ city }}</option>
           <option value="other">Другое…</option>
         </select>
         <input
@@ -26,7 +26,7 @@
         <label>Куда</label>
         <select v-model="selectedTo" class="select">
           <option value="">Выберите город</option>
-          <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
+          <option v-for="city in allCities" :key="city" :value="city">{{ city }}</option>
           <option value="other">Другое…</option>
         </select>
         <input
@@ -68,12 +68,12 @@
     <Toast ref="toastRef" />
   </div>
 </template>
-
 <script setup lang="ts">
-import { reactive, ref, onMounted, onBeforeUnmount, watchEffect } from 'vue';
+import { reactive, ref, onMounted, onBeforeUnmount, watchEffect, computed } from 'vue';
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { createTrip } from "@/api/trips";
+import { getCities } from "@/api/cities"; // <-- новая ручка
 import { useSmartBack } from "@/utils/navigation";
 import Toast from "@/components/Toast.vue";
 
@@ -82,7 +82,7 @@ const auth = useAuthStore();
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const loading = ref(false);
 
-const cities = [
+const defaultCities = [
   "Бохтар", "Бустон", "Вахдат", "Душанбе", "Истаравшан", "Истиклол", "Исфара",
   "Гиссар", "Гулистон", "Канибадам", "Куляб", "Левакант", "Нурек", "Пенджикент",
   "Рогун", "Турсунзаде", "Хорог", "Худжанд",
@@ -98,6 +98,16 @@ const cities = [
   "Мастчох", "Ашт", "Бободжон Гафуров", "Джаббор Расулов", "Деваштич", "Шахристан", "Айни"
 ];
 
+const extraCities = ref<string[]>([]);
+
+// объединённый список
+const allCities = computed(() => {
+  const lowerDefaults = defaultCities.map(c => c.toLowerCase());
+  const filteredExtra = extraCities.value.filter(
+    c => !lowerDefaults.includes(c.toLowerCase())
+  );
+  return [...defaultCities, ...filteredExtra];
+});
 
 const selectedFrom = ref('');
 const selectedTo = ref('');
@@ -113,7 +123,7 @@ const form = reactive({
   description: "",
 });
 
-// Применение "Другое"
+// Подставляем значения в поля
 watchEffect(() => {
   form.from_ = selectedFrom.value === 'other' ? form.from_ : selectedFrom.value;
 });
@@ -121,12 +131,24 @@ watchEffect(() => {
   form.to = selectedTo.value === 'other' ? form.to : selectedTo.value;
 });
 
-// 🔐 Проверка доступа
+// Загрузка городов с сервера
+async function loadCities() {
+  try {
+    const list = await getCities();
+    extraCities.value = list;
+  } catch (e) {
+    console.warn("Не удалось загрузить дополнительные города", e);
+  }
+}
+
+// Проверка доступа и загрузка городов
 onMounted(() => {
   if (!auth.user?.active_driver) {
     router.replace("/buy-access");
     return;
   }
+
+  loadCities();
 
   const tg = (window as any).Telegram?.WebApp;
   tg?.BackButton?.show?.();
@@ -162,6 +184,7 @@ async function save() {
   loading.value = false;
 }
 </script>
+
 
 <style scoped>
 .offer-trip-page {
