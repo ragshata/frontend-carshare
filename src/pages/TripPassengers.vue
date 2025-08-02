@@ -12,7 +12,11 @@
         Нет пассажиров
       </div>
       <div v-else-if="trip">
-        <div v-for="booking in bookings" :key="booking.id" class="passenger-card">
+        <div
+          v-for="booking in bookings"
+          :key="booking.id"
+          class="passenger-card"
+        >
           <div class="row between bold">
             <span>
               {{ booking.user?.first_name }}
@@ -25,11 +29,19 @@
             </span>
           </div>
 
-          <!-- Если владелец поездки -->
-          <template v-if="isOwner">
+          <!-- Пол всегда виден -->
+          <div class="row" v-if="booking.user?.gender">
+            Пол: <b>{{ genderLabel(booking.user.gender) }}</b>
+          </div>
+
+          <!-- Контакты видны только водителю -->
+          <template v-if="auth.user?.is_driver">
             <div class="row" v-if="booking.user?.username">
               Telegram:
-              <a :href="`https://t.me/${booking.user.username}`" target="_blank">
+              <a
+                :href="`https://t.me/${booking.user.username}`"
+                target="_blank"
+              >
                 @{{ booking.user.username }}
               </a>
             </div>
@@ -43,16 +55,11 @@
             </div>
           </template>
 
-          <!-- Если не владелец -->
-          <template v-else>
-            <div class="row" v-if="booking.user?.gender">
-              Пол: <b>{{ genderLabel(booking.user.gender) }}</b>
-            </div>
-          </template>
-
           <div class="actions" v-if="isOwner && booking.status === 'pending'">
             <button class="btn" @click="confirm(booking.id)">Подтвердить</button>
-            <button class="btn btn-danger" @click="reject(booking.id)">Отклонить</button>
+            <button class="btn btn-danger" @click="reject(booking.id)">
+              Отклонить
+            </button>
           </div>
         </div>
       </div>
@@ -65,7 +72,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { getBookingsByTrip, confirmBooking, rejectBooking } from "@/api/bookings";
+import {
+  getBookingsByTrip,
+  confirmBooking,
+  rejectBooking,
+} from "@/api/bookings";
 import { getTripById } from "@/api/trips";
 import { useAuthStore } from "@/store/auth";
 import Toast from "@/components/Toast.vue";
