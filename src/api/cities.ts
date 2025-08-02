@@ -5,3 +5,6 @@ export async function getCities() {
   const { data } = await axios.get(`${API_BASE}/cities/`);
   return data;
 }
+export async function deleteCityByName(name: string): Promise<void> {
+  await axios.delete(`/cities/${encodeURIComponent(name)}`);
+}

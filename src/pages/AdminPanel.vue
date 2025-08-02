@@ -11,6 +11,7 @@
         <button :class="['tab', { active: tab === 'reviews' }]" @click="tab = 'reviews'">Отзывы</button>
         <button :class="['tab', { active: tab === 'stats' }]" @click="tab = 'stats'">Аналитика</button>
         <button :class="['tab', { active: tab === 'tariffs' }]" @click="tab = 'tariffs'">Тарифы</button>
+        <button :class="['tab', { active: tab === 'cities' }]" @click="tab = 'cities'">Города</button>
       </div>
 
       <!-- Пользователи -->
@@ -122,9 +123,25 @@
         </table>
       </div>
 
-
-
-      
+      <!-- Города -->
+      <div v-else-if="tab === 'cities'" class="transparent-section">
+        <table class="trips-table">
+          <thead>
+            <tr>
+              <th>Город</th>
+              <th>Действие</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="city in cities" :key="city">
+              <td>{{ city }}</td>
+              <td>
+                <button class="btn btn-danger" @click="deleteCity(city)">Удалить</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <!-- Аналитика -->
       <div v-else-if="tab === 'stats'" class="stats-section">
@@ -284,6 +301,30 @@ function closeModal() {
 function showReview(review: any) {
   modalReview.value = { ...review };
 }
+
+import { getCities, deleteCityByName } from '@/api/cities';
+
+const cities = ref<string[]>([]);
+
+async function loadCities() {
+  try {
+    cities.value = await getCities();
+  } catch {
+    toastRef.value?.show("Ошибка загрузки городов!");
+  }
+}
+
+async function deleteCity(name: string) {
+  if (!confirm(`Удалить город "${name}"?`)) return;
+  try {
+    await deleteCityByName(name);
+    toastRef.value?.show("Город удалён");
+    await loadCities();
+  } catch {
+    toastRef.value?.show("Ошибка удаления города!");
+  }
+}
+
 async function loadReviews() {
   try {
     const allReviews = await getAllReviews(); // 0 вернёт ВСЕ отзывы
@@ -293,11 +334,13 @@ async function loadReviews() {
   }
 }
 watch(tab, (newTab) => {
+  if (newTab === 'cities') loadCities();
   if (newTab === 'users') loadUsers();
   if (newTab === 'trips') loadTrips();
   if (newTab === 'stats') loadStats();
   if (newTab === 'reviews') loadReviews();
 });
+
 
 
 function getDriverName(owner_id: number) {
