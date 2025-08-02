@@ -43,12 +43,20 @@
                 {{ driver.first_name }}
                 <template v-if="driver.last_name"> {{ driver.last_name }}</template>
               </div>
-              <div class="driver-username" v-if="driver.username">@{{ driver.username }}</div>
-              <div class="driver-phone" v-if="driver.phone"><b>Телефон:</b> {{ driver.phone }}</div>
-              <div class="driver-telegramid">ID: {{ driver.telegram_id }}</div>
-              <div class="driver-gender" v-if="driver.gender">
-                <b>Пол:</b> {{ genderLabel(driver.gender) }}
-              </div>
+
+              <!-- Если пользователь ВЛАДЕЛЕЦ поездки (isOwner) -->
+              <template v-if="isOwner">
+                <div class="driver-username" v-if="driver.username">@{{ driver.username }}</div>
+                <div class="driver-phone" v-if="driver.phone"><b>Телефон:</b> {{ driver.phone }}</div>
+                <div class="driver-telegramid">ID: {{ driver.telegram_id }}</div>
+              </template>
+
+              <!-- Если не владелец (обычный пассажир) — скрываем контакты -->
+              <template v-else>
+                <div class="driver-gender" v-if="driver.gender">
+                  <b>Пол:</b> {{ genderLabel(driver.gender) }}
+                </div>
+              </template>
             </div>
           </div>
           <div class="driver-rating">
@@ -113,12 +121,6 @@ const avgRating = ref(0);
 const booking = ref(false);
 const hasBooking = ref(false);
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
-
-const statusMap: Record<string, string> = {
-  active: "активна",
-  done: "завершена",
-  cancelled: "отменена"
-};
 
 const isOwner = computed(() => trip.value && driver.value && driver.value.id === auth.user.id);
 
@@ -190,8 +192,6 @@ onBeforeUnmount(() => {
   tg?.BackButton?.offClick?.();
 });
 </script>
-
-
 
 <style scoped>
 .trip-details-page {
@@ -387,5 +387,4 @@ onBeforeUnmount(() => {
   background: rgba(0,0,0,0.15);
   border-radius: 4px;
 }
-
 </style>
