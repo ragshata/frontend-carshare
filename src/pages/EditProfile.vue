@@ -34,6 +34,17 @@
             maxlength="15"
           />
         </div>
+
+        <!-- Новое поле: Пол -->
+        <div class="input-group">
+          <label>Пол</label>
+          <select v-model="form.gender" class="select">
+            <option value="">Не указан</option>
+            <option value="male">Мужской</option>
+            <option value="female">Женский</option>
+          </select>
+        </div>
+
         <template v-if="auth.user.is_driver">
           <div class="input-group">
             <label>Номер машины</label>
@@ -60,6 +71,7 @@
 </template>
 
 
+
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
@@ -78,6 +90,7 @@ const form = ref({
   first_name: auth.user.first_name || '',
   last_name: auth.user.last_name || '',
   phone: auth.user.phone || '',
+  gender: auth.user.gender || '',
   car_number: auth.user.car_number || '',
   car_brand: auth.user.car_brand || '',
 });
@@ -202,6 +215,19 @@ async function submit() {
   border-radius: 18px;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
 }
+
+select.select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1.2px solid #bcd7fb;
+  font-size: 15px;
+  outline: none;
+  transition: border 0.14s;
+}
+select.select:focus {
+  border-color: #007bff;
+}
+
 
 .title {
   font-size: 23px;
