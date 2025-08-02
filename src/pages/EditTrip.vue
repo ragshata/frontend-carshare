@@ -58,29 +58,14 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
 import { ref, onMounted, watchEffect, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { getTrip, updateTrip } from "@/api/trips";
+import { getCities } from "@/api/cities";
 import Toast from "@/components/Toast.vue";
 
-const cities = [
-  "Бохтар", "Бустон", "Вахдат", "Душанбе", "Истаравшан", "Истиклол", "Исфара",
-  "Гиссар", "Гулистон", "Канибадам", "Куляб", "Левакант", "Нурек", "Пенджикент",
-  "Рогун", "Турсунзаде", "Хорог", "Худжанд",
-  "Мургаб", "Фархор", "Шахритус", "Зафарабад", "Балх", "Гарм", "Гафуров", "Яван",
-  "Шарора", "Абдурахмони Джоми", "Дангара", "Дусти", "Кубодиён", "Московский",
-  "Муминабад", "Пяндж", "Ховалинг", "Хулбук", "20-летия Независимости", "Вахш",
-  "Кировский", "Обикиик", "Орзу", "Пархар", "Хаётинав", "Навкат", "Мехнатобод",
-  "Адрасман", "Зарнисор", "Зеравшан", "Кансай", "Варзоб", "Чорбог", "Такоб",
-  "Симиганч", "Дехмой", "Навобод", "Сангтуда", "Чилгази", "Кухистони Мастчох",
-  "Патрук", "Поршинев", "Ванж", "Рушан", "Дарвоз", "Шахринав", "Лахш", "Файзабад",
-  "Джиликуль", "Джайхун", "Хуросон", "Хамадони", "Восе", "Дангарин", "Темурмалик",
-  "Балджуван", "Муминобод", "Носири Хусрав", "Джалолиддин Балхи", "Спитамен",
-  "Мастчох", "Ашт", "Бободжон Гафуров", "Джаббор Расулов", "Деваштич", "Шахристан", "Айни"
-];
-
+const cities = ref<string[]>([]);
 
 const router = useRouter();
 const route = useRoute();
@@ -114,6 +99,15 @@ onMounted(async () => {
     });
   }
 
+  // Подгружаем список городов с сервера
+  try {
+    const cityList = await getCities();
+    cities.value = cityList;
+  } catch (e) {
+    console.error("Ошибка загрузки городов:", e);
+    toastRef.value?.show("Не удалось загрузить города");
+  }
+
   const tripId = Number(route.params.id);
   if (!tripId) {
     toastRef.value?.show("Ошибка: не найдена поездка!");
@@ -123,13 +117,13 @@ onMounted(async () => {
   try {
     const trip = await getTrip(tripId);
     // Автовыбор города в списке
-    if (cities.includes(trip.from_)) {
+    if (cities.value.includes(trip.from_)) {
       selectedFrom.value = trip.from_;
     } else {
       selectedFrom.value = 'other';
       from_.value = trip.from_;
     }
-    if (cities.includes(trip.to)) {
+    if (cities.value.includes(trip.to)) {
       selectedTo.value = trip.to;
     } else {
       selectedTo.value = 'other';

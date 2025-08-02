@@ -18,11 +18,7 @@
           placeholder="Введите город"
           class="input"
         />
-        <input
-          v-else
-          type="hidden"
-          v-model="form.from_"
-        />
+        <input v-else type="hidden" v-model="form.from_" />
 
         <label for="to">Куда</label>
         <select v-model="selectedTo" id="to" class="select">
@@ -37,11 +33,7 @@
           placeholder="Введите город"
           class="input"
         />
-        <input
-          v-else
-          type="hidden"
-          v-model="form.to"
-        />
+        <input v-else type="hidden" v-model="form.to" />
 
         <label for="date">Дата</label>
         <input v-model="form.date" id="date" type="date" class="input" />
@@ -57,30 +49,15 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
 import { useSmartBack } from '@/utils/navigation';
 import { reactive, ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
-
-const cities = [
-  "Бохтар", "Бустон", "Вахдат", "Душанбе", "Истаравшан", "Истиклол", "Исфара",
-  "Гиссар", "Гулистон", "Канибадам", "Куляб", "Левакант", "Нурек", "Пенджикент",
-  "Рогун", "Турсунзаде", "Хорог", "Худжанд",
-  "Мургаб", "Фархор", "Шахритус", "Зафарабад", "Балх", "Гарм", "Гафуров", "Яван",
-  "Шарора", "Абдурахмони Джоми", "Дангара", "Дусти", "Кубодиён", "Московский",
-  "Муминабад", "Пяндж", "Ховалинг", "Хулбук", "20-летия Независимости", "Вахш",
-  "Кировский", "Обикиик", "Орзу", "Пархар", "Хаётинав", "Навкат", "Мехнатобод",
-  "Адрасман", "Зарнисор", "Зеравшан", "Кансай", "Варзоб", "Чорбог", "Такоб",
-  "Симиганч", "Дехмой", "Навобод", "Сангтуда", "Чилгази", "Кухистони Мастчох",
-  "Патрук", "Поршинев", "Ванж", "Рушан", "Дарвоз", "Шахринав", "Лахш", "Файзабад",
-  "Джиликуль", "Джайхун", "Хуросон", "Хамадони", "Восе", "Дангарин", "Темурмалик",
-  "Балджуван", "Муминобод", "Носири Хусрав", "Джалолиддин Балхи", "Спитамен",
-  "Мастчох", "Ашт", "Бободжон Гафуров", "Джаббор Расулов", "Деваштич", "Шахристан", "Айни"
-];
-
+import { getCities } from '@/api/cities';
 
 const router = useRouter();
+
+const cities = ref<string[]>([]);
 
 const form = reactive({
   from_: '',
@@ -90,7 +67,7 @@ const form = reactive({
 const selectedFrom = ref('');
 const selectedTo = ref('');
 
-// Следим за выбором и синхронизируем input/select
+// Синхронизация select/input
 watch(selectedFrom, (val) => {
   form.from_ = val === 'other' ? '' : val;
 });
@@ -98,15 +75,24 @@ watch(selectedTo, (val) => {
   form.to = val === 'other' ? '' : val;
 });
 
-onMounted(() => {
+onMounted(async () => {
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.BackButton) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => {
-      useSmartBack(router); // передай свой router
+      useSmartBack(router);
     });
   }
+
+  // Загружаем список городов
+  try {
+    const cityList = await getCities();
+    cities.value = cityList;
+  } catch (e) {
+    console.error("Ошибка загрузки городов:", e);
+  }
 });
+
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
   tg?.BackButton?.hide();
@@ -221,5 +207,4 @@ function goToResults() {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
 </style>
