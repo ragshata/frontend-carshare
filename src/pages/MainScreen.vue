@@ -49,7 +49,7 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 // ----- REDIRECT если роль уже выбрана -----
 onMounted(() => {
-  // При инициализации — редирект по роли, если есть user
+  // Если роль уже выбрана на сервере
   if (auth.user?.is_driver === true) {
     router.replace('/driver');
     return;
@@ -58,9 +58,11 @@ onMounted(() => {
     router.replace('/passenger');
     return;
   }
-  // Если в localStorage есть роль, но в профиле ещё нет — покажем подсказку
+
+  // Если роль еще не задана (null или undefined),
+  // но в localStorage уже есть выбор — показать модалку
   const storedRole = localStorage.getItem('user_role');
-  if (!auth.user?.is_driver && storedRole) {
+  if ((auth.user?.is_driver === null || auth.user?.is_driver === undefined) && storedRole) {
     modalRole.value = storedRole as 'driver' | 'passenger';
     showModal.value = true;
   }
@@ -70,19 +72,16 @@ onMounted(() => {
 async function chooseRole(role: 'driver' | 'passenger') {
   loading.value = true;
   try {
-    // 1. PATCH запрос к API (сохраняем роль на бэке)
-    //      - если в auth.user уже есть id, иначе жди авторизации
     if (!auth.user?.id) {
       toastRef.value?.show('Ошибка: не авторизован!');
       loading.value = false;
       return;
     }
-    await patchUserRole(auth.user.id, role == 'driver'); // функция см. ниже
-    // 2. Обновляем роль в Pinia store (или запроси профиль заново)
+
+    await patchUserRole(auth.user.id, role == 'driver');
     auth.user.is_driver = role === 'driver';
-    // 3. Сохраняем в localStorage (для UX, не бизнес-логика)
+
     localStorage.setItem('user_role', role);
-    // 4. Открываем модалку и сохраняем выбранную роль
     modalRole.value = role;
     showModal.value = true;
   } catch (e) {
