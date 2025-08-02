@@ -174,7 +174,6 @@ async function submit() {
   }
 }
 </script>
-
 <style scoped>
 .edit-trip-page {
   position: fixed;
@@ -185,14 +184,31 @@ async function submit() {
   background: transparent;
 }
 
-.select, .input {
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.select {
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--color-border, #bbb);
+  font-size: 16px;
+  outline: none;
+  background: white;
+  appearance: none;
+  cursor: pointer;
+}
+
+.input {
   padding: 9px 12px;
   border-radius: 7px;
   border: 1px solid var(--color-border, #bbb);
   font-size: 16px;
   outline: none;
 }
-
 
 .background-img {
   position: fixed;
@@ -233,15 +249,6 @@ async function submit() {
   gap: 13px;
 }
 
-.select, .input {
-  padding: 9px 12px;
-  border-radius: 7px;
-  border: 1px solid var(--color-border, #bbb);
-  font-size: 16px;
-  outline: none;
-}
-
-
 .btn {
   background: var(--color-primary, #007bff);
   color: white;
@@ -258,5 +265,4 @@ async function submit() {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
 </style>
