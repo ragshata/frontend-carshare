@@ -17,6 +17,7 @@ interface User {
   car_brand?: string;
   car_photo_url?: string;
   driver_trial_end?: string | null ;
+  gender?: string | null ;
   subscription_end?: string;
   // можно добавить другие поля по необходимости
 }

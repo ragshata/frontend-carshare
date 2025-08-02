@@ -39,10 +39,16 @@
           <div class="driver-header">
             <img v-if="driver.photo_url" :src="driver.photo_url" class="driver-avatar" alt="avatar" />
             <div>
-              <div class="driver-name">{{ driver.first_name }}<template v-if="driver.last_name"> {{ driver.last_name }}</template></div>
+              <div class="driver-name">
+                {{ driver.first_name }}
+                <template v-if="driver.last_name"> {{ driver.last_name }}</template>
+              </div>
               <div class="driver-username" v-if="driver.username">@{{ driver.username }}</div>
               <div class="driver-phone" v-if="driver.phone"><b>Телефон:</b> {{ driver.phone }}</div>
               <div class="driver-telegramid">ID: {{ driver.telegram_id }}</div>
+              <div class="driver-gender" v-if="driver.gender">
+                <b>Пол:</b> {{ genderLabel(driver.gender) }}
+              </div>
             </div>
           </div>
           <div class="driver-rating">
@@ -116,6 +122,13 @@ const statusMap: Record<string, string> = {
 
 const isOwner = computed(() => trip.value && driver.value && driver.value.id === auth.user.id);
 
+// Локализация пола
+function genderLabel(g: string) {
+  if (g === "male") return "Мужской";
+  if (g === "female") return "Женский";
+  return "Не указан";
+}
+
 onMounted(async () => {
   const tg = (window as any).Telegram?.WebApp;
 
@@ -138,7 +151,6 @@ onMounted(async () => {
 
     // Проверка, есть ли у пользователя бронь
     hasBooking.value = trip.value.passengers?.some((p: any) => p.user_id === auth.user.id) ?? false;
-
 
     reviews.value = (await getDriverReviews(trip.value.owner_id)).reverse();
 
@@ -178,6 +190,7 @@ onBeforeUnmount(() => {
   tg?.BackButton?.offClick?.();
 });
 </script>
+
 
 
 <style scoped>

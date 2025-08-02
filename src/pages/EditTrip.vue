@@ -1,162 +1,176 @@
 <template>
-  <div class="edit-trip-page">
+  <div class="edit-profile-page">
     <div class="background-img"></div>
 
     <div class="form-card">
-      <h2 class="title">Редактировать поездку</h2>
-      <form class="form" @submit.prevent="save">
-        <label>Откуда</label>
-        <select v-model="selectedFrom" class="select">
-          <option value="">Выберите город</option>
-          <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
-          <option value="other">Другое…</option>
-        </select>
-        <input
-          v-if="selectedFrom === 'other'"
-          v-model="from_"
-          type="text"
-          placeholder="Введите город"
-          class="input"
-          required
-          maxlength="40"
-        />
-        <input v-else type="hidden" v-model="from_" />
+      <h2 class="title">Редактировать профиль</h2>
+      <form @submit.prevent="submit">
+        <div class="input-group">
+          <label>Имя</label>
+          <input
+            v-model="form.first_name"
+            required
+            @input="onNameInput('first_name')"
+            pattern="[A-Za-zА-Яа-яЁё\s\-]+"
+            maxlength="30"
+          />
+        </div>
+        <div class="input-group">
+          <label>Фамилия</label>
+          <input
+            v-model="form.last_name"
+            @input="onNameInput('last_name')"
+            pattern="[A-Za-zА-Яа-яЁё\s\-]+"
+            maxlength="40"
+          />
+        </div>
+        <div class="input-group">
+          <label>Телефон</label>
+          <input
+            v-model="form.phone"
+            @input="onPhoneInput"
+            inputmode="numeric"
+            pattern="[0-9]+"
+            maxlength="15"
+          />
+        </div>
 
-        <label>Куда</label>
-        <select v-model="selectedTo" class="select">
-          <option value="">Выберите город</option>
-          <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
-          <option value="other">Другое…</option>
-        </select>
-        <input
-          v-if="selectedTo === 'other'"
-          v-model="to"
-          type="text"
-          placeholder="Введите город"
-          class="input"
-          required
-          maxlength="40"
-        />
-        <input v-else type="hidden" v-model="to" />
+        <!-- Новое поле: Пол -->
+        <div class="input-group">
+          <label>Пол</label>
+          <select v-model="form.gender">
+            <option value="">Не указан</option>
+            <option value="male">Мужской</option>
+            <option value="female">Женский</option>
+          </select>
+        </div>
 
-        <label>Дата</label>
-        <input v-model="date" type="date" required class="input" />
-
-        <label>Время</label>
-        <input v-model="time" type="time" required class="input" />
-
-        <label>Свободных мест</label>
-        <input v-model.number="seats" type="number" min="1" required class="input" />
-
-        <label>Цена (сомони, TJS)</label>
-        <input v-model.number="price" type="number" min="0" required class="input" />
-
-        <button class="btn" type="submit" :disabled="loading">Сохранить</button>
+        <template v-if="auth.user.is_driver">
+          <div class="input-group">
+            <label>Номер машины</label>
+            <input v-model="form.car_number" placeholder="Например, 1234АБ-1" />
+          </div>
+          <div class="input-group">
+            <label>Марка машины</label>
+            <input v-model="form.car_brand" placeholder="Например, Toyota Prius" />
+          </div>
+          <div class="input-group">
+            <label>Фото машины</label>
+            <input type="file" accept="image/*" @change="onFileChange" />
+            <div v-if="showCarPhoto" class="car-photo-preview">
+              <img :src="showCarPhoto" alt="Фото машины" />
+            </div>
+          </div>
+        </template>
+        <button class="btn" type="submit">Сохранить</button>
+        <button class="btn btn-outline" type="button" @click="router.push('/profile')">Отмена</button>
       </form>
     </div>
     <Toast ref="toastRef" />
   </div>
 </template>
 
-
 <script setup lang="ts">
-import { ref, onMounted, watchEffect, onBeforeUnmount } from "vue";
-import { useRouter, useRoute } from "vue-router";
-import { getTrip, updateTrip } from "@/api/trips";
-import Toast from "@/components/Toast.vue";
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/store/auth';
+import { patchProfile, uploadCarPhoto } from '@/api/auth';
+import Toast from '@/components/Toast.vue';
+import axios from 'axios';
 
-const cities = [
-  "Бохтар", "Бустон", "Вахдат", "Душанбе", "Истаравшан", "Истиклол", "Исфара",
-  "Гиссар", "Гулистон", "Канибадам", "Куляб", "Левакант", "Нурек", "Пенджикент",
-  "Рогун", "Турсунзаде", "Хорог", "Худжанд"
-];
+const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const router = useRouter();
-const route = useRoute();
-const toastRef = ref<InstanceType<typeof Toast> | null>(null);
+const auth = useAuthStore();
+const toastRef = ref();
 
-const loading = ref(false);
-
-const selectedFrom = ref('');
-const selectedTo = ref('');
-const from_ = ref('');
-const to = ref('');
-const date = ref('');
-const time = ref('');
-const seats = ref(1);
-const price = ref(0);
-
-// Синхронизируем select/input
-watchEffect(() => {
-  from_.value = selectedFrom.value === 'other' ? from_.value : selectedFrom.value;
-});
-watchEffect(() => {
-  to.value = selectedTo.value === 'other' ? to.value : selectedTo.value;
+const form = ref({
+  first_name: auth.user.first_name || '',
+  last_name: auth.user.last_name || '',
+  phone: auth.user.phone || '',
+  gender: auth.user.gender || '',   // <-- добавили сюда
+  car_number: auth.user.car_number || '',
+  car_brand: auth.user.car_brand || '',
 });
 
-onMounted(async () => {
+const carPhotoUrl = ref(auth.user.car_photo_url || '');
+const carPhotoFile = ref<File | null>(null);
+const localPreview = ref<string>('');
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+// Показывать превью для фото машины
+const showCarPhoto = computed(() => {
+  if (localPreview.value) return localPreview.value;
+  if (carPhotoUrl.value) {
+    return carPhotoUrl.value.startsWith('http')
+      ? carPhotoUrl.value
+      : BACKEND_URL + carPhotoUrl.value;
+  }
+  return '';
+});
+
+// Только буквы
+function onNameInput(field: 'first_name' | 'last_name') {
+  form.value[field] = form.value[field].replace(/[^A-Za-zА-Яа-яЁё\s\-]/g, "");
+}
+
+// Только цифры в телефоне
+function onPhoneInput(e: Event) {
+  let val = (e.target as HTMLInputElement).value.replace(/\D/g, "");
+  form.value.phone = val;
+}
+
+function onFileChange(e: Event) {
+  const target = e.target as HTMLInputElement;
+  if (target.files && target.files[0]) {
+    carPhotoFile.value = target.files[0];
+    localPreview.value = URL.createObjectURL(target.files[0]);
+  }
+}
+
+onMounted(() => {
   const tg = (window as any).Telegram?.WebApp;
-  if (tg?.BackButton) {
-    tg.BackButton.show();
-    tg.BackButton.onClick(() => {
-      router.back();
-    });
-  }
-
-  const tripId = Number(route.params.id);
-  if (!tripId) {
-    toastRef.value?.show("Ошибка: не найдена поездка!");
+  tg?.BackButton?.show?.();
+  tg?.BackButton?.onClick?.(() => {
     router.back();
-    return;
-  }
-  try {
-    const trip = await getTrip(tripId);
-    // Автовыбор города в списке
-    if (cities.includes(trip.from_)) {
-      selectedFrom.value = trip.from_;
-    } else {
-      selectedFrom.value = 'other';
-      from_.value = trip.from_;
-    }
-    if (cities.includes(trip.to)) {
-      selectedTo.value = trip.to;
-    } else {
-      selectedTo.value = 'other';
-      to.value = trip.to;
-    }
-    date.value = trip.date || "";
-    time.value = trip.time || "";
-    seats.value = trip.seats || 1;
-    price.value = trip.price || 0;
-  } catch {
-    toastRef.value?.show("Ошибка загрузки поездки");
-    router.back();
-  }
+  });
 });
-
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
-  tg?.BackButton?.hide();
+  tg?.BackButton?.hide?.();
   tg?.BackButton?.offClick?.();
 });
 
-async function save() {
-  loading.value = true;
+async function submit() {
   try {
-    await updateTrip(Number(route.params.id), {
-      from_: from_.value,
-      to: to.value,
-      date: date.value,
-      time: time.value,
-      seats: seats.value,
-      price: price.value,
+    const payload: any = {
+      ...form.value,
+    };
+
+    if (!auth.user.is_driver) {
+      delete payload.car_number;
+      delete payload.car_brand;
+    }
+
+    const updated = await axios.patch(`${API_BASE}/users/${auth.user.id}`, payload);
+
+    // Если выбрано новое фото — загружаем
+    if (auth.user.is_driver && carPhotoFile.value) {
+      const formData = new FormData();
+      formData.append('file', carPhotoFile.value);
+      await uploadCarPhoto(auth.user.id, formData);
+    }
+
+    auth.setUser({
+      ...updated.data,
+      car_photo_url: updated.data.car_photo_url || carPhotoUrl.value
     });
-    toastRef.value?.show("Поездка обновлена!");
-    setTimeout(() => router.push("/manage-trips"), 700);
-  } catch {
-    toastRef.value?.show("Ошибка сохранения!");
+
+    toastRef.value?.show('✅ Профиль обновлен!');
+    router.push('/profile');
+  } catch (err) {
+    toastRef.value?.show('❌ Ошибка обновления профиля');
   }
-  loading.value = false;
 }
 </script>
 
