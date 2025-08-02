@@ -36,6 +36,7 @@
 
         <!-- Блок с водителем -->
         <div class="driver-card" v-if="driver">
+          <h3 class="section-title">Водитель</h3>
           <div class="driver-header">
             <img v-if="driver.photo_url" :src="driver.photo_url" class="driver-avatar" alt="avatar" />
             <div>
@@ -304,6 +305,14 @@ onBeforeUnmount(() => {
   font-weight: bold;
   color: var(--color-text-primary);
 }
+.section-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--color-text-primary);
+  margin: 0 0 10px;
+  text-align: center;
+}
+
 .driver-username {
   font-size: 13px;
   color: var(--color-text-secondary);
