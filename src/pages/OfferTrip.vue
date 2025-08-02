@@ -81,6 +81,7 @@ const router = useRouter();
 const auth = useAuthStore();
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const loading = ref(false);
+const statusMessage = ref(''); // <-- добавили
 
 const defaultCities = [
   "Бохтар","Бустон","Вахдат","Душанбе","Истаравшан","Истиклол","Исфара",
@@ -129,15 +130,15 @@ watchEffect(() => {
   form.to = selectedTo.value === 'other' ? form.to : selectedTo.value;
 });
 
-async function loadCities(showToast = false) {
+async function loadCities(showMessage = false) {
   try {
     const list = await getCities();
     extraCities.value = list;
-    if (showToast) {
-      toastRef.value?.show(`Города обновлены (${list.length} шт.)`);
+    if (showMessage) {
+      statusMessage.value = `Города обновлены (${list.length})`;
     }
   } catch (e) {
-    toastRef.value?.show("Не удалось загрузить дополнительные города");
+    statusMessage.value = "Не удалось загрузить дополнительные города";
   }
 }
 
@@ -164,11 +165,11 @@ onBeforeUnmount(() => {
 
 async function save() {
   if (!form.from_ || !form.to || !form.date || !form.time) {
-    toastRef.value?.show("Заполните все поля!");
+    statusMessage.value = "Заполните все поля!";
     return;
   }
 
-  toastRef.value?.show("Создаем поездку...");
+  statusMessage.value = "Создаем поездку...";
   loading.value = true;
   try {
     const res = await createTrip({
@@ -176,19 +177,17 @@ async function save() {
       owner_id: auth.user.id,
     });
 
-    toastRef.value?.show(`Поездка создана! (${res.from_} → ${res.to})`);
-
-    // обновляем список городов сразу после добавления
+    statusMessage.value = `Поездка создана! ${res.from_} → ${res.to}`;
     await loadCities(true);
-
-    toastRef.value?.show("Список городов обновлён. Перенаправление...");
-    setTimeout(() => router.push("/manage-trips"), 1500);
+    statusMessage.value += " | Список городов обновлён.";
+    setTimeout(() => router.push("/manage-trips"), 2000);
   } catch (e) {
-    toastRef.value?.show("Ошибка при создании поездки!");
+    statusMessage.value = "Ошибка при создании поездки!";
   }
   loading.value = false;
 }
 </script>
+
 
 
 
