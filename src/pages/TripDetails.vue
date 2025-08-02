@@ -13,28 +13,21 @@
         <div class="trip-info-card">
           <div class="row bold">{{ trip.from_ }} — {{ trip.to }}</div>
           <div class="row">🗓 {{ trip.date }} &nbsp; ⏰ {{ trip.time }}</div>
-          <div class="row">
-            💰 {{ trip.price }} сомони (TJS) &nbsp; 👥 Мест: {{ trip.seats }}
-          </div>
+          <div class="row">💰 {{ trip.price }} сомони (TJS) &nbsp; 👥 Мест: {{ trip.seats }}</div>
           <div class="trip-desc" v-if="trip.description">
             <b>Особенности поездки:</b>
-            <div style="margin-top: 4px">{{ trip.description }}</div>
+            <div style="margin-top:4px;">{{ trip.description }}</div>
           </div>
-          <div
-            class="row car-info"
-            v-if="driver && (driver.car_brand || driver.car_number)"
-          >
+          <div class="row car-info" v-if="driver && (driver.car_brand || driver.car_number)">
             🚘 <span v-if="driver.car_brand">{{ driver.car_brand }}</span>
             <span v-if="driver.car_brand && driver.car_number">,</span>
             <span v-if="driver.car_number"> номер {{ driver.car_number }}</span>
           </div>
           <div class="car-photo-wrapper" v-if="driver && driver.car_photo_url">
             <img
-              :src="
-                driver.car_photo_url.startsWith('http')
-                  ? driver.car_photo_url
-                  : BACKEND_URL + driver.car_photo_url
-              "
+              :src="driver.car_photo_url.startsWith('http')
+                ? driver.car_photo_url
+                : BACKEND_URL + driver.car_photo_url"
               class="car-photo"
               alt="Фото машины"
             />
@@ -44,56 +37,23 @@
         <!-- Блок с водителем -->
         <div class="driver-card" v-if="driver">
           <div class="driver-header">
-            <img
-              v-if="driver.photo_url"
-              :src="driver.photo_url"
-              class="driver-avatar"
-              alt="avatar"
-            />
+            <img v-if="driver.photo_url" :src="driver.photo_url" class="driver-avatar" alt="avatar" />
             <div>
               <div class="driver-name">
                 {{ driver.first_name }}
-                <template v-if="driver.last_name">
-                  {{ driver.last_name }}
-                </template>
+                <template v-if="driver.last_name"> {{ driver.last_name }}</template>
               </div>
+              <div class="driver-username" v-if="driver.username">@{{ driver.username }}</div>
+              <div class="driver-phone" v-if="driver.phone"><b>Телефон:</b> {{ driver.phone }}</div>
+              <div class="driver-telegramid">ID: {{ driver.telegram_id }}</div>
               <div class="driver-gender" v-if="driver.gender">
                 <b>Пол:</b> {{ genderLabel(driver.gender) }}
               </div>
-
-              <!-- Контакты водителя -->
-              <template v-if="isOwner || !isOwner">
-                <div
-                  class="driver-username"
-                  v-if="driver.username && (isOwner || !isOwner)"
-                >
-                  @{{ driver.username }}
-                </div>
-                <div
-                  class="driver-phone"
-                  v-if="driver.phone && (isOwner || !isOwner)"
-                >
-                  <b>Телефон:</b> {{ driver.phone }}
-                </div>
-              </template>
             </div>
           </div>
-
           <div class="driver-rating">
             <span>Рейтинг:</span>
-            <b>{{
-              avgRating > 0
-                ? avgRating.toFixed(1)
-                : "—"
-            }}</b>
-            ⭐️ ({{ reviews.length }}
-            отзыв{{
-              reviews.length === 1
-                ? ""
-                : reviews.length < 5
-                ? "а"
-                : "ов"
-            }})
+            <b>{{ avgRating > 0 ? avgRating.toFixed(1) : "—" }}</b> ⭐️ ({{ reviews.length }} отзыв{{ reviews.length === 1 ? '' : reviews.length < 5 ? 'а' : 'ов' }})
           </div>
 
           <div v-if="reviews.length === 0" class="empty-text">Нет отзывов</div>
@@ -111,17 +71,10 @@
 
         <!-- Кнопки действий -->
         <div class="actions">
-          <!-- Пассажир может забронировать -->
-          <button
-            v-if="!isOwner && !hasBooking"
-            class="btn"
-            @click="bookTrip"
-            :disabled="booking"
-          >
+          <button v-if="!isOwner && !hasBooking" class="btn" @click="bookTrip" :disabled="booking">
             Забронировать
           </button>
 
-          <!-- Кнопка для водителя -->
           <button
             v-if="isOwner"
             class="btn btn-outline"
@@ -146,11 +99,12 @@ import { getUserById } from "@/api/users";
 import { getDriverReviews } from "@/api/reviews";
 import { createBooking } from "@/api/bookings";
 import Toast from "@/components/Toast.vue";
+import { useSmartBack } from "@/utils/navigation";
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
-const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const trip = ref<any | null>(null);
 const driver = ref<any | null>(null);
@@ -160,9 +114,13 @@ const booking = ref(false);
 const hasBooking = ref(false);
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
-const isOwner = computed(() => {
-  return trip.value && driver.value && driver.value.id === auth.user.id;
-});
+const statusMap: Record<string, string> = {
+  active: "активна",
+  done: "завершена",
+  cancelled: "отменена"
+};
+
+const isOwner = computed(() => trip.value && driver.value && driver.value.id === auth.user.id);
 
 // Локализация пола
 function genderLabel(g: string) {
@@ -174,10 +132,12 @@ function genderLabel(g: string) {
 onMounted(async () => {
   const tg = (window as any).Telegram?.WebApp;
 
-  tg?.BackButton?.show();
-  tg?.BackButton?.onClick(() => {
-    router.replace("/search-results");
-  });
+  if (tg?.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => {
+      router.replace("/search-results");
+    });
+  }
 
   const tripId = Number(route.params.id);
   if (!tripId) {
@@ -190,15 +150,12 @@ onMounted(async () => {
     driver.value = await getUserById(trip.value.owner_id);
 
     // Проверка, есть ли у пользователя бронь
-    hasBooking.value =
-      trip.value.passengers?.some((p: any) => p.user_id === auth.user.id) ??
-      false;
+    hasBooking.value = trip.value.passengers?.some((p: any) => p.user_id === auth.user.id) ?? false;
 
     reviews.value = (await getDriverReviews(trip.value.owner_id)).reverse();
 
     avgRating.value = reviews.value.length
-      ? reviews.value.reduce((sum, r) => sum + (r.rating || 0), 0) /
-        reviews.value.length
+      ? reviews.value.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.value.length
       : 0;
   } catch (err) {
     toastRef.value?.show("Ошибка при загрузке поездки или водителя");
@@ -212,7 +169,7 @@ async function bookTrip() {
     await createBooking({
       trip_id: trip.value.id,
       user_id: auth.user.id,
-      status: "pending",
+      status: "pending"
     });
     hasBooking.value = true;
     toastRef.value?.show("Вы успешно забронировали поездку!");
@@ -223,8 +180,8 @@ async function bookTrip() {
 }
 
 function formatDate(dt: string | null) {
-  if (!dt) return "";
-  return new Date(dt).toLocaleDateString("ru-RU");
+  if (!dt) return '';
+  return new Date(dt).toLocaleDateString('ru-RU');
 }
 
 onBeforeUnmount(() => {
@@ -233,6 +190,8 @@ onBeforeUnmount(() => {
   tg?.BackButton?.offClick?.();
 });
 </script>
+
+
 
 <style scoped>
 .trip-details-page {
@@ -249,7 +208,7 @@ onBeforeUnmount(() => {
   inset: 0;
   width: 100%;
   height: 100%;
-  background: url("@/assets/secondary.webp") center center / cover no-repeat;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
   z-index: 0;
   pointer-events: none;
   user-select: none;
@@ -283,11 +242,11 @@ onBeforeUnmount(() => {
   margin-top: 20px;
 }
 .trip-info-card {
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255,255,255,0.65);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 18px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 .row {
   font-size: 16px;
@@ -313,7 +272,7 @@ onBeforeUnmount(() => {
   max-width: 260px;
   max-height: 130px;
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.09);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.09);
   object-fit: cover;
 }
 .trip-desc {
@@ -322,11 +281,11 @@ onBeforeUnmount(() => {
   font-size: 15px;
 }
 .driver-card {
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255,255,255,0.65);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 18px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
 }
 .driver-header {
   display: flex;
@@ -367,7 +326,7 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   padding: 9px 13px;
   margin-bottom: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
 }
 .review-rating {
   font-size: 15px;
@@ -410,12 +369,8 @@ onBeforeUnmount(() => {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 .review-list-wrapper {
   max-height: 280px;
@@ -429,7 +384,8 @@ onBeforeUnmount(() => {
   width: 6px;
 }
 .review-list-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(0,0,0,0.15);
   border-radius: 4px;
 }
+
 </style>
