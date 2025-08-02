@@ -185,6 +185,15 @@ async function submit() {
   background: transparent;
 }
 
+.select, .input {
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--color-border, #bbb);
+  font-size: 16px;
+  outline: none;
+}
+
+
 .background-img {
   position: fixed;
   inset: 0;
