@@ -1,7 +1,7 @@
 <template>
   <div class="main-screen-root">
-    <!-- Фиксированный SVG-фон -->
     <div class="background-img"></div>
+
     <div class="blur-container" :class="{ 'blur-active': showModal }">
       <div class="main-screen-content">
         <h1 class="title">Добро пожаловать!</h1>
@@ -15,7 +15,8 @@
         <div v-if="loading" class="loading">Сохраняем выбор...</div>
       </div>
     </div>
-    <!-- Модалка с подсказкой -->
+
+    <!-- Модалка -->
     <div v-if="showModal" class="modal-overlay">
       <div class="modal">
         <h3 class="modal-title">Завершите регистрацию</h3>
@@ -29,6 +30,7 @@
         <button class="btn" @click="goToProfile">Перейти в профиль</button>
       </div>
     </div>
+
     <Toast ref="toastRef" />
   </div>
 </template>
@@ -37,19 +39,19 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { patchUserRole } from '@/api/auth'; // Функция для PATCH запроса к API
+import { patchUserRole } from '@/api/auth';
 import Toast from '@/components/Toast.vue';
 
 const router = useRouter();
 const auth = useAuthStore();
+
 const showModal = ref(false);
 const modalRole = ref<'driver' | 'passenger' | null>(null);
 const loading = ref(false);
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
-// ----- REDIRECT если роль уже выбрана -----
 onMounted(() => {
-  // Если роль уже выбрана на сервере
+  // Если роль уже есть на сервере — сразу переходим
   if (auth.user?.is_driver === true) {
     router.replace('/driver');
     return;
@@ -58,17 +60,10 @@ onMounted(() => {
     router.replace('/passenger');
     return;
   }
-
-  // Если роль еще не задана (null или undefined),
-  // но в localStorage уже есть выбор — показать модалку
-  const storedRole = localStorage.getItem('user_role');
-  if ((auth.user?.is_driver === null || auth.user?.is_driver === undefined) && storedRole) {
-    modalRole.value = storedRole as 'driver' | 'passenger';
-    showModal.value = true;
-  }
+  // Если роль не выбрана — ничего не показываем, ждём, пока выберет
 });
 
-// ----- Основная логика выбора роли -----
+// Выбор роли
 async function chooseRole(role: 'driver' | 'passenger') {
   loading.value = true;
   try {
@@ -78,10 +73,12 @@ async function chooseRole(role: 'driver' | 'passenger') {
       return;
     }
 
+    // Сохраняем роль на сервере
     await patchUserRole(auth.user.id, role == 'driver');
     auth.user.is_driver = role === 'driver';
-
     localStorage.setItem('user_role', role);
+
+    // После выбора роли открываем модалку для заполнения профиля
     modalRole.value = role;
     showModal.value = true;
   } catch (e) {
@@ -95,6 +92,7 @@ function goToProfile() {
   router.replace('/profile');
 }
 </script>
+
 
 <style scoped>
 html, body {
