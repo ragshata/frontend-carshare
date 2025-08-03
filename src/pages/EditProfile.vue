@@ -11,7 +11,7 @@
             v-model="form.first_name"
             required
             @input="onNameInput('first_name')"
-            pattern="[A-Za-zА-Яа-яЁё\s\-]+"
+            pattern="[A-Za-zА-Яа-яЁё\\s\\-]+"
             maxlength="30"
           />
         </div>
@@ -20,7 +20,7 @@
           <input
             v-model="form.last_name"
             @input="onNameInput('last_name')"
-            pattern="[A-Za-zА-Яа-яЁё\s\-]+"
+            pattern="[A-Za-zА-Яа-яЁё\\s\\-]+"
             maxlength="40"
           />
         </div>
@@ -35,7 +35,6 @@
           />
         </div>
 
-        <!-- Новое поле: Пол -->
         <div class="input-group">
           <label>Пол</label>
           <select v-model="form.gender" class="select">
@@ -70,17 +69,15 @@
   </div>
 </template>
 
-
-
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { patchProfile, uploadCarPhoto } from '@/api/auth';
+import { uploadCarPhoto } from '@/api/auth';
 import Toast from '@/components/Toast.vue';
 import axios from 'axios';
 
-const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -98,26 +95,21 @@ const form = ref({
 const carPhotoUrl = ref(auth.user.car_photo_url || '');
 const carPhotoFile = ref<File | null>(null);
 const localPreview = ref<string>('');
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-
-// Показывать превью для фото машины
 const showCarPhoto = computed(() => {
   if (localPreview.value) return localPreview.value;
   if (carPhotoUrl.value) {
     return carPhotoUrl.value.startsWith('http')
       ? carPhotoUrl.value
-      : BACKEND_URL + carPhotoUrl.value;
+      : API_BASE + carPhotoUrl.value;
   }
   return '';
 });
 
-// Только буквы, пробелы, дефисы
 function onNameInput(field: 'first_name' | 'last_name') {
   form.value[field] = form.value[field].replace(/[^A-Za-zА-Яа-яЁё\s\-]/g, "");
 }
 
-// Только цифры в телефоне
 function onPhoneInput(e: Event) {
   let val = (e.target as HTMLInputElement).value.replace(/\D/g, "");
   form.value.phone = val;
@@ -140,6 +132,7 @@ onMounted(() => {
     });
   }
 });
+
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
   tg?.BackButton?.hide();
@@ -148,19 +141,14 @@ onBeforeUnmount(() => {
 
 async function submit() {
   try {
-    const payload: any = {
-      ...form.value,
-    };
-
+    const payload: any = { ...form.value };
     if (!auth.user.is_driver) {
       delete payload.car_number;
       delete payload.car_brand;
     }
 
-    // ВАЖНО: передаём user.id в URL
     const updated = await axios.patch(`${API_BASE}/users/${auth.user.id}`, payload);
 
-    // Если выбрано новое фото — загружаем
     if (auth.user.is_driver && carPhotoFile.value) {
       const formData = new FormData();
       formData.append('file', carPhotoFile.value);
@@ -173,12 +161,19 @@ async function submit() {
     });
 
     toastRef.value?.show('✅ Профиль обновлен!');
-    router.push('/profile');
+
+    // Редирект на главное меню
+    setTimeout(() => {
+      if (auth.user.is_driver) {
+        router.replace('/driver');
+      } else {
+        router.replace('/passenger');
+      }
+    }, 500);
   } catch (err) {
     toastRef.value?.show('❌ Ошибка обновления профиля');
   }
 }
-
 </script>
 
 <style scoped>
@@ -227,7 +222,6 @@ select.select {
 select.select:focus {
   border-color: #007bff;
 }
-
 
 .title {
   font-size: 23px;
@@ -285,5 +279,4 @@ input:focus {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
 </style>
