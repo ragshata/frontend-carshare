@@ -147,17 +147,20 @@ const toQuery = ref("");
 const showSuggestionsFrom = ref(false);
 const showSuggestionsTo = ref(false);
 
+// Теперь всегда показываем список, если длина ввода >= 1
 const filteredCitiesFrom = computed(() => {
-  if (!fromQuery.value.trim()) return [];
+  const q = fromQuery.value.toLowerCase();
+  if (q.length === 0) return [];
   return allCities.value.filter((c) =>
-    c.toLowerCase().startsWith(fromQuery.value.trim().toLowerCase())
+    c.toLowerCase().startsWith(q)
   );
 });
 
 const filteredCitiesTo = computed(() => {
-  if (!toQuery.value.trim()) return [];
+  const q = toQuery.value.toLowerCase();
+  if (q.length === 0) return [];
   return allCities.value.filter((c) =>
-    c.toLowerCase().startsWith(toQuery.value.trim().toLowerCase())
+    c.toLowerCase().startsWith(q)
   );
 });
 
