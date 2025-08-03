@@ -8,37 +8,33 @@
       <form class="form" @submit.prevent="save">
         <!-- Откуда -->
         <label>Откуда</label>
-        <select v-model="selectedFrom" class="select">
-          <option value="other">Нет в списке (добавить свой)</option>
-          <option v-for="city in allCities" :key="city" :value="city">{{ city }}</option>
-        </select>
         <input
-          v-if="selectedFrom === 'other'"
+          list="city-list-from"
           v-model="form.from_"
           type="text"
-          placeholder="Введите город"
+          placeholder="Начните вводить город"
           class="input"
           required
           maxlength="40"
         />
-        <input v-else type="hidden" v-model="form.from_" />
+        <datalist id="city-list-from">
+          <option v-for="city in allCities" :key="city" :value="city"></option>
+        </datalist>
 
         <!-- Куда -->
         <label>Куда</label>
-        <select v-model="selectedTo" class="select">
-          <option value="other">Нет в списке (добавить свой)</option>
-          <option v-for="city in allCities" :key="city" :value="city">{{ city }}</option>
-        </select>
         <input
-          v-if="selectedTo === 'other'"
+          list="city-list-to"
           v-model="form.to"
           type="text"
-          placeholder="Введите город"
+          placeholder="Начните вводить город"
           class="input"
           required
           maxlength="40"
         />
-        <input v-else type="hidden" v-model="form.to" />
+        <datalist id="city-list-to">
+          <option v-for="city in allCities" :key="city" :value="city"></option>
+        </datalist>
 
         <!-- Остальные поля -->
         <label>Дата</label>
@@ -71,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, onBeforeUnmount, computed, watchEffect } from 'vue';
+import { reactive, ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { createTrip } from "@/api/trips";
@@ -109,9 +105,6 @@ const allCities = computed(() => {
   return [...defaultCities, ...filteredExtra];
 });
 
-const selectedFrom = ref('other');
-const selectedTo = ref('other');
-
 const form = reactive({
   from_: "",
   to: "",
@@ -121,14 +114,6 @@ const form = reactive({
   price: 0,
   status: "active",
   description: "",
-});
-
-// синхронизируем input/select
-watchEffect(() => {
-  form.from_ = selectedFrom.value === 'other' ? form.from_ : selectedFrom.value;
-});
-watchEffect(() => {
-  form.to = selectedTo.value === 'other' ? form.to : selectedTo.value;
 });
 
 // Загрузка городов
@@ -171,7 +156,14 @@ async function save() {
   try {
     const res = await createTrip({ ...form, owner_id: auth.user.id });
     toastRef.value?.show(`Поездка создана: ${res.from_} → ${res.to}`);
-    await loadCities();
+
+    // Если введены новые города — добавляем их в extraCities (локально)
+    [res.from_, res.to].forEach(city => {
+      if (!allCities.value.some(c => c.toLowerCase() === city.toLowerCase())) {
+        extraCities.value.push(city);
+      }
+    });
+
     setTimeout(() => router.push("/manage-trips"), 1000);
   } catch {
     toastRef.value?.show("Ошибка создания поездки!");
@@ -184,6 +176,7 @@ async function save() {
 .offer-trip-page {
   padding: 16px;
   min-height: 100vh;
+  background: var(--color-background, #fafbfc);
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -214,9 +207,10 @@ async function save() {
   border: 1px solid var(--color-border, #bbb);
   font-size: 16px;
   outline: none;
+  box-sizing: border-box;
+  resize: none;
   margin-bottom: 8px;
   width: 100%;
-  box-sizing: border-box;
 }
 
 textarea.input {
