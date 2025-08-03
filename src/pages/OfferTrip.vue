@@ -6,6 +6,7 @@
       <h2 class="title">Создать поездку</h2>
 
       <form class="form" @submit.prevent="save">
+        <!-- Поле "Откуда" -->
         <label>Откуда</label>
         <div class="input-wrapper">
           <input
@@ -15,19 +16,25 @@
             class="input"
             required
             maxlength="40"
+            @focus="showSuggestionsFrom = true"
+            @blur="hideSuggestionsWithDelay('from')"
           />
-          <div v-if="showSuggestionsFrom && filteredCitiesFrom.length" class="suggestions">
+          <div
+            v-if="showSuggestionsFrom && filteredCitiesFrom.length"
+            class="suggestions"
+          >
             <div
               v-for="city in filteredCitiesFrom"
               :key="city"
               class="suggestion"
-              @click="selectFromCity(city)"
+              @mousedown.prevent="selectFromCity(city)"
             >
               {{ city }}
             </div>
           </div>
         </div>
 
+        <!-- Поле "Куда" -->
         <label>Куда</label>
         <div class="input-wrapper">
           <input
@@ -37,13 +44,18 @@
             class="input"
             required
             maxlength="40"
+            @focus="showSuggestionsTo = true"
+            @blur="hideSuggestionsWithDelay('to')"
           />
-          <div v-if="showSuggestionsTo && filteredCitiesTo.length" class="suggestions">
+          <div
+            v-if="showSuggestionsTo && filteredCitiesTo.length"
+            class="suggestions"
+          >
             <div
               v-for="city in filteredCitiesTo"
               :key="city"
               class="suggestion"
-              @click="selectToCity(city)"
+              @mousedown.prevent="selectToCity(city)"
             >
               {{ city }}
             </div>
@@ -135,25 +147,24 @@ const toQuery = ref("");
 const showSuggestionsFrom = ref(false);
 const showSuggestionsTo = ref(false);
 
-const filteredCitiesFrom = computed(() =>
-  allCities.value.filter((c) =>
+const filteredCitiesFrom = computed(() => {
+  if (!fromQuery.value.trim()) return [];
+  return allCities.value.filter((c) =>
     c.toLowerCase().startsWith(fromQuery.value.trim().toLowerCase())
-  )
-);
-
-const filteredCitiesTo = computed(() =>
-  allCities.value.filter((c) =>
-    c.toLowerCase().startsWith(toQuery.value.trim().toLowerCase())
-  )
-);
-
-watch(fromQuery, (val) => {
-  showSuggestionsFrom.value = val.trim().length > 0;
-  form.from_ = val;
+  );
 });
 
+const filteredCitiesTo = computed(() => {
+  if (!toQuery.value.trim()) return [];
+  return allCities.value.filter((c) =>
+    c.toLowerCase().startsWith(toQuery.value.trim().toLowerCase())
+  );
+});
+
+watch(fromQuery, (val) => {
+  form.from_ = val;
+});
 watch(toQuery, (val) => {
-  showSuggestionsTo.value = val.trim().length > 0;
   form.to = val;
 });
 
@@ -167,6 +178,13 @@ function selectToCity(city: string) {
   form.to = city;
   toQuery.value = city;
   showSuggestionsTo.value = false;
+}
+
+function hideSuggestionsWithDelay(type: 'from' | 'to') {
+  setTimeout(() => {
+    if (type === 'from') showSuggestionsFrom.value = false;
+    else showSuggestionsTo.value = false;
+  }, 200);
 }
 
 // Загрузка городов с сервера
@@ -227,13 +245,37 @@ async function save() {
 .offer-trip-page {
   padding: 16px;
   min-height: 100vh;
-  background: var(--color-background, #fafbfc);
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
   overflow-y: auto;
   background: transparent;
+}
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.content-card {
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+  margin: 38px auto;
+  padding: 24px 18px 32px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
 }
 
 .title {
@@ -268,6 +310,11 @@ async function save() {
   width: 100%;
 }
 
+textarea.input {
+  min-height: 44px;
+  max-height: 130px;
+}
+
 .suggestions {
   position: absolute;
   top: 100%;
@@ -278,7 +325,7 @@ async function save() {
   border-top: none;
   max-height: 180px;
   overflow-y: auto;
-  z-index: 10;
+  z-index: 9999;
 }
 
 .suggestion {
@@ -287,11 +334,6 @@ async function save() {
 }
 .suggestion:hover {
   background: #f0f0f0;
-}
-
-textarea.input {
-  min-height: 44px;
-  max-height: 130px;
 }
 
 .btn {
@@ -304,31 +346,6 @@ textarea.input {
   cursor: pointer;
   margin-top: 4px;
   transition: background 0.2s;
-}
-
-.background-img {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background: url('@/assets/secondary.webp') center center / cover no-repeat;
-  z-index: 0;
-  pointer-events: none;
-  user-select: none;
-  animation: fadeIn 1s ease-in-out;
-}
-
-.content-card {
-  position: relative;
-  z-index: 2;
-  max-width: 480px;
-  margin: 38px auto;
-  padding: 24px 18px 32px;
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-radius: 18px;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
 }
 
 @keyframes fadeIn {
