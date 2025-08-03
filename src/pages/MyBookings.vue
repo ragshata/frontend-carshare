@@ -6,8 +6,12 @@
       <h2 class="title">Мои Заказы</h2>
 
       <div class="tabs">
-        <button :class="{ active: currentTab === 'active' }" @click="currentTab = 'active'">Активные</button>
-        <button :class="{ active: currentTab === 'done' }" @click="currentTab = 'done'">Завершённые</button>
+        <button :class="{ active: currentTab === 'active' }" @click="currentTab = 'active'">
+          Активные
+        </button>
+        <button :class="{ active: currentTab === 'done' }" @click="currentTab = 'done'">
+          Завершённые
+        </button>
       </div>
 
       <div v-if="loading" class="empty-text">Загрузка...</div>
@@ -67,7 +71,6 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { useAuthStore } from "@/store/auth";
@@ -94,7 +97,7 @@ let timer: any = null;
 onMounted(() => {
   timer = setInterval(() => {
     now.value = Date.now();
-  }, 1000); // каждую секунду
+  }, 1000);
 });
 onBeforeUnmount(() => {
   clearInterval(timer);
@@ -105,16 +108,17 @@ const filteredBookings = computed(() =>
     const trip = tripMap.value[b.trip_id];
     if (!trip) return false;
 
+    const isTripDone = trip.status === 'done' || trip.status === 'cancelled';
+
     if (currentTab.value === 'active') {
-      // Активные: не завершенные и не отмененные
-      return b.status !== 'done' && b.status !== 'cancelled';
+      // Активные — только те, у которых поездка и бронь ещё актуальны
+      return b.status !== 'done' && b.status !== 'cancelled' && !isTripDone;
     } else {
-      // Завершенные: либо done, либо cancelled
-      return b.status === 'done' || b.status === 'cancelled';
+      // Завершённые — если поездка завершена ИЛИ бронь завершена/отменена
+      return isTripDone || b.status === 'done' || b.status === 'cancelled';
     }
   })
 );
-
 
 function ruStatus(status: string) {
   switch (status) {
@@ -142,10 +146,9 @@ function secondsPassed(b: any) {
 
 function remainingSeconds(b: any) {
   if (!b.confirmed_at) return 0;
-  // Принудительно парсим как UTC
   const confirmed = new Date(b.confirmed_at + "Z").getTime();
   const diff = (Date.now() - confirmed) / 1000;
-  const remaining = 1800 - diff; // 30 минут = 1800 сек
+  const remaining = 1800 - diff; // 30 минут
   return remaining > 0 ? Math.floor(remaining) : 0;
 }
 
@@ -171,7 +174,6 @@ onMounted(async () => {
   loading.value = true;
   try {
     const all = await getMyBookings(auth.user.id);
-    // раньше было: confirmedBookings.value = all.filter((b: any) => ["confirmed", "cancelled"].includes(b.status))
     confirmedBookings.value = all;
 
     for (const b of confirmedBookings.value) {
@@ -201,12 +203,10 @@ onMounted(async () => {
 
 onMounted(() => {
   const tg = (window as any).Telegram?.WebApp;
-  if (tg?.BackButton) {
-    tg.BackButton.show();
-    tg.BackButton.onClick(() => {
-      useSmartBack(router);
-    });
-  }
+  tg?.BackButton?.show();
+  tg?.BackButton?.onClick(() => {
+    useSmartBack(router);
+  });
 });
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
@@ -214,9 +214,6 @@ onBeforeUnmount(() => {
   tg?.BackButton?.offClick?.();
 });
 </script>
-
-
-
 
 <style scoped>
 .my-bookings-page {
@@ -388,5 +385,4 @@ onBeforeUnmount(() => {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
 </style>
