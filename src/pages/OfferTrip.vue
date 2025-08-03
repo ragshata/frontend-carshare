@@ -105,6 +105,9 @@ const auth = useAuthStore();
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const loading = ref(false);
 
+/* ------------------------------------------------------------
+   Базовый список городов (по-прежнему можно расширять с сервера)
+------------------------------------------------------------- */
 const defaultCities = [
   "Бохтар", "Бустон", "Вахдат", "Душанбе", "Истаравшан", "Истиклол", "Исфара",
   "Гиссар", "Гулистон", "Канибадам", "Куляб", "Левакант", "Нурек", "Пенджикент",
@@ -131,6 +134,9 @@ const allCities = computed(() => {
   return [...defaultCities, ...filteredExtra];
 });
 
+/* ------------------------------------------------------------
+   Данные формы
+------------------------------------------------------------- */
 const form = reactive({
   from_: "",
   to: "",
@@ -142,64 +148,91 @@ const form = reactive({
   description: "",
 });
 
+/* ------------------------------------------------------------
+   Управление полями ввода и подсказками
+------------------------------------------------------------- */
 const fromQuery = ref("");
-const toQuery = ref("");
+const toQuery   = ref("");
 const showSuggestionsFrom = ref(false);
-const showSuggestionsTo = ref(false);
+const showSuggestionsTo   = ref(false);
 
-// Теперь всегда показываем список, если длина ввода >= 1
-const filteredCitiesFrom = computed(() => {
-  const q = fromQuery.value.toLowerCase();
-  if (q.length === 0) return [];
-  return allCities.value.filter((c) =>
-    c.toLowerCase().startsWith(q)
-  );
-});
+/* ------------------------------------------------------------
+   1. Лёгкая транслитерация латиницы → кириллица
+------------------------------------------------------------- */
+const latinToCyr: Record<string, string> = {
+  a:"а",b:"б",c:"с",d:"д",e:"е",f:"ф",
+  g:"г",h:"х",i:"и",j:"й",k:"к",l:"л",
+  m:"м",n:"н",o:"о",p:"п",q:"к",r:"р",
+  s:"с",t:"т",u:"у",v:"в",w:"в",x:"кс",
+  y:"ы",z:"з",
+};
+function toCyrillic(txt: string): string {
+  return txt
+    .split("")
+    .map(ch=>{
+      const low = ch.toLowerCase();
+      const repl = latinToCyr[low] ?? ch;
+      return ch === low ? repl : repl.toUpperCase();
+    })
+    .join("");
+}
 
-const filteredCitiesTo = computed(() => {
-  const q = toQuery.value.toLowerCase();
-  if (q.length === 0) return [];
-  return allCities.value.filter((c) =>
-    c.toLowerCase().startsWith(q)
-  );
-});
+/* ------------------------------------------------------------
+   2. Универсальная фильтрация списка городов
+------------------------------------------------------------- */
+function filterCities(query: string) {
+  if (!query) return [];
+  const raw = query.toLowerCase();
+  const cyr = toCyrillic(query).toLowerCase();
+  return allCities.value.filter(city=>{
+    const c = city.toLowerCase();
+    return c.startsWith(raw) || c.startsWith(cyr);
+  });
+}
 
-watch(fromQuery, (val) => {
-  form.from_ = val;
-});
-watch(toQuery, (val) => {
-  form.to = val;
-});
+/* ------------------------------------------------------------
+   3. Подсказки «Откуда» и «Куда»
+------------------------------------------------------------- */
+const filteredCitiesFrom = computed(() => filterCities(fromQuery.value));
+const filteredCitiesTo   = computed(() => filterCities(toQuery.value));
+
+/* ------------------------------------------------------------
+   Синхронизация полей ввода с form.*
+------------------------------------------------------------- */
+watch(fromQuery, v => form.from_ = v);
+watch(toQuery,   v => form.to    = v);
 
 function selectFromCity(city: string) {
   form.from_ = city;
   fromQuery.value = city;
   showSuggestionsFrom.value = false;
 }
-
 function selectToCity(city: string) {
   form.to = city;
   toQuery.value = city;
   showSuggestionsTo.value = false;
 }
-
-function hideSuggestionsWithDelay(type: 'from' | 'to') {
-  setTimeout(() => {
-    if (type === 'from') showSuggestionsFrom.value = false;
-    else showSuggestionsTo.value = false;
-  }, 200);
+function hideSuggestionsWithDelay(type:'from'|'to') {
+  setTimeout(()=>{
+    if (type==='from') showSuggestionsFrom.value=false;
+    else               showSuggestionsTo.value=false;
+  },200);
 }
 
-// Загрузка городов с сервера
+/* ------------------------------------------------------------
+   Загрузка городов с сервера
+------------------------------------------------------------- */
 async function loadCities() {
   try {
-    const list = await getCities();
-    extraCities.value = list;
+    extraCities.value = await getCities();
   } catch (e) {
     console.error("Не удалось загрузить дополнительные города", e);
   }
 }
 
+/* ------------------------------------------------------------
+   Монтаж/демонтаж компонента
+------------------------------------------------------------- */
 onMounted(() => {
   if (!auth.user?.active_driver) {
     router.replace("/buy-access");
@@ -214,13 +247,15 @@ onMounted(() => {
     useSmartBack(router);
   });
 });
-
 onBeforeUnmount(() => {
   const tg = (window as any).Telegram?.WebApp;
   tg?.BackButton?.hide?.();
   tg?.BackButton?.offClick?.();
 });
 
+/* ------------------------------------------------------------
+   Сохранение поездки
+------------------------------------------------------------- */
 async function save() {
   if (!form.from_ || !form.to || !form.date || !form.time) {
     toastRef.value?.show("Заполните все поля!");
@@ -229,18 +264,15 @@ async function save() {
 
   loading.value = true;
   try {
-    const res = await createTrip({
-      ...form,
-      owner_id: auth.user.id,
-    });
-
+    const res = await createTrip({ ...form, owner_id: auth.user.id });
     toastRef.value?.show(`Поездка создана: ${res.from_} → ${res.to}`);
     await loadCities();
     setTimeout(() => router.push("/manage-trips"), 1000);
   } catch (e) {
     toastRef.value?.show("Ошибка создания поездки!");
+  } finally {
+    loading.value = false;
   }
-  loading.value = false;
 }
 </script>
 
@@ -353,6 +385,6 @@ textarea.input {
 
 @keyframes fadeIn {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
 </style>
