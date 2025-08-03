@@ -245,4 +245,124 @@ async function save() {
 .suggestion:hover {
   background: #f5f5f5;
 }
+.offer-trip-page {
+  padding: 16px;
+  min-height: 100vh;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  background: transparent;
+}
+
+.background-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.content-card {
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+  margin: 38px auto;
+  padding: 24px 18px 32px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 18px;
+  color: var(--color-text-primary, #232323);
+  text-align: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input,
+.select,
+textarea.input {
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--color-border, #bbb);
+  font-size: 16px;
+  outline: none;
+  box-sizing: border-box;
+  resize: none;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+textarea.input {
+  min-height: 44px;
+  max-height: 130px;
+}
+
+.btn {
+  background: var(--color-primary, #007bff);
+  color: white;
+  border: none;
+  padding: 11px 18px;
+  border-radius: 8px;
+  font-size: 17px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background 0.2s;
+}
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 10;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.suggestion {
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.suggestion:hover {
+  background: #f5f5f5;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 </style>
