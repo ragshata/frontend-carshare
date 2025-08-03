@@ -6,34 +6,41 @@
       <h2 class="title">Создать поездку</h2>
 
       <form class="form" @submit.prevent="save">
+        <!-- Откуда -->
         <label>Откуда</label>
+        <select v-model="selectedFrom" class="select">
+          <option value="other">Нет в списке (добавить свой)</option>
+          <option v-for="city in allCities" :key="city" :value="city">{{ city }}</option>
+        </select>
         <input
-          list="city-list-from"
+          v-if="selectedFrom === 'other'"
           v-model="form.from_"
           type="text"
-          placeholder="Начните вводить город"
+          placeholder="Введите город"
           class="input"
           required
           maxlength="40"
         />
-        <datalist id="city-list-from">
-          <option v-for="city in allCities" :key="city" :value="city"></option>
-        </datalist>
+        <input v-else type="hidden" v-model="form.from_" />
 
+        <!-- Куда -->
         <label>Куда</label>
+        <select v-model="selectedTo" class="select">
+          <option value="other">Нет в списке (добавить свой)</option>
+          <option v-for="city in allCities" :key="city" :value="city">{{ city }}</option>
+        </select>
         <input
-          list="city-list-to"
+          v-if="selectedTo === 'other'"
           v-model="form.to"
           type="text"
-          placeholder="Начните вводить город"
+          placeholder="Введите город"
           class="input"
           required
           maxlength="40"
         />
-        <datalist id="city-list-to">
-          <option v-for="city in allCities" :key="city" :value="city"></option>
-        </datalist>
+        <input v-else type="hidden" v-model="form.to" />
 
+        <!-- Остальные поля -->
         <label>Дата</label>
         <input v-model="form.date" type="date" required class="input" />
 
@@ -64,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, onBeforeUnmount, computed } from 'vue';
+import { reactive, ref, onMounted, onBeforeUnmount, computed, watchEffect } from 'vue';
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { createTrip } from "@/api/trips";
@@ -94,7 +101,6 @@ const defaultCities = [
 ];
 
 const extraCities = ref<string[]>([]);
-
 const allCities = computed(() => {
   const lowerDefaults = defaultCities.map(c => c.toLowerCase());
   const filteredExtra = extraCities.value.filter(
@@ -102,6 +108,9 @@ const allCities = computed(() => {
   );
   return [...defaultCities, ...filteredExtra];
 });
+
+const selectedFrom = ref('other');
+const selectedTo = ref('other');
 
 const form = reactive({
   from_: "",
@@ -114,14 +123,20 @@ const form = reactive({
   description: "",
 });
 
-// Загрузка городов с сервера
+// синхронизируем input/select
+watchEffect(() => {
+  form.from_ = selectedFrom.value === 'other' ? form.from_ : selectedFrom.value;
+});
+watchEffect(() => {
+  form.to = selectedTo.value === 'other' ? form.to : selectedTo.value;
+});
+
+// Загрузка городов
 async function loadCities() {
   try {
-    const list = await getCities();
-    extraCities.value = list;
-    console.log("✅ Города успешно загружены:", list);
+    extraCities.value = await getCities();
   } catch (e) {
-    console.error("❌ Не удалось загрузить дополнительные города", e);
+    console.error("Не удалось загрузить дополнительные города", e);
   }
 }
 
@@ -146,33 +161,19 @@ onBeforeUnmount(() => {
   tg?.BackButton?.offClick?.();
 });
 
-// Создание поездки
 async function save() {
   if (!form.from_ || !form.to || !form.date || !form.time) {
-    console.error("❌ Не все поля заполнены:", form);
     toastRef.value?.show("Заполните все поля!");
     return;
   }
 
-  console.log("🚀 Отправляем запрос createTrip с данными:", form);
-
   loading.value = true;
   try {
-    const res = await createTrip({
-      ...form,
-      owner_id: auth.user.id,
-    });
-
-    console.log("✅ Поездка успешно создана, ответ сервера:", res);
-
+    const res = await createTrip({ ...form, owner_id: auth.user.id });
     toastRef.value?.show(`Поездка создана: ${res.from_} → ${res.to}`);
-
     await loadCities();
-    console.log("🔄 Города после обновления:", extraCities.value);
-
     setTimeout(() => router.push("/manage-trips"), 1000);
-  } catch (e) {
-    console.error("❌ Ошибка при создании поездки:", e);
+  } catch {
     toastRef.value?.show("Ошибка создания поездки!");
   }
   loading.value = false;
@@ -183,7 +184,6 @@ async function save() {
 .offer-trip-page {
   padding: 16px;
   min-height: 100vh;
-  background: var(--color-background, #fafbfc);
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -214,10 +214,9 @@ async function save() {
   border: 1px solid var(--color-border, #bbb);
   font-size: 16px;
   outline: none;
-  box-sizing: border-box;
-  resize: none;
   margin-bottom: 8px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 textarea.input {
