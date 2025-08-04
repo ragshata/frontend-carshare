@@ -101,7 +101,7 @@ function go(path: string) {
   -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
   transition: background 0.18s;
-  text-align: left;
+  text-align: center;
   display: block;
   text-decoration: none;
 }
