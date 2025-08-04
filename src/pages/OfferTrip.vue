@@ -30,11 +30,12 @@
             v-for="city in filteredCitiesFrom"
             :key="city"
             class="suggestion"
-            @click.prevent="selectToCity(city)"
+            @click.prevent="selectFromCity(city)"   
           >
             {{ city }}
           </div>
         </div>
+
 
         <!-- Куда -->
         <label>Куда</label>
