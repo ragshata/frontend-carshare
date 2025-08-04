@@ -1,72 +1,72 @@
 <template>
   <div class="offer-trip-page">
     <div class="background-img"></div>
+
     <div class="content-card">
       <h2 class="title">Создать поездку</h2>
 
       <form class="form" @submit.prevent="save">
-        <!-- Поле "Откуда" -->
-        <label>Откуда</label>
-        <div class="input-wrapper">
-          <input
-            v-model="fromQuery"
-            @input="onFromInput"
-            @focus="showSuggestionsFrom = true"
-            @blur="hideSuggestionsWithDelay('from')"
-            type="text"
-            placeholder="Начните вводить город"
-            class="input"
-            required
-            maxlength="40"
-            autocomplete="off"
-          />
+        <!-- Откуда -->
+        <input
+          v-model="fromQuery"
+          @input="onFromInput"
+          type="text"
+          placeholder="Начните вводить город"
+          class="input"
+          required
+          maxlength="40"
+          @focus="showSuggestionsFrom = true"
+          autocomplete="off"
+        />
+
+        <!-- Список подсказок «Откуда» -->
+        <div
+          v-if="showSuggestionsFrom && filteredCitiesFrom.length"
+          class="suggestions"
+          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : 'auto' }"
+        >
           <div
-            v-if="showSuggestionsFrom && filteredCitiesFrom.length"
-            class="suggestions"
+            v-for="city in filteredCitiesFrom"
+            :key="city"
+            class="suggestion"
+            @mousedown.prevent="selectFromCity(city)"
+            @touchstart.prevent="selectFromCity(city)"
           >
-            <div
-              v-for="city in filteredCitiesFrom"
-              :key="city"
-              class="suggestion"
-              @mousedown.prevent="selectFromCity(city)"
-              @touchstart.prevent="selectFromCity(city)"
-            >
-              {{ city }}
-            </div>
+            {{ city }}
           </div>
         </div>
 
-        <!-- Поле "Куда" -->
-        <label>Куда</label>
-        <div class="input-wrapper">
-          <input
-            v-model="toQuery"
-            @input="onToInput"
-            @focus="showSuggestionsTo = true"
-            @blur="hideSuggestionsWithDelay('to')"
-            type="text"
-            placeholder="Начните вводить город"
-            class="input"
-            required
-            maxlength="40"
-            autocomplete="off"
-          />
+        <!-- Куда -->
+        <input
+          v-model="toQuery"
+          @input="onToInput"
+          type="text"
+          placeholder="Начните вводить город"
+          class="input"
+          required
+          maxlength="40"
+          @focus="showSuggestionsTo = true"
+          autocomplete="off"
+        />
+
+        <!-- Список подсказок «Куда» -->
+        <div
+          v-if="showSuggestionsTo && filteredCitiesTo.length"
+          class="suggestions"
+          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : 'auto' }"
+        >
           <div
-            v-if="showSuggestionsTo && filteredCitiesTo.length"
-            class="suggestions"
+            v-for="city in filteredCitiesTo"
+            :key="city"
+            class="suggestion"
+            @mousedown.prevent="selectToCity(city)"
+            @touchstart.prevent="selectToCity(city)"
           >
-            <div
-              v-for="city in filteredCitiesTo"
-              :key="city"
-              class="suggestion"
-              @mousedown.prevent="selectToCity(city)"
-              @touchstart.prevent="selectToCity(city)"
-            >
-              {{ city }}
-            </div>
+            {{ city }}
           </div>
         </div>
 
+        <!-- Остальные поля формы -->
         <label>Дата</label>
         <input v-model="form.date" type="date" required class="input" />
 
@@ -91,164 +91,125 @@
         <button class="btn" type="submit" :disabled="loading">Создать</button>
       </form>
     </div>
+
     <Toast ref="toastRef" />
   </div>
 </template>
-
 <script setup lang="ts">
-import { reactive, ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
-import { useRouter } from "vue-router";
-import { useAuthStore } from "@/store/auth";
-import { createTrip } from "@/api/trips";
-import { getCities } from "@/api/cities";
-import { useSmartBack } from "@/utils/navigation";
-import Toast from "@/components/Toast.vue";
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/store/auth';
+import { createTrip } from '@/api/trips';
+import { getCities } from '@/api/cities';
+import { useSmartBack } from '@/utils/navigation';
+import Toast from '@/components/Toast.vue';
 
-const router = useRouter();
-const auth = useAuthStore();
-const toastRef = ref<InstanceType<typeof Toast> | null>(null);
-const loading = ref(false);
+const router   = useRouter();
+const auth     = useAuthStore();
+const toastRef = ref<InstanceType<typeof Toast>>();
 
+const loading  = ref(false);
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const kbOpenOffset = ref(0);
+
+/* ---------- списки городов ---------- */
 const defaultCities = [
-  // ... список городов ...
-  "Бохтар", "Бустон", "Вахдат", "Душанбе", "Истаравшан", "Истиклол", "Исфара",
-  "Гиссар", "Гулистон", "Канибадам", "Куляб", "Левакант", "Нурек", "Пенджикент",
-  "Рогун", "Турсунзаде", "Хорог", "Худжанд",
-  "Мургаб", "Фархор", "Шахритус", "Зафарабад", "Балх", "Гарм", "Гафуров", "Яван",
-  "Шарора", "Абдурахмони Джоми", "Дангара", "Дусти", "Кубодиён", "Московский",
-  "Муминабад", "Пяндж", "Ховалинг", "Хулбук", "20-летия Независимости", "Вахш",
-  "Кировский", "Обикиик", "Орзу", "Пархар", "Хаётинав", "Навкат", "Мехнатобод",
-  "Адрасман", "Зарнисор", "Зеравшан", "Кансай", "Варзоб", "Чорбог", "Такоб",
-  "Симиганч", "Дехмой", "Навобод", "Сангтуда", "Чилгази", "Кухистони Мастчох",
-  "Патрук", "Поршинев", "Ванж", "Рушан", "Дарвоз", "Шахринав", "Лахш", "Файзабад",
-  "Джиликуль", "Джайхун", "Хуросон", "Хамадони", "Восе", "Дангарин", "Темурмалик",
-  "Балджуван", "Муминобод", "Носири Хусрав", "Джалолиддин Балхи", "Спитамен",
-  "Мастчох", "Ашт", "Бободжон Гафуров", "Джаббор Расулов", "Деваштич", "Шахристан", "Айни"
+  'Бохтар','Бустон','Вахдат','Душанбе','Истаравшан','Истиклол','Исфара',
+  'Гиссар','Гулистон','Канибадам','Куляб','Левакант','Нурек','Пенджикент',
+  'Рогун','Турсунзаде','Хорог','Худжанд',
+  'Мургаб','Фархор','Шахритус','Зафарабад','Балх','Гарм','Гафуров','Яван',
+  'Шарора','Абдурахмони Джоми','Дангара','Дусти','Кубодиён','Московский',
+  'Муминабад','Пяндж','Ховалинг','Хулбук','20-летия Независимости','Вахш',
+  'Кировский','Обикиик','Орзу','Пархар','Хаётинав','Навкат','Мехнатобод',
+  'Адрасман','Зарнисор','Зеравшан','Кансай','Варзоб','Чорбог','Такоб',
+  'Симиганч','Дехмой','Навобод','Сангтуда','Чилгази','Кухистони Мастчох',
+  'Патрук','Поршинев','Ванж','Рушан','Дарвоз','Шахринав','Лахш','Файзабад',
+  'Джиликуль','Джайхун','Хуросон','Хамадони','Восе','Дангарин','Темурмалик',
+  'Балджуван','Муминобод','Носири Хусрав','Джалолиддин Балхи','Спитамен',
+  'Мастчох','Ашт','Бободжон Гафуров','Джаббор Расулов','Деваштич','Шахристан','Айни'
 ];
-const extraCities = ref<string[]>([]);
-
-const allCities = computed(() => {
-  const lowerDefaults = defaultCities.map(c => c.toLowerCase());
-  const filteredExtra = extraCities.value.filter(
-    c => !lowerDefaults.includes(c.toLowerCase())
-  );
-  return [...defaultCities, ...filteredExtra];
+const extraCities   = ref<string[]>([]);
+const allCities     = computed(() => {
+  const low = defaultCities.map(c => c.toLowerCase());
+  return [...defaultCities, ...extraCities.value.filter(c => !low.includes(c.toLowerCase()))];
 });
 
-/* Данные формы */
+/* ---------- форма ---------- */
 const form = reactive({
-  from_: "",
-  to: "",
-  date: "",
-  time: "",
-  seats: 1,
-  price: 0,
-  status: "active",
-  description: "",
+  from_: '', to: '', date: '', time: '', seats: 1,
+  price: 0, status: 'active', description: ''
 });
 
-const fromQuery = ref("");
-const toQuery   = ref("");
-const showSuggestionsFrom = ref(false);
-const showSuggestionsTo   = ref(false);
+/* ---------- подсказки ---------- */
+const fromQuery = ref(''), toQuery = ref('');
+const showSuggestionsFrom = ref(false), showSuggestionsTo = ref(false);
 
-const latinToCyr: Record<string, string> = {
-  a:"а", b:"б", c:"с", d:"д", e:"е", f:"ф",
-  g:"г", h:"х", i:"и", j:"й", k:"к", l:"л",
-  m:"м", n:"н", o:"о", p:"п", q:"к", r:"р",
-  s:"с", t:"т", u:"у", v:"в", w:"в", x:"кс",
-  y:"ы", z:"з"
+const latinToCyr: Record<string,string> = { a:'а',b:'б',c:'с',d:'д',e:'е',f:'ф',g:'г',h:'х',i:'и',j:'й',k:'к',l:'л',m:'м',n:'н',o:'о',p:'п',q:'к',r:'р',s:'с',t:'т',u:'у',v:'в',w:'в',x:'кс',y:'ы',z:'з' };
+const toCyr = (t:string)=>t.split('').map(ch=>{const l=ch.toLowerCase();const r=latinToCyr[l]??ch;return ch===l?r:r.toUpperCase();}).join('');
+
+const filter = (q:string)=>{
+  if(!q) return [];
+  const raw=q.toLowerCase(), cyr=toCyr(q).toLowerCase();
+  return allCities.value.filter(c=>{const l=c.toLowerCase();return l.startsWith(raw)||l.startsWith(cyr);}).slice(0,15);
 };
-function toCyrillic(txt: string): string {
-  return txt.split("").map(ch => {
-    const low = ch.toLowerCase();
-    const repl = latinToCyr[low] ?? ch;
-    return ch === low ? repl : repl.toUpperCase();
-  }).join("");
+const filteredCitiesFrom = computed(()=>filter(fromQuery.value));
+const filteredCitiesTo   = computed(()=>filter(toQuery.value));
+
+watch(fromQuery,v=>form.from_=v);
+watch(toQuery,  v=>form.to  =v);
+
+function onFromInput(e: Event){
+  const el=e.target as HTMLInputElement;
+  fromQuery.value=el.value;
+  showSuggestionsFrom.value=fromQuery.value.trim().length>0;
+}
+function onToInput(e: Event){
+  const el=e.target as HTMLInputElement;
+  toQuery.value=el.value;
+  showSuggestionsTo.value=toQuery.value.trim().length>0;
 }
 
-function onFromInput() {
-  showSuggestionsFrom.value = fromQuery.value.length > 0;
-}
-function onToInput() {
-  showSuggestionsTo.value = toQuery.value.length > 0;
-}
+function selectFromCity(c:string){ form.from_=fromQuery.value=c; showSuggestionsFrom.value=false; }
+function selectToCity(c:string){   form.to  =toQuery.value  =c; showSuggestionsTo.value  =false; }
 
-/* Фильтрация с учётом транслита, не дублирует выбранный город */
-function filterCities(query: string, exclude: string) {
-  if (!query) return [];
-  const raw = query.toLowerCase();
-  const cyr = toCyrillic(query).toLowerCase();
-  return allCities.value.filter(city => {
-    const cl = city.toLowerCase();
-    return (cl.startsWith(raw) || cl.startsWith(cyr)) && city !== exclude;
-  });
-}
-const filteredCitiesFrom = computed(() => filterCities(fromQuery.value, form.from_));
-const filteredCitiesTo   = computed(() => filterCities(toQuery.value, form.to));
+/* ---------- города + клавиатура ---------- */
+async function loadCities(){ try{ extraCities.value=await getCities(); }catch{} }
 
-watch(fromQuery, val => form.from_ = val);
-watch(toQuery,   val => form.to    = val);
-
-function selectFromCity(city: string) {
-  form.from_ = city;
-  fromQuery.value = city;
-  showSuggestionsFrom.value = false;
-}
-function selectToCity(city: string) {
-  form.to = city;
-  toQuery.value = city;
-  showSuggestionsTo.value = false;
-}
-function hideSuggestionsWithDelay(type: 'from' | 'to') {
-  setTimeout(() => {
-    if (type === 'from') showSuggestionsFrom.value = false;
-    else showSuggestionsTo.value = false;
-  }, 160);
-}
-
-async function loadCities() {
-  try {
-    extraCities.value = await getCities();
-  } catch (err) {
-    // Тихо, если не получилось — fallback на дефолт
-  }
-}
-
-onMounted(() => {
-  if (!auth.user?.active_driver) {
-    return router.replace("/buy-access");
-  }
+onMounted(()=>{
+  if(!auth.user?.active_driver){ router.replace('/buy-access'); return; }
   loadCities();
-
-  const tg = (window as any).Telegram?.WebApp;
+  if(isMobile && 'visualViewport' in window){
+    window.visualViewport!.addEventListener('resize',()=>{
+      const diff=window.innerHeight-window.visualViewport!.height;
+      kbOpenOffset.value = diff>80 ? diff : 0;
+    });
+  }
+  const tg=(window as any).Telegram?.WebApp;
   tg?.BackButton?.show?.();
-  tg?.BackButton?.onClick?.(() => useSmartBack(router));
+  tg?.BackButton?.onClick?.(()=>useSmartBack(router));
 });
-onBeforeUnmount(() => {
-  const tg = (window as any).Telegram?.WebApp;
+onBeforeUnmount(()=>{
+  const tg=(window as any).Telegram?.WebApp;
   tg?.BackButton?.hide?.();
   tg?.BackButton?.offClick?.();
 });
 
-async function save() {
-  if (!form.from_ || !form.to || !form.date || !form.time) {
-    toastRef.value?.show("Заполните все поля!");
-    return;
-  }
-  loading.value = true;
-  try {
-    const res = await createTrip({ ...form, owner_id: auth.user.id });
-    toastRef.value?.show(`Поездка создана: ${res.from_} → ${res.to}`);
+/* ---------- сохранить ---------- */
+async function save(){
+  if(!form.from_||!form.to||!form.date||!form.time){ toastRef.value?.show('Заполните все поля');return; }
+  loading.value=true;
+  try{
+    await createTrip({ ...form, owner_id:auth.user.id });
+    toastRef.value?.show('Поездка создана');
     await loadCities();
-    setTimeout(() => router.push("/manage-trips"), 1000);
-  } catch {
-    toastRef.value?.show("Ошибка создания поездки!");
-  } finally {
-    loading.value = false;
-  }
+    setTimeout(()=>router.push('/manage-trips'),800);
+  }catch{ toastRef.value?.show('Ошибка создания'); }
+  finally{ loading.value=false; }
 }
 </script>
+
+
+
 
 <style scoped>
 .offer-trip-page {
@@ -261,6 +222,7 @@ async function save() {
   overflow-y: auto;
   background: transparent;
 }
+
 .background-img {
   position: fixed;
   inset: 0;
@@ -272,6 +234,7 @@ async function save() {
   user-select: none;
   animation: fadeIn 1s ease-in-out;
 }
+
 .content-card {
   position: relative;
   z-index: 2;
@@ -284,6 +247,7 @@ async function save() {
   border-radius: 18px;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
 }
+
 .title {
   font-size: 20px;
   font-weight: bold;
@@ -291,6 +255,7 @@ async function save() {
   color: var(--color-text-primary, #232323);
   text-align: center;
 }
+
 .form {
   display: flex;
   flex-direction: column;
@@ -298,9 +263,11 @@ async function save() {
   max-width: 380px;
   margin: 0 auto;
 }
+
 .input-wrapper {
   position: relative;
 }
+
 .input, .select, textarea.input {
   padding: 9px 12px;
   border-radius: 7px;
@@ -312,34 +279,34 @@ async function save() {
   margin-bottom: 8px;
   width: 100%;
 }
+
 textarea.input {
   min-height: 44px;
   max-height: 130px;
 }
-.suggestions {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: white;
-  border: 1px solid #ccc;
-  border-top: none;
-  max-height: 180px;
-  overflow-y: auto;
-  z-index: 9999;
-  box-shadow: 0 2px 16px 0 rgba(50,50,50,0.13);
-  border-radius: 0 0 8px 8px;
-  animation: fadeIn 0.2s;
+
+.suggestions{
+  position:fixed;                 /* фиксируем к экрану, а не к input */
+  left:12px; right:12px;
+  top:calc(50vh - 10px);          /* по умолчанию – под полем (≈середина) */
+  max-height:200px;
+  overflow-y:auto;
+  background:#fff;
+  border:1px solid #ccc;
+  border-radius:12px 12px 8px 8px;
+  box-shadow:0 4px 18px rgba(0,0,0,.08);
+  z-index:10000;
 }
-.suggestion {
-  padding: 8px 12px;
-  cursor: pointer;
-  user-select: none;
-  font-size: 16px;
+.suggestion{
+  padding:10px 14px;
+  font-size:16px;
+  cursor:pointer;
 }
-.suggestion:hover, .suggestion:active {
+.suggestion:active{ background:#f0f4ff; }
+.suggestion:hover {
   background: #f0f0f0;
 }
+
 .btn {
   background: var(--color-primary, #007bff);
   color: white;
@@ -351,6 +318,7 @@ textarea.input {
   margin-top: 4px;
   transition: background 0.2s;
 }
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
