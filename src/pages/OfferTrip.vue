@@ -18,7 +18,7 @@
             required
             maxlength="40"
             @focus="showSuggestionsFrom = true"
-            @blur="hideSuggestionsWithDelay('from')"
+            @keydown.enter.prevent="selectFromCity(filteredCitiesFrom[0])"
             autocomplete="off"
           />
           <div
