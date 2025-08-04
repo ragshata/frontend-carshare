@@ -16,6 +16,14 @@
         <button class="btn" @click="go('/help')">
           🛟 Помощь
         </button>
+                <a
+          class="btn"
+          href="https://t.me/Safarbartjk"
+          target="_blank"
+          rel="noopener"
+        >
+          🛠 Написать поддержке
+        </a>
         <button class="btn" @click="go('/profile')">
           👤 Профиль
         </button>
@@ -103,6 +111,9 @@ function go(path: string) {
 }
 .btn-access:active {
   background: #fb8c00;
+}
+a.btn {
+  text-decoration: none;
 }
 
 @keyframes bg-fade-in {

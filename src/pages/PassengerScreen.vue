@@ -10,21 +10,19 @@
         <button class="btn" @click="go('/my-bookings')">
           📋 Мои бронирования
         </button>
-        <button class="btn" @click="go('/profile')">
-          👤 Мой профиль
+        <button class="btn" @click="go('/help')">
+          🛟 Помощь
         </button>
-        <!-- КНОПКА ПОДДЕРЖКИ -->
         <a
           class="btn"
           href="https://t.me/Safarbartjk"
           target="_blank"
           rel="noopener"
-          style="text-align: left;"
         >
-          🛠 Поддержка
+          🛠 Написать поддержке
         </a>
-        <button class="btn" @click="go('/help')">
-          🛟 Помощь
+        <button class="btn" @click="go('/profile')">
+          👤 Мой профиль
         </button>
       </div>
     </div>
@@ -107,7 +105,6 @@ function go(path: string) {
   background: rgba(227, 238, 255, 0.6);
 }
 
-/* Для <a class="btn"> чтобы была без подчёркивания */
 a.btn {
   text-decoration: none;
 }
