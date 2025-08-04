@@ -7,6 +7,7 @@
 
       <form class="form" @submit.prevent="save">
         <!-- Откуда -->
+        <label>Откуда</label>
         <input
           v-model="fromQuery"
           @input="onFromInput"
@@ -37,6 +38,7 @@
         </div>
 
         <!-- Куда -->
+        <label>Куда</label>
         <input
           v-model="toQuery"
           @input="onToInput"
@@ -95,6 +97,7 @@
     <Toast ref="toastRef" />
   </div>
 </template>
+
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
