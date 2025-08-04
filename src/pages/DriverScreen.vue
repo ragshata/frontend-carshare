@@ -16,6 +16,7 @@
         <button class="btn" @click="go('/help')">
           🛟 Помощь
         </button>
+        <!-- Кнопка поддержки -->
         <a
           class="btn"
           href="https://t.me/Safarbartjk"
@@ -100,6 +101,9 @@ function go(path: string) {
   -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
   transition: background 0.18s;
+  text-align: left;
+  display: block;
+  text-decoration: none;
 }
 .btn:active {
   background: rgba(227, 238, 255, 0.6);
@@ -112,6 +116,7 @@ function go(path: string) {
 .btn-access:active {
   background: #fb8c00;
 }
+
 a.btn {
   text-decoration: none;
 }
