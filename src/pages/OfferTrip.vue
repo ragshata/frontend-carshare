@@ -6,65 +6,60 @@
       <h2 class="title">Создать поездку</h2>
 
       <form class="form" @submit.prevent="save">
-        <!-- Поле "Откуда" -->
-        <label>Откуда</label>
-        <div class="input-wrapper">
-          <input
-            v-model="fromQuery"
-            @input="showSuggestionsFrom = true"
-            type="text"
-            placeholder="Начните вводить город"
-            class="input"
-            required
-            maxlength="40"
-            @focus="showSuggestionsFrom = true"
-            @keydown.enter.prevent="selectFromCity(filteredCitiesFrom[0])"
-            autocomplete="off"
-          />
+        <input
+          v-model="fromQuery"
+          @input="onFromInput"
+          type="text"
+          placeholder="Начните вводить город"
+          class="input"
+          required
+          maxlength="40"
+          @focus="showSuggestionsFrom = true"
+          autocomplete="off"
+        />
+        <div
+          v-if="showSuggestionsFrom && filteredCitiesFrom.length"
+          class="suggestions"
+        >
           <div
-            v-if="showSuggestionsFrom && filteredCitiesFrom.length"
-            class="suggestions"
+            v-for="city in filteredCitiesFrom"
+            :key="city"
+            class="suggestion"
+            @mousedown.prevent="selectFromCity(city)"
+            @touchstart.prevent="selectFromCity(city)"
           >
-            <div
-              v-for="city in filteredCitiesFrom"
-              :key="city"
-              class="suggestion"
-              @mousedown.prevent="selectFromCity(city)"
-            >
-              {{ city }}
-            </div>
+            {{ city }}
           </div>
         </div>
 
+
         <!-- Поле "Куда" -->
-        <label>Куда</label>
-        <div class="input-wrapper">
-          <input
-            v-model="toQuery"
-            @input="showSuggestionsTo = true"
-            type="text"
-            placeholder="Начните вводить город"
-            class="input"
-            required
-            maxlength="40"
-            @focus="showSuggestionsTo = true"
-            @blur="hideSuggestionsWithDelay('to')"
-            autocomplete="off"
-          />
+        <input
+          v-model="toQuery"
+          @input="onToInput"
+          type="text"
+          placeholder="Начните вводить город"
+          class="input"
+          required
+          maxlength="40"
+          @focus="showSuggestionsTo = true"
+          autocomplete="off"
+        />
+        <div
+          v-if="showSuggestionsTo && filteredCitiesTo.length"
+          class="suggestions"
+        >
           <div
-            v-if="showSuggestionsTo && filteredCitiesTo.length"
-            class="suggestions"
+            v-for="city in filteredCitiesTo"
+            :key="city"
+            class="suggestion"
+            @mousedown.prevent="selectToCity(city)"
+            @touchstart.prevent="selectToCity(city)"
           >
-            <div
-              v-for="city in filteredCitiesTo"
-              :key="city"
-              class="suggestion"
-              @mousedown.prevent="selectToCity(city)"
-            >
-              {{ city }}
-            </div>
+            {{ city }}
           </div>
         </div>
+
 
         <label>Дата</label>
         <input v-model="form.date" type="date" required class="input" />
@@ -169,6 +164,15 @@ function toCyrillic(txt: string): string {
     return ch === low ? repl : repl.toUpperCase();
   }).join("");
 }
+
+function onFromInput() {
+  showSuggestionsFrom.value = fromQuery.value.length > 0;
+}
+
+function onToInput() {
+  showSuggestionsTo.value = toQuery.value.length > 0;
+}
+
 
 /* Фильтрация, с учётом транслитерации */
 function filterCities(query: string) {
