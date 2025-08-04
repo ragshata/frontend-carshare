@@ -30,8 +30,7 @@
             v-for="city in filteredCitiesFrom"
             :key="city"
             class="suggestion"
-            @mousedown.prevent="selectFromCity(city)"
-            @touchstart.prevent="selectFromCity(city)"
+            @click.prevent="selectToCity(city)"
           >
             {{ city }}
           </div>
@@ -61,8 +60,7 @@
             v-for="city in filteredCitiesTo"
             :key="city"
             class="suggestion"
-            @mousedown.prevent="selectToCity(city)"
-            @touchstart.prevent="selectToCity(city)"
+            @click.prevent="selectToCity(city)"
           >
             {{ city }}
           </div>
