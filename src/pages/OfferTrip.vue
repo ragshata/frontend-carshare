@@ -1,65 +1,71 @@
 <template>
   <div class="offer-trip-page">
     <div class="background-img"></div>
-
     <div class="content-card">
       <h2 class="title">Создать поездку</h2>
 
       <form class="form" @submit.prevent="save">
-        <input
-          v-model="fromQuery"
-          @input="onFromInput"
-          type="text"
-          placeholder="Начните вводить город"
-          class="input"
-          required
-          maxlength="40"
-          @focus="showSuggestionsFrom = true"
-          autocomplete="off"
-        />
-        <div
-          v-if="showSuggestionsFrom && filteredCitiesFrom.length"
-          class="suggestions"
-        >
+        <!-- Поле "Откуда" -->
+        <label>Откуда</label>
+        <div class="input-wrapper">
+          <input
+            v-model="fromQuery"
+            @input="onFromInput"
+            @focus="showSuggestionsFrom = true"
+            @blur="hideSuggestionsWithDelay('from')"
+            type="text"
+            placeholder="Начните вводить город"
+            class="input"
+            required
+            maxlength="40"
+            autocomplete="off"
+          />
           <div
-            v-for="city in filteredCitiesFrom"
-            :key="city"
-            class="suggestion"
-            @mousedown.prevent="selectFromCity(city)"
-            @touchstart.prevent="selectFromCity(city)"
+            v-if="showSuggestionsFrom && filteredCitiesFrom.length"
+            class="suggestions"
           >
-            {{ city }}
+            <div
+              v-for="city in filteredCitiesFrom"
+              :key="city"
+              class="suggestion"
+              @mousedown.prevent="selectFromCity(city)"
+              @touchstart.prevent="selectFromCity(city)"
+            >
+              {{ city }}
+            </div>
           </div>
         </div>
-
 
         <!-- Поле "Куда" -->
-        <input
-          v-model="toQuery"
-          @input="onToInput"
-          type="text"
-          placeholder="Начните вводить город"
-          class="input"
-          required
-          maxlength="40"
-          @focus="showSuggestionsTo = true"
-          autocomplete="off"
-        />
-        <div
-          v-if="showSuggestionsTo && filteredCitiesTo.length"
-          class="suggestions"
-        >
+        <label>Куда</label>
+        <div class="input-wrapper">
+          <input
+            v-model="toQuery"
+            @input="onToInput"
+            @focus="showSuggestionsTo = true"
+            @blur="hideSuggestionsWithDelay('to')"
+            type="text"
+            placeholder="Начните вводить город"
+            class="input"
+            required
+            maxlength="40"
+            autocomplete="off"
+          />
           <div
-            v-for="city in filteredCitiesTo"
-            :key="city"
-            class="suggestion"
-            @mousedown.prevent="selectToCity(city)"
-            @touchstart.prevent="selectToCity(city)"
+            v-if="showSuggestionsTo && filteredCitiesTo.length"
+            class="suggestions"
           >
-            {{ city }}
+            <div
+              v-for="city in filteredCitiesTo"
+              :key="city"
+              class="suggestion"
+              @mousedown.prevent="selectToCity(city)"
+              @touchstart.prevent="selectToCity(city)"
+            >
+              {{ city }}
+            </div>
           </div>
         </div>
-
 
         <label>Дата</label>
         <input v-model="form.date" type="date" required class="input" />
@@ -85,7 +91,6 @@
         <button class="btn" type="submit" :disabled="loading">Создать</button>
       </form>
     </div>
-
     <Toast ref="toastRef" />
   </div>
 </template>
@@ -105,7 +110,7 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 const loading = ref(false);
 
 const defaultCities = [
-  //  ... тот же список городов без изменения ...
+  // ... список городов ...
   "Бохтар", "Бустон", "Вахдат", "Душанбе", "Истаравшан", "Истиклол", "Исфара",
   "Гиссар", "Гулистон", "Канибадам", "Куляб", "Левакант", "Нурек", "Пенджикент",
   "Рогун", "Турсунзаде", "Хорог", "Худжанд",
@@ -120,7 +125,6 @@ const defaultCities = [
   "Балджуван", "Муминобод", "Носири Хусрав", "Джалолиддин Балхи", "Спитамен",
   "Мастчох", "Ашт", "Бободжон Гафуров", "Джаббор Расулов", "Деваштич", "Шахристан", "Айни"
 ];
-
 const extraCities = ref<string[]>([]);
 
 const allCities = computed(() => {
@@ -143,13 +147,11 @@ const form = reactive({
   description: "",
 });
 
-/* Управление вводом и подсказками */
 const fromQuery = ref("");
 const toQuery   = ref("");
 const showSuggestionsFrom = ref(false);
 const showSuggestionsTo   = ref(false);
 
-/* Транслитерация */
 const latinToCyr: Record<string, string> = {
   a:"а", b:"б", c:"с", d:"д", e:"е", f:"ф",
   g:"г", h:"х", i:"и", j:"й", k:"к", l:"л",
@@ -168,26 +170,22 @@ function toCyrillic(txt: string): string {
 function onFromInput() {
   showSuggestionsFrom.value = fromQuery.value.length > 0;
 }
-
 function onToInput() {
   showSuggestionsTo.value = toQuery.value.length > 0;
 }
 
-
-/* Фильтрация, с учётом транслитерации */
-function filterCities(query: string) {
+/* Фильтрация с учётом транслита, не дублирует выбранный город */
+function filterCities(query: string, exclude: string) {
   if (!query) return [];
   const raw = query.toLowerCase();
   const cyr = toCyrillic(query).toLowerCase();
-
   return allCities.value.filter(city => {
     const cl = city.toLowerCase();
-    return cl.startsWith(raw) || cl.startsWith(cyr);
+    return (cl.startsWith(raw) || cl.startsWith(cyr)) && city !== exclude;
   });
 }
-
-const filteredCitiesFrom = computed(() => filterCities(fromQuery.value));
-const filteredCitiesTo   = computed(() => filterCities(toQuery.value));
+const filteredCitiesFrom = computed(() => filterCities(fromQuery.value, form.from_));
+const filteredCitiesTo   = computed(() => filterCities(toQuery.value, form.to));
 
 watch(fromQuery, val => form.from_ = val);
 watch(toQuery,   val => form.to    = val);
@@ -206,14 +204,14 @@ function hideSuggestionsWithDelay(type: 'from' | 'to') {
   setTimeout(() => {
     if (type === 'from') showSuggestionsFrom.value = false;
     else showSuggestionsTo.value = false;
-  }, 200);
+  }, 160);
 }
 
 async function loadCities() {
   try {
     extraCities.value = await getCities();
   } catch (err) {
-    console.error("Не удалось загрузить города", err);
+    // Тихо, если не получилось — fallback на дефолт
   }
 }
 
@@ -238,7 +236,6 @@ async function save() {
     toastRef.value?.show("Заполните все поля!");
     return;
   }
-
   loading.value = true;
   try {
     const res = await createTrip({ ...form, owner_id: auth.user.id });
@@ -253,7 +250,6 @@ async function save() {
 }
 </script>
 
-
 <style scoped>
 .offer-trip-page {
   padding: 16px;
@@ -265,7 +261,6 @@ async function save() {
   overflow-y: auto;
   background: transparent;
 }
-
 .background-img {
   position: fixed;
   inset: 0;
@@ -277,7 +272,6 @@ async function save() {
   user-select: none;
   animation: fadeIn 1s ease-in-out;
 }
-
 .content-card {
   position: relative;
   z-index: 2;
@@ -290,7 +284,6 @@ async function save() {
   border-radius: 18px;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
 }
-
 .title {
   font-size: 20px;
   font-weight: bold;
@@ -298,7 +291,6 @@ async function save() {
   color: var(--color-text-primary, #232323);
   text-align: center;
 }
-
 .form {
   display: flex;
   flex-direction: column;
@@ -306,11 +298,9 @@ async function save() {
   max-width: 380px;
   margin: 0 auto;
 }
-
 .input-wrapper {
   position: relative;
 }
-
 .input, .select, textarea.input {
   padding: 9px 12px;
   border-radius: 7px;
@@ -322,12 +312,10 @@ async function save() {
   margin-bottom: 8px;
   width: 100%;
 }
-
 textarea.input {
   min-height: 44px;
   max-height: 130px;
 }
-
 .suggestions {
   position: absolute;
   top: 100%;
@@ -339,16 +327,19 @@ textarea.input {
   max-height: 180px;
   overflow-y: auto;
   z-index: 9999;
+  box-shadow: 0 2px 16px 0 rgba(50,50,50,0.13);
+  border-radius: 0 0 8px 8px;
+  animation: fadeIn 0.2s;
 }
-
 .suggestion {
   padding: 8px 12px;
   cursor: pointer;
+  user-select: none;
+  font-size: 16px;
 }
-.suggestion:hover {
+.suggestion:hover, .suggestion:active {
   background: #f0f0f0;
 }
-
 .btn {
   background: var(--color-primary, #007bff);
   color: white;
@@ -360,7 +351,6 @@ textarea.input {
   margin-top: 4px;
   transition: background 0.2s;
 }
-
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
