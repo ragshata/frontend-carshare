@@ -16,7 +16,7 @@
         <button class="btn" @click="go('/help')">
           🛟 Помощь
         </button>
-                <a
+        <a
           class="btn"
           href="https://t.me/Safarbartjk"
           target="_blank"
