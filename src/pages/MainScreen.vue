@@ -61,9 +61,9 @@ async function chooseRole(role: 'driver' | 'passenger') {
     localStorage.setItem('user_role', role);
 
     if (role === 'passenger') {
-      router.replace('/passenger'); // 👈 сюда пассажира
+      router.replace('/passenger');
     } else {
-      router.replace('/driver');    // 👈 сюда водителя
+      router.replace('/driver');
     }
   } catch (e) {
     toastRef.value?.show('Ошибка при выборе роли');
@@ -159,22 +159,72 @@ html, body {
   gap: 14px;
   margin-bottom: 18px;
 }
+
+/* === Новый стиль кнопок ролей (более выразительные) === */
 .role-btn {
-  padding: 15px 0;
-  font-size: 18px;
-  font-weight: 600;
-  border: none;
-  border-radius: 13px;
-  background: #fff;
-  color: #007bff;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-  cursor: pointer;
-  transition: background 0.16s;
+  position: relative;
+  display: inline-block;
   width: 100%;
+  padding: 16px 14px;                 /* +1px высоты */
+  font-size: 18px;
+  font-weight: 700;                   /* жирнее */
+  border: 1.5px solid transparent;    /* тонкая рамка (перекрасим ниже) */
+  border-radius: 14px;                /* чуть больше радиус */
+  background: #fff;
+  color: #0a58ca;                     /* чуть темнее синий */
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08), inset 0 -2px 0 rgba(0,0,0,0.03);
+  cursor: pointer;
+  transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1.2;
 }
-.role-btn.driver { background: #f1f8ff; }
-.role-btn.passenger { background: #f9f4ff; }
-.role-btn:active { background: #e3eeff; }
+
+/* Пассажир — фиолетово-розовый градиент, с контрастной рамкой */
+.role-btn.passenger {
+  background: linear-gradient(180deg, #ffffff 20%, #faf5ff 100%);
+  border-color: #e6d9ff;
+  color: #6a4cff;
+}
+
+/* Водитель — голубой градиент */
+.role-btn.driver {
+  background: linear-gradient(180deg, #ffffff 20%, #eef7ff 100%);
+  border-color: #cfe6ff;
+  color: #0b72ff;
+}
+
+/* Hover (desktop), слегка подсветить */
+.role-btn:hover {
+  box-shadow: 0 8px 22px rgba(0,0,0,0.10), inset 0 -2px 0 rgba(0,0,0,0.04);
+}
+
+/* Active (tap) — лёгкий «нажатый» эффект */
+.role-btn:active {
+  transform: translateY(1px) scale(0.995);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08), inset 0 -1px 0 rgba(0,0,0,0.05);
+}
+
+/* Фокус для доступности */
+.role-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px rgba(0,123,255,0.6),
+    0 8px 22px rgba(0,0,0,0.10);
+}
+
+/* Эмоджи немного крупнее на мобильном и чуть отступа */
+
+.role-btn {
+  letter-spacing: 0.1px;
+}
+@media (max-width: 430px) {
+  .role-btn {
+    font-size: 18px;
+    padding: 16px 14px;
+  }
+}
 
 .loading {
   font-size: 15px;
