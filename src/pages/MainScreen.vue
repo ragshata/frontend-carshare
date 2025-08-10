@@ -9,14 +9,23 @@
         <br />
         Выберите свою роль (можно поменять в профиле):
       </p>
+
       <div class="roles">
-        <button class="role-btn passenger" @click="chooseRole('passenger')">
+        <button
+          class="role-btn"
+          @click="onRoleClick('passenger', $event)"
+        >
           🙋 Попутчик (Найти поездку)
         </button>
-        <button class="role-btn driver" @click="chooseRole('driver')">
+
+        <button
+          class="role-btn"
+          @click="onRoleClick('driver', $event)"
+        >
           🚗 Водитель (Предложить поездку)
         </button>
       </div>
+
       <div v-if="loading" class="loading">Сохраняем выбор...</div>
     </div>
 
@@ -60,16 +69,42 @@ async function chooseRole(role: 'driver' | 'passenger') {
     auth.user.is_driver = role === 'driver';
     localStorage.setItem('user_role', role);
 
-    if (role === 'passenger') {
-      router.replace('/passenger');
-    } else {
-      router.replace('/driver');
-    }
+    router.replace(role === 'driver' ? '/driver' : '/passenger');
   } catch (e) {
     toastRef.value?.show('Ошибка при выборе роли');
   } finally {
     loading.value = false;
   }
+}
+
+/** Клик с «вспышкой» */
+function onRoleClick(role: 'driver' | 'passenger', e: MouseEvent | TouchEvent) {
+  const el = e.currentTarget as HTMLElement;
+  if (!el) return;
+  // позиция клика для центра вспышки
+  let clientX = 0, clientY = 0;
+  if (e instanceof TouchEvent && e.touches[0]) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else if (e instanceof MouseEvent) {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+  const rect = el.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+
+  // прокидываем координаты и запускаем анимацию
+  el.style.setProperty('--fx-x', `${x}px`);
+  el.style.setProperty('--fx-y', `${y}px`);
+  el.classList.remove('flash'); // если спам-клики
+  // рефлоу, чтобы перезапустить анимацию
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  el.offsetWidth;
+  el.classList.add('flash');
+
+  // маленькая задержка, чтобы эффект успел сыграть
+  setTimeout(() => chooseRole(role), 160);
 }
 </script>
 
@@ -97,10 +132,7 @@ html, body {
   user-select: none;
   animation: bg-fade-in 1.1s;
 }
-@keyframes bg-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+@keyframes bg-fade-in { from {opacity:0} to {opacity:1} }
 
 .main-screen-root {
   position: fixed;
@@ -128,18 +160,10 @@ html, body {
 }
 
 @media (max-width: 430px) {
-  .main-screen-content {
-    padding: 20px 3vw 16px 3vw;
-    font-size: 15px;
-    border-radius: 16px;
-  }
+  .main-screen-content { padding: 20px 3vw 16px 3vw; font-size: 15px; border-radius: 16px; }
 }
 @media (max-width: 340px) {
-  .main-screen-content {
-    padding: 12px 1vw 10px 1vw;
-    font-size: 14px;
-    border-radius: 12px;
-  }
+  .main-screen-content { padding: 12px 1vw 10px 1vw; font-size: 14px; border-radius: 12px; }
 }
 
 .title {
@@ -160,70 +184,56 @@ html, body {
   margin-bottom: 18px;
 }
 
-/* === Новый стиль кнопок ролей (более выразительные) === */
+/* Кнопки одинакового стиля, более тёмные + эффект вспышки */
 .role-btn {
   position: relative;
   display: inline-block;
   width: 100%;
-  padding: 16px 14px;                 /* +1px высоты */
+  padding: 16px 14px;
   font-size: 18px;
-  font-weight: 700;                   /* жирнее */
-  border: 1.5px solid transparent;    /* тонкая рамка (перекрасим ниже) */
-  border-radius: 14px;                /* чуть больше радиус */
-  background: #fff;
-  color: #0a58ca;                     /* чуть темнее синий */
+  font-weight: 700;
+  border: 1.5px solid rgba(0, 60, 130, 0.45);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #d1daea 0%, #bcc9df 100%);
+  color: #0b5ed7;
   box-shadow: 0 6px 16px rgba(0,0,0,0.08), inset 0 -2px 0 rgba(0,0,0,0.03);
   cursor: pointer;
   transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   line-height: 1.2;
+  overflow: hidden; /* прячем вспышку за границы */
 }
 
-/* Пассажир — фиолетово-розовый градиент, с контрастной рамкой */
-.role-btn.passenger {
-  background: linear-gradient(180deg, #ffffff 20%, #faf5ff 100%);
-  border-color: #e6d9ff;
-  color: #6a4cff;
-}
-
-/* Водитель — голубой градиент */
-.role-btn.driver {
-  background: linear-gradient(180deg, #ffffff 20%, #eef7ff 100%);
-  border-color: #cfe6ff;
-  color: #0b72ff;
-}
-
-/* Hover (desktop), слегка подсветить */
 .role-btn:hover {
-  box-shadow: 0 8px 22px rgba(0,0,0,0.10), inset 0 -2px 0 rgba(0,0,0,0.04);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.12), inset 0 -2px 0 rgba(0,0,0,0.05);
+  background: linear-gradient(180deg, #c6d2e6 0%, #b3c2da 100%);
+}
+.role-btn:active { transform: translateY(1px) scale(0.995); }
+
+/* Псевдоэлемент для вспышки/риппла */
+.role-btn::after {
+  content: "";
+  position: absolute;
+  left: var(--fx-x, 50%);
+  top: var(--fx-y, 50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%) scale(1);
+  background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.4) 45%, rgba(255,255,255,0) 65%);
+  pointer-events: none;
+  opacity: 0;
 }
 
-/* Active (tap) — лёгкий «нажатый» эффект */
-.role-btn:active {
-  transform: translateY(1px) scale(0.995);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08), inset 0 -1px 0 rgba(0,0,0,0.05);
+.role-btn.flash::after {
+  animation: btn-flash 420ms ease-out;
 }
 
-/* Фокус для доступности */
-.role-btn:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px #fff,
-    0 0 0 4px rgba(0,123,255,0.6),
-    0 8px 22px rgba(0,0,0,0.10);
-}
-
-/* Эмоджи немного крупнее на мобильном и чуть отступа */
-
-.role-btn {
-  letter-spacing: 0.1px;
-}
-@media (max-width: 430px) {
-  .role-btn {
-    font-size: 18px;
-    padding: 16px 14px;
-  }
+@keyframes btn-flash {
+  0%   { opacity: .85; transform: translate(-50%, -50%) scale(1); }
+  60%  { opacity: .35; transform: translate(-50%, -50%) scale(26); }
+  100% { opacity: 0;   transform: translate(-50%, -50%) scale(34); }
 }
 
 .loading {
