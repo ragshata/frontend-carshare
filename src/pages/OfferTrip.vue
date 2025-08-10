@@ -24,18 +24,17 @@
         <div
           v-if="showSuggestionsFrom && filteredCitiesFrom.length"
           class="suggestions"
-          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : 'auto' }"
+          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : undefined }"
         >
           <div
             v-for="city in filteredCitiesFrom"
             :key="city"
             class="suggestion"
-            @click.prevent="selectFromCity(city)"   
+            @click.prevent="selectFromCity(city)"
           >
             {{ city }}
           </div>
         </div>
-
 
         <!-- Куда -->
         <label>Куда</label>
@@ -55,7 +54,7 @@
         <div
           v-if="showSuggestionsTo && filteredCitiesTo.length"
           class="suggestions"
-          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : 'auto' }"
+          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : undefined }"
         >
           <div
             v-for="city in filteredCitiesTo"
@@ -93,6 +92,14 @@
       </form>
     </div>
 
+    <!-- Модалка «Завершите регистрацию» (только при сабмите, если профиль не полный) -->
+    <CompleteProfileModal
+      :open="showProfileModal"
+      role="driver"
+      @goProfile="router.push('/profile')"
+      @close="showProfileModal = false"
+    />
+
     <Toast ref="toastRef" />
   </div>
 </template>
@@ -106,6 +113,10 @@ import { getCities } from '@/api/cities';
 import { useSmartBack } from '@/utils/navigation';
 import Toast from '@/components/Toast.vue';
 
+/* Новое: модалка + композабл проверки профиля */
+import CompleteProfileModal from '@/components/CompleteProfileModal.vue';
+import { checkProfileComplete } from '@/composables/profileGate';
+
 const router   = useRouter();
 const auth     = useAuthStore();
 const toastRef = ref<InstanceType<typeof Toast>>();
@@ -113,6 +124,7 @@ const toastRef = ref<InstanceType<typeof Toast>>();
 const loading  = ref(false);
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const kbOpenOffset = ref(0);
+const showProfileModal = ref(false);
 
 /* ---------- списки городов ---------- */
 const defaultCities = [
@@ -152,7 +164,9 @@ const toCyr = (t:string)=>t.split('').map(ch=>{const l=ch.toLowerCase();const r=
 const filter = (q:string)=>{
   if(!q) return [];
   const raw=q.toLowerCase(), cyr=toCyr(q).toLowerCase();
-  return allCities.value.filter(c=>{const l=c.toLowerCase();return l.startsWith(raw)||l.startsWith(cyr);}).slice(0,15);
+  return allCities.value
+    .filter(c=>{const l=c.toLowerCase();return l.startsWith(raw)||l.startsWith(cyr);})
+    .slice(0,15);
 };
 const filteredCitiesFrom = computed(()=>filter(fromQuery.value));
 const filteredCitiesTo   = computed(()=>filter(toQuery.value));
@@ -180,6 +194,7 @@ async function loadCities(){ try{ extraCities.value=await getCities(); }catch{} 
 onMounted(()=>{
   if(!auth.user?.active_driver){ router.replace('/buy-access'); return; }
   loadCities();
+
   if(isMobile && 'visualViewport' in window){
     window.visualViewport!.addEventListener('resize',()=>{
       const diff=window.innerHeight-window.visualViewport!.height;
@@ -198,20 +213,30 @@ onBeforeUnmount(()=>{
 
 /* ---------- сохранить ---------- */
 async function save(){
-  if(!form.from_||!form.to||!form.date||!form.time){ toastRef.value?.show('Заполните все поля');return; }
+  // Перед созданием — проверяем профиль водителя
+  const { ok } = checkProfileComplete('driver');
+  if (!ok) {
+    showProfileModal.value = true;
+    return;
+  }
+
+  if(!form.from_||!form.to||!form.date||!form.time){
+    toastRef.value?.show('Заполните все поля');
+    return;
+  }
   loading.value=true;
   try{
     await createTrip({ ...form, owner_id:auth.user.id });
     toastRef.value?.show('Поездка создана');
     await loadCities();
     setTimeout(()=>router.push('/manage-trips'),800);
-  }catch{ toastRef.value?.show('Ошибка создания'); }
-  finally{ loading.value=false; }
+  }catch{ 
+    toastRef.value?.show('Ошибка создания'); 
+  } finally{ 
+    loading.value=false; 
+  }
 }
 </script>
-
-
-
 
 <style scoped>
 .offer-trip-page {
@@ -266,10 +291,6 @@ async function save(){
   margin: 0 auto;
 }
 
-.input-wrapper {
-  position: relative;
-}
-
 .input, .select, textarea.input {
   padding: 9px 12px;
   border-radius: 7px;
@@ -287,27 +308,27 @@ textarea.input {
   max-height: 130px;
 }
 
+/* Флоат-список подсказок — адаптив под мобильную клавиатуру */
 .suggestions{
-  position:fixed;                 /* фиксируем к экрану, а не к input */
-  left:12px; right:12px;
-  top:calc(50vh - 10px);          /* по умолчанию – под полем (≈середина) */
-  max-height:200px;
-  overflow-y:auto;
-  background:#fff;
-  border:1px solid #ccc;
-  border-radius:12px 12px 8px 8px;
-  box-shadow:0 4px 18px rgba(0,0,0,.08);
-  z-index:10000;
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;                 /* по умолчанию прижимаем к низу */
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 12px 12px 8px 8px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.08);
+  z-index: 10000;
 }
 .suggestion{
-  padding:10px 14px;
-  font-size:16px;
-  cursor:pointer;
+  padding: 10px 14px;
+  font-size: 16px;
+  cursor: pointer;
 }
 .suggestion:active{ background:#f0f4ff; }
-.suggestion:hover {
-  background: #f0f0f0;
-}
+.suggestion:hover { background: #f0f0f0; }
 
 .btn {
   background: var(--color-primary, #007bff);

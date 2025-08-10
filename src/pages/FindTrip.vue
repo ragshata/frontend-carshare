@@ -19,7 +19,7 @@
         <div
           v-if="showSuggestionsFrom && filteredCitiesFrom.length"
           class="suggestions"
-          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : 'auto' }"
+          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : undefined }"
         >
           <div
             v-for="city in filteredCitiesFrom"
@@ -45,7 +45,7 @@
         <div
           v-if="showSuggestionsTo && filteredCitiesTo.length"
           class="suggestions"
-          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : 'auto' }"
+          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : undefined }"
         >
           <div
             v-for="city in filteredCitiesTo"
@@ -68,6 +68,14 @@
         </div>
       </form>
     </div>
+
+    <!-- Модалка завершения профиля (показываем только при сабмите, если профиль неполный) -->
+    <CompleteProfileModal
+      :open="showProfileModal"
+      role="passenger"
+      @goProfile="router.push('/profile')"
+      @close="showProfileModal = false"
+    />
   </div>
 </template>
 
@@ -77,7 +85,15 @@ import { reactive, ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router';
 import { getCities } from '@/api/cities';
 
+/* Новое: модалка + композабл проверки профиля */
+import CompleteProfileModal from '@/components/CompleteProfileModal.vue';
+import { checkProfileComplete } from '@/composables/profileGate';
+
 const router = useRouter();
+
+const showProfileModal = ref(false);
+const kbOpenOffset = ref(0);
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 const defaultCities = [
   'Бохтар','Бустон','Вахдат','Душанбе','Истаравшан','Истиклол','Исфара',
@@ -99,35 +115,37 @@ const allCities = computed(() => {
   return [...defaultCities, ...extraCities.value.filter(c => !low.includes(c.toLowerCase()))];
 });
 
-const form = reactive({
-  from_: '',
-  to: '',
-  date: ''
-});
+const form = reactive({ from_: '', to: '', date: '' });
 const fromQuery = ref('');
 const toQuery = ref('');
 const showSuggestionsFrom = ref(false);
 const showSuggestionsTo = ref(false);
-const kbOpenOffset = ref(0);
 
-const latinToCyr: Record<string, string> = { a:'а',b:'б',c:'с',d:'д',e:'е',f:'ф',g:'г',h:'х',i:'и',j:'й',k:'к',l:'л',m:'м',n:'н',o:'о',p:'п',q:'к',r:'р',s:'с',t:'т',u:'у',v:'в',w:'в',x:'кс',y:'ы',z:'з' };
-const toCyr = (t: string) => t.split('').map(ch => {
-  const l = ch.toLowerCase(); const r = latinToCyr[l] ?? ch;
-  return ch === l ? r : r.toUpperCase();
-}).join('');
+const latinToCyr: Record<string, string> = {
+  a:'а',b:'б',c:'с',d:'д',e:'е',f:'ф',g:'г',h:'х',i:'и',j:'й',k:'к',l:'л',m:'м',n:'н',o:'о',p:'п',q:'к',r:'р',s:'с',t:'т',u:'у',v:'в',w:'в',x:'кс',y:'ы',z:'з'
+};
+const toCyr = (t: string) =>
+  t.split('').map(ch => {
+    const l = ch.toLowerCase(); const r = latinToCyr[l] ?? ch;
+    return ch === l ? r : r.toUpperCase();
+  }).join('');
+
 const filter = (q: string) => {
   if (!q) return [];
   const raw = q.toLowerCase(), cyr = toCyr(q).toLowerCase();
-  return allCities.value.filter(c => {
-    const l = c.toLowerCase();
-    return l.startsWith(raw) || l.startsWith(cyr);
-  }).slice(0, 15);
+  return allCities.value
+    .filter(c => {
+      const l = c.toLowerCase();
+      return l.startsWith(raw) || l.startsWith(cyr);
+    })
+    .slice(0, 15);
 };
+
 const filteredCitiesFrom = computed(() => filter(fromQuery.value));
 const filteredCitiesTo = computed(() => filter(toQuery.value));
 
-watch(fromQuery, v => form.from_ = v);
-watch(toQuery, v => form.to = v);
+watch(fromQuery, v => (form.from_ = v));
+watch(toQuery, v => (form.to = v));
 
 function onFromInput(e: Event) {
   const el = e.target as HTMLInputElement;
@@ -156,9 +174,10 @@ onMounted(async () => {
   try {
     extraCities.value = await getCities();
   } catch (e) {
-    console.error("Ошибка загрузки городов:", e);
+    console.error('Ошибка загрузки городов:', e);
   }
-  if ('visualViewport' in window) {
+
+  if (isMobile && 'visualViewport' in window) {
     window.visualViewport!.addEventListener('resize', () => {
       const diff = window.innerHeight - window.visualViewport!.height;
       kbOpenOffset.value = diff > 80 ? diff : 0;
@@ -179,14 +198,21 @@ function resetFilters() {
 }
 
 function goToResults() {
+  // Проверяем профиль пассажира — если не заполнен, мягко просим дополнить
+  const { ok } = checkProfileComplete('passenger');
+  if (!ok) {
+    showProfileModal.value = true;
+    return;
+  }
+
   const allEmpty = !form.from_ && !form.to && !form.date;
   if (allEmpty) {
     router.push({ path: '/search-results' });
     return;
   }
   const query: Record<string, string> = {};
-  Object.entries(form).forEach(([key, value]) => {
-    if (value) query[key] = value;
+  Object.entries(form).forEach(([k, v]) => {
+    if (v) query[k] = v as string;
   });
   router.push({ path: '/search-results', query });
 }
@@ -236,7 +262,7 @@ function goToResults() {
   flex-direction: column;
   gap: 20px;
 }
-.select, .input {
+.input {
   padding: 9px 12px;
   border-radius: 7px;
   border: 1px solid var(--color-border, #bbb);
@@ -244,25 +270,29 @@ function goToResults() {
   outline: none;
   margin-bottom: 6px;
 }
-.suggestions{
-  position:fixed;
-  left:12px; right:12px;
-  top:calc(50vh - 10px);
-  max-height:200px;
-  overflow-y:auto;
-  background:#fff;
-  border:1px solid #ccc;
-  border-radius:12px 12px 8px 8px;
-  box-shadow:0 4px 18px rgba(0,0,0,.08);
-  z-index:10000;
+
+/* Плавающий список подсказок — дружит с мобильной клавой */
+.suggestions {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px; /* по умолчанию, но сдвигаем через :style при открытой клавиатуре */
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 12px 12px 8px 8px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.08);
+  z-index: 10000;
 }
-.suggestion{
-  padding:10px 14px;
-  font-size:16px;
-  cursor:pointer;
+.suggestion {
+  padding: 10px 14px;
+  font-size: 16px;
+  cursor: pointer;
 }
-.suggestion:active{ background:#f0f4ff; }
+.suggestion:active { background: #f0f4ff; }
 .suggestion:hover { background: #f0f0f0; }
+
 .buttons {
   display: flex;
   flex-direction: column;
@@ -279,16 +309,15 @@ function goToResults() {
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
-.btn:hover {
-  background-color: #0069d9;
-}
+.btn:hover { background-color: #0069d9; }
 .btn-outline {
   background: transparent;
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
 }
+
 @keyframes fadeIn {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
 </style>

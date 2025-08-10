@@ -2,33 +2,22 @@
   <div class="main-screen-root">
     <div class="background-img"></div>
 
-    <div class="blur-container" :class="{ 'blur-active': showModal }">
-      <div class="main-screen-content">
-        <h1 class="title">Добро пожаловать!</h1>
-        <p class="desc">
-          Это мини-приложение для поиска попутчиков и совместных поездок. Выберите, кто вы:
-        </p>
-        <div class="roles">
-          <button class="role-btn driver" @click="chooseRole('driver')">🚗 Я водитель</button>
-          <button class="role-btn passenger" @click="chooseRole('passenger')">🙋 Я попутчик</button>
-        </div>
-        <div v-if="loading" class="loading">Сохраняем выбор...</div>
+    <div class="main-screen-content">
+      <h1 class="title">Привет!</h1>
+      <p class="desc">
+        Safarbar помогает быстро найти попутчиков и поездки по Таджикистану и СНГ.
+        <br />
+        Выберите свою роль (можно поменять в профиле):
+      </p>
+      <div class="roles">
+        <button class="role-btn passenger" @click="chooseRole('passenger')">
+          🙋 Попутчик (Найти поездку)
+        </button>
+        <button class="role-btn driver" @click="chooseRole('driver')">
+          🚗 Водитель (Предложить поездку)
+        </button>
       </div>
-    </div>
-
-    <!-- Модалка -->
-    <div v-if="showModal" class="modal-overlay">
-      <div class="modal">
-        <h3 class="modal-title">Завершите регистрацию</h3>
-        <div class="modal-desc">
-          <div>Пожалуйста, перейдите во вкладку <b>Профиль</b> и заполните:</div>
-          <ul>
-            <li>Фамилию, имя и телефон</li>
-            <li v-if="modalRole==='driver'">Марку, номер и фото машины</li>
-          </ul>
-        </div>
-        <button class="btn" @click="goToProfile">Перейти в профиль</button>
-      </div>
+      <div v-if="loading" class="loading">Сохраняем выбор...</div>
     </div>
 
     <Toast ref="toastRef" />
@@ -45,13 +34,10 @@ import Toast from '@/components/Toast.vue';
 const router = useRouter();
 const auth = useAuthStore();
 
-const showModal = ref(false);
-const modalRole = ref<'driver' | 'passenger' | null>(null);
 const loading = ref(false);
 const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 onMounted(() => {
-  // Если роль уже есть на сервере — сразу переходим
   if (auth.user?.is_driver === true) {
     router.replace('/driver');
     return;
@@ -60,10 +46,8 @@ onMounted(() => {
     router.replace('/passenger');
     return;
   }
-  // Если роль не выбрана — ничего не показываем, ждём, пока выберет
 });
 
-// Выбор роли
 async function chooseRole(role: 'driver' | 'passenger') {
   loading.value = true;
   try {
@@ -72,27 +56,22 @@ async function chooseRole(role: 'driver' | 'passenger') {
       loading.value = false;
       return;
     }
-
-    // Сохраняем роль на сервере
-    await patchUserRole(auth.user.id, role == 'driver');
+    await patchUserRole(auth.user.id, role === 'driver');
     auth.user.is_driver = role === 'driver';
     localStorage.setItem('user_role', role);
 
-    // После выбора роли открываем модалку для заполнения профиля
-    modalRole.value = role;
-    showModal.value = true;
+    if (role === 'passenger') {
+      router.replace('/passenger'); // 👈 сюда пассажира
+    } else {
+      router.replace('/driver');    // 👈 сюда водителя
+    }
   } catch (e) {
     toastRef.value?.show('Ошибка при выборе роли');
+  } finally {
+    loading.value = false;
   }
-  loading.value = false;
-}
-
-function goToProfile() {
-  showModal.value = false;
-  router.replace('/profile');
 }
 </script>
-
 
 <style scoped>
 html, body {
@@ -106,6 +85,7 @@ html, body {
   background: #222;
 }
 * { box-sizing: border-box; }
+
 .background-img {
   position: fixed;
   inset: 0;
@@ -121,8 +101,8 @@ html, body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-.main-screen-root,
-.blur-container {
+
+.main-screen-root {
   position: fixed;
   inset: 0;
   min-height: 100vh;
@@ -131,15 +111,10 @@ html, body {
   align-items: center;
   justify-content: center;
   z-index: 2;
-  transition: filter 0.18s, background 0.18s;
   padding-bottom: env(safe-area-inset-bottom, 0);
   padding-top: env(safe-area-inset-top, 0);
 }
-.blur-active {
-  filter: blur(7px) brightness(0.7);
-  pointer-events: none;
-  user-select: none;
-}
+
 .main-screen-content {
   z-index: 3;
   position: relative;
@@ -150,8 +125,8 @@ html, body {
   max-width: 95vw;
   width: 100%;
   text-align: center;
-  margin: 0;
 }
+
 @media (max-width: 430px) {
   .main-screen-content {
     padding: 20px 3vw 16px 3vw;
@@ -166,6 +141,7 @@ html, body {
     border-radius: 12px;
   }
 }
+
 .title {
   font-size: 21px;
   font-weight: 700;
@@ -182,8 +158,6 @@ html, body {
   flex-direction: column;
   gap: 14px;
   margin-bottom: 18px;
-  justify-content: center;
-  align-items: stretch;
 }
 .role-btn {
   padding: 15px 0;
@@ -201,61 +175,10 @@ html, body {
 .role-btn.driver { background: #f1f8ff; }
 .role-btn.passenger { background: #f9f4ff; }
 .role-btn:active { background: #e3eeff; }
+
 .loading {
   font-size: 15px;
   color: #666;
   margin-top: 14px;
 }
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  background: rgba(18,24,36,0.16);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.modal {
-  background: #fff;
-  border-radius: 18px;
-  padding: 30px 22px 18px 22px;
-  min-width: 250px;
-  max-width: 90vw;
-  text-align: center;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.10);
-  animation: pop-in 0.16s;
-}
-@keyframes pop-in {
-  0% { transform: scale(0.97); opacity: 0.75; }
-  100% { transform: scale(1); opacity: 1; }
-}
-.modal-title {
-  font-size: 20px;
-  font-weight: bold;
-  color: #232323;
-  margin-bottom: 13px;
-}
-.modal-desc {
-  font-size: 15px;
-  color: #444;
-  margin-bottom: 20px;
-}
-.modal-desc ul {
-  text-align: left;
-  margin: 10px 0 0 0;
-  padding-left: 20px;
-  font-size: 15px;
-}
-.btn {
-  background: var(--color-primary, #007bff);
-  color: white;
-  border: none;
-  padding: 11px 24px;
-  border-radius: 9px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background 0.18s;
-  font-weight: 600;
-}
-.btn:active { background: #1d6de6; }
 </style>
