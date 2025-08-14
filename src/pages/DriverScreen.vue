@@ -40,6 +40,9 @@ function go(path: string) {
 </script>
 
 <style scoped>
+/* Подключаем аккуратный геометричный шрифт с хорошей читабельностью */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@600;700&display=swap');
+
 .driver-screen {
   position: fixed;
   inset: 0;
@@ -88,7 +91,9 @@ function go(path: string) {
 .btn {
   padding: 14px;
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 700; /* делаем чуть жирнее */
+  font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+  letter-spacing: 0.2px; /* чутка воздуха между буквами */
   border: none;
   border-radius: 12px;
   width: 100%;
@@ -101,6 +106,8 @@ function go(path: string) {
   text-align: center;
   display: block;
   text-decoration: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 .btn:active {
   background: rgba(227, 238, 255, 0.6);

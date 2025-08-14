@@ -72,7 +72,7 @@
               <th>Действия</th>
             </tr>
           </thead>
-        <tbody>
+          <tbody>
             <tr v-for="review in reviews" :key="review.id">
               <td>{{ review.id }}</td>
               <td>{{ getUserName(review.author_id) }}</td>
@@ -347,10 +347,8 @@ function computePopoverPosition(evt: MouseEvent, prefer: 'bottom'|'top' = 'botto
   const openTop = spaceBelow < estimatedHeight;
 
   placement.value = openTop ? 'top' : prefer;
-  popX.value = Math.max(16, Math.min(x, contRect.width - 16)); // немного ограничим по краям
-  popY.value = openTop
-    ? baseY - 8 // дальше в CSS смещаем на -100% по высоте
-    : baseY + btnRect.height + 8; // рендерим под кнопкой
+  popX.value = Math.max(16, Math.min(x, contRect.width - 16));
+  popY.value = openTop ? baseY - 8 : baseY + btnRect.height + 8;
 }
 
 function showUser(user: any, evt: MouseEvent) {
@@ -533,29 +531,27 @@ watch(tab, (newTab) => {
   max-height: calc(100vh - 64px);
 }
 
-/* Табы */
+/* Табы — 2 ряда (3 колонки) */
 .tabs {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 20px;
   padding-bottom: 4px;
 }
 .tab {
-  padding: 6px 10px;
+  padding: 8px 10px;
   font-size: 13px;
   border: 1px solid var(--color-primary);
-  border-radius: 6px;
-  background: transparent;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
   color: var(--color-primary);
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
-  max-width: 48%;
-  text-overflow: ellipsis;
-  overflow: hidden;
+  text-align: center;
+  line-height: 1.15;
+  white-space: normal;       /* позволяем перенос */
+  word-break: break-word;    /* переносим длинные слова */
 }
 .tab.active { background: var(--color-primary); color: #fff; }
 
