@@ -29,7 +29,8 @@
               <td>{{ user.id }}</td>
               <td>{{ user.first_name }} <span v-if="user.last_name">{{ user.last_name }}</span></td>
               <td>
-                <button class="info-btn" @click="showUser(user)">Подробнее</button>
+                <!-- передаём $event, чтобы вычислить позицию -->
+                <button class="info-btn" @click="showUser(user, $event)">Подробнее</button>
               </td>
             </tr>
           </tbody>
@@ -138,49 +139,45 @@
         <div>⭐️ Средний рейтинг пользователей: <b>{{ stats.avg_driver_rating?.toFixed(2) ?? '—' }}</b></div>
       </div>
 
-      <!-- Слой для клика вне поповера (кроме модалки пользователя) -->
-      <div
-        v-if="detailType && detailType !== 'user'"
-        class="admin-popover-layer"
-        @click="closePopover"
-      ></div>
+      <!-- Слой для клика вне поповера -->
+      <div v-if="detailType" class="admin-popover-layer" @click="closePopover"></div>
 
-      <!-- Модальное окно: Пользователь (по центру экрана) -->
+      <!-- Поповер: Пользователь — центр по X, привязка по Y к кнопке -->
       <div
         v-if="detailType === 'user' && detUser"
-        class="admin-modal"
-        @click="closePopover"
+        class="admin-popover"
+        :class="placement"
+        :style="{ left: popX + 'px', top: popY + 'px' }"
+        @click.stop
       >
-        <div class="admin-modal-card" @click.stop>
-          <h3>Пользователь #{{ detUser.id }}</h3>
-          <div class="modal-content">
-            <p><b>Имя:</b> {{ detUser.first_name }} <span v-if="detUser.last_name">{{ detUser.last_name }}</span></p>
-            <p><b>Telegram ID:</b> {{ detUser.telegram_id }}</p>
-            <p><b>Telegram:</b>
-              <a v-if="detUser.username" :href="`https://t.me/${detUser.username}`" target="_blank">@{{ detUser.username }}</a>
-              <span v-else>—</span>
-            </p>
-            <p>
-              <b>Роль:</b>
-              <span class="role-select">
-                <button :class="['role-option', detUser.is_driver ? 'selected' : '']" @click="setRole(true)">Водитель</button>
-                <button :class="['role-option', !detUser.is_driver ? 'selected' : '']" @click="setRole(false)">Пассажир</button>
-              </span>
-            </p>
-            <p>
-              <b>Может создавать:</b>
-              <label class="switch">
-                <input type="checkbox" v-model="detUser.active_driver" @change="toggleActive(detUser)">
-                <span class="slider"></span>
-              </label>
-            </p>
-            <p><b>Номер машины:</b> {{ detUser.car_number || '—' }}</p>
-            <p><b>Марка машины:</b> {{ detUser.car_brand || '—' }}</p>
-          </div>
-          <div class="modal-actions">
-            <button class="delete-btn" @click="deleteUserById(detUser.telegram_id)">Удалить</button>
-            <button class="btn close-btn" @click="closePopover">Закрыть</button>
-          </div>
+        <h3>Пользователь #{{ detUser.id }}</h3>
+        <div class="modal-content">
+          <p><b>Имя:</b> {{ detUser.first_name }} <span v-if="detUser.last_name">{{ detUser.last_name }}</span></p>
+          <p><b>Telegram ID:</b> {{ detUser.telegram_id }}</p>
+          <p><b>Telegram:</b>
+            <a v-if="detUser.username" :href="`https://t.me/${detUser.username}`" target="_blank">@{{ detUser.username }}</a>
+            <span v-else>—</span>
+          </p>
+          <p>
+            <b>Роль:</b>
+            <span class="role-select">
+              <button :class="['role-option', detUser.is_driver ? 'selected' : '']" @click="setRole(true)">Водитель</button>
+              <button :class="['role-option', !detUser.is_driver ? 'selected' : '']" @click="setRole(false)">Пассажир</button>
+            </span>
+          </p>
+          <p>
+            <b>Может создавать:</b>
+            <label class="switch">
+              <input type="checkbox" v-model="detUser.active_driver" @change="toggleActive(detUser)">
+              <span class="slider"></span>
+            </label>
+          </p>
+          <p><b>Номер машины:</b> {{ detUser.car_number || '—' }}</p>
+          <p><b>Марка машины:</b> {{ detUser.car_brand || '—' }}</p>
+        </div>
+        <div class="modal-actions">
+          <button class="delete-btn" @click="deleteUserById(detUser.telegram_id)">Удалить</button>
+          <button class="btn close-btn" @click="closePopover">Закрыть</button>
         </div>
       </div>
 
@@ -321,7 +318,7 @@ async function deleteCity(city: string) {
   }
 }
 
-/* -------- поповер / модалка -------- */
+/* -------- поповер / позиционирование -------- */
 const containerRef = ref<HTMLElement | null>(null);
 const detailType = ref<null | 'user' | 'trip' | 'review'>(null);
 const detail = ref<any | null>(null);
@@ -333,6 +330,28 @@ const detUser = computed(() => detailType.value === 'user' ? detail.value : null
 const detTrip = computed(() => detailType.value === 'trip' ? detail.value : null);
 const detReview = computed(() => detailType.value === 'review' ? detail.value : null);
 
+/** Центр по X (экран/контейнер), по Y — около кнопки, с флипом */
+function computePopoverPositionCenteredX(evt: MouseEvent) {
+  const container = containerRef.value;
+  if (!container) return;
+  const target = (evt.currentTarget as HTMLElement) || (evt.target as HTMLElement);
+  const btnRect = target.getBoundingClientRect();
+  const contRect = container.getBoundingClientRect();
+
+  // X — строго центр контейнера
+  popX.value = contRect.width / 2;
+
+  // Y — привязка к кнопке внутри прокручиваемого контейнера
+  const baseY = container.scrollTop + (btnRect.top - contRect.top);
+  const estimatedHeight = 320;
+  const spaceBelow = contRect.height - (btnRect.bottom - contRect.top);
+  const openTop = spaceBelow < estimatedHeight;
+
+  placement.value = openTop ? 'top' : 'bottom';
+  popY.value = openTop ? baseY - 8 : baseY + btnRect.height + 8;
+}
+
+/** Обычное позиционирование рядом с кнопкой */
 function computePopoverPosition(evt: MouseEvent, prefer: 'bottom'|'top' = 'bottom') {
   const container = containerRef.value;
   if (!container) return;
@@ -352,10 +371,10 @@ function computePopoverPosition(evt: MouseEvent, prefer: 'bottom'|'top' = 'botto
   popY.value = openTop ? baseY - 8 : baseY + btnRect.height + 8;
 }
 
-function showUser(user: any) {
+function showUser(user: any, evt: MouseEvent) {
   detailType.value = 'user';
   detail.value = { ...user };
-  // без позиционирования — модалка по центру
+  computePopoverPositionCenteredX(evt);
 }
 function showTrip(trip: any, evt: MouseEvent) {
   detailType.value = 'trip';
@@ -577,7 +596,7 @@ watch(tab, (newTab) => {
 .btn-danger { background: rgba(229,57,53,0.85); color: #fff; }
 .btn-danger:hover { background: rgba(198,40,40,0.9); }
 
-/* Поповерный слой и окно (для поездок/отзывов) */
+/* Поповерный слой и окно */
 .admin-popover-layer {
   position: absolute;
   inset: 0;
@@ -610,29 +629,12 @@ watch(tab, (newTab) => {
   top: -8px;
   border-bottom: 8px solid #fff;
 }
-.admin-popover.top { transform: translate(-50%, -100%); }
+.admin-popover.top {
+  transform: translate(-50%, -100%);
+}
 .admin-popover.top::after {
   bottom: -8px;
   border-top: 8px solid #fff;
-}
-
-/* Модалка пользователя (по центру окна) */
-.admin-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 120;
-  background: rgba(0,0,0,0.18);
-  display: grid;
-  place-items: center;
-  padding: 16px;
-}
-.admin-modal-card {
-  width: 100%;
-  max-width: 380px;
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 14px 40px rgba(0,0,0,0.22);
-  padding: 16px 16px 14px 16px;
 }
 
 /* Общие элементы карточек */
