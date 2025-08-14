@@ -3,10 +3,7 @@
     <div class="background-img"></div>
 
     <div class="driver-content">
-      <div class="actions">
-        <button class="btn btn-access" @click="go('/buy-access')">
-          💳 Купить доступ
-        </button>
+      <div class="actions">ton>
         <button class="btn" @click="go('/offer-trip')">
           🚗 Создать поездку
         </button>
