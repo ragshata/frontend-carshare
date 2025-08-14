@@ -2,7 +2,7 @@
   <div class="admin-page">
     <div class="background-img"></div>
 
-    <div class="admin-content">
+    <div class="admin-content" ref="containerRef">
       <h2 class="title">Админ-панель</h2>
 
       <div class="tabs">
@@ -12,12 +12,11 @@
         <button :class="['tab', { active: tab === 'stats' }]" @click="tab = 'stats'">Аналитика</button>
         <button :class="['tab', { active: tab === 'tariffs' }]" @click="tab = 'tariffs'">Тарифы</button>
         <button :class="['tab', { active: tab === 'cities' }]" @click="tab = 'cities'">Города</button>
-
       </div>
 
       <!-- Пользователи -->
       <div v-if="tab === 'users'">
-        <table class="data-table">
+        <table class="data-table users-table">
           <thead>
             <tr>
               <th>ID</th>
@@ -30,7 +29,7 @@
               <td>{{ user.id }}</td>
               <td>{{ user.first_name }} <span v-if="user.last_name">{{ user.last_name }}</span></td>
               <td>
-                <button class="info-btn" @click="showUser(user)">Подробнее</button>
+                <button class="info-btn" @click="showUser(user, $event)">Подробнее</button>
               </td>
             </tr>
           </tbody>
@@ -39,8 +38,7 @@
 
       <!-- Поездки -->
       <div v-else-if="tab === 'trips'" class="transparent-section">
-      <table class="trips-table">
-
+        <table class="trips-table">
           <thead>
             <tr>
               <th>ID</th>
@@ -56,14 +54,14 @@
                 <span v-else>—</span>
               </td>
               <td>
-                <button class="btn" @click="showTrip(trip)">Подробнее</button>
+                <button class="btn" @click="showTrip(trip, $event)">Подробнее</button>
                 <button class="btn btn-danger" @click="deleteTrip(trip.id)">Удалить</button>
               </td>
-
             </tr>
           </tbody>
         </table>
       </div>
+
       <!-- Отзывы -->
       <div v-else-if="tab === 'reviews'" class="transparent-section">
         <table class="trips-table">
@@ -74,19 +72,20 @@
               <th>Действия</th>
             </tr>
           </thead>
-          <tbody>
+        <tbody>
             <tr v-for="review in reviews" :key="review.id">
               <td>{{ review.id }}</td>
               <td>{{ getUserName(review.author_id) }}</td>
               <td>
-                <button class="btn" @click="showReview(review)">Подробнее</button>
+                <button class="btn" @click="showReview(review, $event)">Подробнее</button>
                 <button class="btn btn-danger" @click="deleteReview(review.id)">Удалить</button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <!-- Вкладка Тарифы -->
+
+      <!-- Тарифы -->
       <div v-else-if="tab === 'tariffs'" class="transparent-section">
         <table class="trips-table">
           <thead>
@@ -103,22 +102,12 @@
               <td>{{ tariff.name }}</td>
               <td>{{ tariff.duration_days }}</td>
               <td>
-                <input
-                  type="number"
-                  v-model.number="tariff.price"
-                  style="width:80px; padding: 4px;"
-                />
+                <input type="number" v-model.number="tariff.price" style="width:80px; padding: 4px;" />
               </td>
               <td>
-                <textarea
-                  v-model="tariff.description"
-                  rows="2"
-                  style="width:180px; padding: 4px;"
-                ></textarea>
+                <textarea v-model="tariff.description" rows="2" style="width:180px; padding: 4px;"></textarea>
               </td>
-              <td>
-                <button class="btn" @click="saveTariff(tariff)">Сохранить</button>
-              </td>
+              <td><button class="btn" @click="saveTariff(tariff)">Сохранить</button></td>
             </tr>
           </tbody>
         </table>
@@ -136,14 +125,11 @@
           <tbody>
             <tr v-for="city in customCities" :key="city">
               <td>{{ city }}</td>
-              <td>
-                <button class="btn btn-danger" @click="deleteCity(city)">Удалить</button>
-              </td>
+              <td><button class="btn btn-danger" @click="deleteCity(city)">Удалить</button></td>
             </tr>
           </tbody>
         </table>
       </div>
-
 
       <!-- Аналитика -->
       <div v-else-if="tab === 'stats'" class="stats-section">
@@ -152,87 +138,96 @@
         <div>⭐️ Средний рейтинг пользователей: <b>{{ stats.avg_driver_rating?.toFixed(2) ?? '—' }}</b></div>
       </div>
 
-      <!-- Модалка пользователя -->
-      <div v-if="modalUser" class="modal-overlay" @click.self="closeModal">
-        <div class="modal">
-          <h3>Пользователь #{{ modalUser.id }}</h3>
-          <div class="modal-content">
-            <p><b>Имя:</b> {{ modalUser.first_name }} <span v-if="modalUser.last_name">{{ modalUser.last_name }}</span></p>
-            <p><b>Telegram ID:</b> {{ modalUser.telegram_id }}</p>
-            <p><b>Telegram:</b>
-              <a v-if="modalUser.username" :href="`https://t.me/${modalUser.username}`" target="_blank">@{{ modalUser.username }}</a>
-              <span v-else>—</span>
-            </p>
-            <p>
-              <b>Роль:</b>
-              <span class="role-select">
-                <button
-                  :class="['role-option', modalUser.is_driver ? 'selected' : '']"
-                  @click="setRole(true)"
-                >Водитель</button>
-                <button
-                  :class="['role-option', !modalUser.is_driver ? 'selected' : '']"
-                  @click="setRole(false)"
-                >Пассажир</button>
-              </span>
-            </p>
-            <p>
-              <b>Может создавать:</b>
-              <label class="switch">
-                <input type="checkbox" v-model="modalUser.active_driver" @change="toggleActive(modalUser)">
-                <span class="slider"></span>
-              </label>
-            </p>
-            <p><b>Номер машины:</b> {{ modalUser.car_number || '—' }}</p>
-            <p><b>Марка машины:</b> {{ modalUser.car_brand || '—' }}</p>
-          </div>
-          <div class="modal-actions">
-            <button class="delete-btn" @click="deleteUserById(modalUser.telegram_id)">Удалить</button>
-            <button class="btn close-btn" @click="closeModal">Закрыть</button>
-          </div>
+      <!-- Слой для клика вне поповера -->
+      <div v-if="detailType" class="admin-popover-layer" @click="closePopover"></div>
+
+      <!-- Поповер: Пользователь -->
+      <div
+        v-if="detailType === 'user' && detUser"
+        class="admin-popover"
+        :class="placement"
+        :style="{ left: popX + 'px', top: popY + 'px' }"
+        @click.stop
+      >
+        <h3>Пользователь #{{ detUser.id }}</h3>
+        <div class="modal-content">
+          <p><b>Имя:</b> {{ detUser.first_name }} <span v-if="detUser.last_name">{{ detUser.last_name }}</span></p>
+          <p><b>Telegram ID:</b> {{ detUser.telegram_id }}</p>
+          <p><b>Telegram:</b>
+            <a v-if="detUser.username" :href="`https://t.me/${detUser.username}`" target="_blank">@{{ detUser.username }}</a>
+            <span v-else>—</span>
+          </p>
+          <p>
+            <b>Роль:</b>
+            <span class="role-select">
+              <button :class="['role-option', detUser.is_driver ? 'selected' : '']" @click="setRole(true)">Водитель</button>
+              <button :class="['role-option', !detUser.is_driver ? 'selected' : '']" @click="setRole(false)">Пассажир</button>
+            </span>
+          </p>
+          <p>
+            <b>Может создавать:</b>
+            <label class="switch">
+              <input type="checkbox" v-model="detUser.active_driver" @change="toggleActive(detUser)">
+              <span class="slider"></span>
+            </label>
+          </p>
+          <p><b>Номер машины:</b> {{ detUser.car_number || '—' }}</p>
+          <p><b>Марка машины:</b> {{ detUser.car_brand || '—' }}</p>
+        </div>
+        <div class="modal-actions">
+          <button class="delete-btn" @click="deleteUserById(detUser.telegram_id)">Удалить</button>
+          <button class="btn close-btn" @click="closePopover">Закрыть</button>
         </div>
       </div>
 
-      <!-- Модалка поездки -->
-      <div v-if="modalTrip" class="modal-overlay" @click.self="closeModal">
-        <div class="modal">
-          <h3>Поездка #{{ modalTrip.id }}</h3>
-          <div class="modal-content">
-            <p><b>Маршрут:</b> {{ modalTrip.from_ }} — {{ modalTrip.to }}</p>
-            <p><b>Дата:</b> {{ modalTrip.date }} {{ modalTrip.time }}</p>
-            <p><b>Статус:</b> {{ modalTrip.status }}</p>
-            <p><b>Водитель (ID):</b> {{ modalTrip.owner_id }}</p>
-            <p v-if="modalTrip.description"><b>Особенности:</b> {{ modalTrip.description }}</p>
-            <p v-if="modalTrip.car_brand || modalTrip.car_number">
-              <b>Машина:</b>
-              <span v-if="modalTrip.car_brand">{{ modalTrip.car_brand }}</span>
-              <span v-if="modalTrip.car_brand && modalTrip.car_number">,</span>
-              <span v-if="modalTrip.car_number"> номер {{ modalTrip.car_number }}</span>
-            </p>
-          </div>
-          <div class="modal-actions">
-            <button class="delete-btn" @click="deleteTrip(modalTrip.id)">Удалить</button>
-            <button class="btn close-btn" @click="closeModal">Закрыть</button>
-          </div>
+      <!-- Поповер: Поездка -->
+      <div
+        v-if="detailType === 'trip' && detTrip"
+        class="admin-popover"
+        :class="placement"
+        :style="{ left: popX + 'px', top: popY + 'px' }"
+        @click.stop
+      >
+        <h3>Поездка #{{ detTrip.id }}</h3>
+        <div class="modal-content">
+          <p><b>Маршрут:</b> {{ detTrip.from_ }} — {{ detTrip.to }}</p>
+          <p><b>Дата:</b> {{ detTrip.date }} {{ detTrip.time }}</p>
+          <p><b>Статус:</b> {{ detTrip.status }}</p>
+          <p><b>Водитель (ID):</b> {{ detTrip.owner_id }}</p>
+          <p v-if="detTrip.description"><b>Особенности:</b> {{ detTrip.description }}</p>
+          <p v-if="detTrip.car_brand || detTrip.car_number">
+            <b>Машина:</b>
+            <span v-if="detTrip.car_brand">{{ detTrip.car_brand }}</span>
+            <span v-if="detTrip.car_brand && detTrip.car_number">,</span>
+            <span v-if="detTrip.car_number"> номер {{ detTrip.car_number }}</span>
+          </p>
         </div>
-      </div>
-      <!-- Модалка отзыва -->
-      <div v-if="modalReview" class="modal-overlay" @click.self="closeModal">
-        <div class="modal">
-          <h3>Отзыв #{{ modalReview.id }}</h3>
-          <div class="modal-content">
-            <p><b>Автор:</b> {{ getUserName(modalReview.author_id) }}</p>
-            <p><b>Водитель:</b> {{ getUserName(modalReview.driver_id) }}</p>
-            <p><b>Оценка:</b> {{ modalReview.rating }}</p>
-            <p><b>Комментарий:</b> {{ modalReview.text || '—' }}</p>
-          </div>
-          <div class="modal-actions">
-            <button class="delete-btn" @click="deleteReview(modalReview.id)">Удалить</button>
-            <button class="btn close-btn" @click="closeModal">Закрыть</button>
-          </div>
+        <div class="modal-actions">
+          <button class="delete-btn" @click="deleteTrip(detTrip.id)">Удалить</button>
+          <button class="btn close-btn" @click="closePopover">Закрыть</button>
         </div>
       </div>
 
+      <!-- Поповер: Отзыв -->
+      <div
+        v-if="detailType === 'review' && detReview"
+        class="admin-popover"
+        :class="placement"
+        :style="{ left: popX + 'px', top: popY + 'px' }"
+        @click.stop
+      >
+        <h3>Отзыв #{{ detReview.id }}</h3>
+        <div class="modal-content">
+          <p><b>Автор:</b> {{ getUserName(detReview.author_id) }}</p>
+          <p><b>Водитель:</b> {{ getUserName(detReview.driver_id) }}</p>
+          <p><b>Оценка:</b> {{ detReview.rating }}</p>
+          <p><b>Комментарий:</b> {{ detReview.text || '—' }}</p>
+        </div>
+        <div class="modal-actions">
+          <button class="delete-btn" @click="deleteReview(detReview.id)">Удалить</button>
+          <button class="btn close-btn" @click="closePopover">Закрыть</button>
+        </div>
+      </div>
 
       <Toast ref="toastRef" />
     </div>
@@ -247,7 +242,6 @@ import { getDriverReviews, deleteReviewById, getAllReviews } from '@/api/reviews
 import { getAdminTariffs, updateTariff, Tariff } from '@/api/admin-tariffs';
 import Toast from '@/components/Toast.vue';
 
-
 import {
   getAllUsers,
   updateUserRole,
@@ -260,62 +254,58 @@ import {
   deleteTripById
 } from '@/api/admin-trips';
 
+import { getCustomCities, deleteCityByName } from "@/api/cities";
+
 const router = useRouter();
 const auth = useAuthStore();
+
 const reviews = ref<any[]>([]);
 const tariffs = ref<any[]>([]);
+const users = ref<any[]>([]);
+const trips = ref<any[]>([]);
+const stats = ref({ trips_count: 0, bookings_count: 0, avg_driver_rating: 0 });
+const customCities = ref<string[]>([]);
 
+const toastRef = ref<InstanceType<typeof Toast> | null>(null);
 
 const ADMIN_IDS = [363320196, 6931781449];
 if (!ADMIN_IDS.includes(auth.user?.telegram_id)) {
   router.replace('/main-screen');
 }
 
-const tab = ref('users');
-const users = ref<any[]>([]);
-const trips = ref<any[]>([]);
-const stats = ref({ trips_count: 0, bookings_count: 0, avg_driver_rating: 0 });
+const tab = ref<'users'|'trips'|'reviews'|'stats'|'tariffs'|'cities'>('users');
 
-const toastRef = ref<InstanceType<typeof Toast> | null>(null);
-const modalUser = ref<any | null>(null);
-const modalTrip = ref<any | null>(null);
-const modalReview = ref<any | null>(null);
+const activeTrips = computed(() => trips.value.filter(t => t.status === 'active'));
 
-const activeTrips = computed(() => {
-  return trips.value.filter(t => {
-    // показываем только активные поездки, игнорируя дату
-    return t.status === "active";
-  });
-});
-
-
-function showUser(user: any) {
-  modalUser.value = { ...user };
+function getDriverName(owner_id: number) {
+  const user = users.value.find(u => u.id === owner_id);
+  return user ? `${user.first_name} ${user.last_name || ''}` : null;
 }
-function showTrip(trip: any) {
-  modalTrip.value = { ...trip };
-}
-function closeModal() {
-  modalUser.value = null;
-  modalTrip.value = null;
-  modalReview.value = null;
-}
-function showReview(review: any) {
-  modalReview.value = { ...review };
+function getUserName(userId: number) {
+  const user = users.value.find(u => u.id === userId);
+  return user ? `${user.first_name} ${user.last_name || ''}` : `ID ${userId}`;
 }
 
-import { getCustomCities, deleteCityByName } from "@/api/cities"; // нужно создать в api
-
-const customCities = ref<string[]>([]);
-
-async function loadCustomCities() {
+/* -------- загрузка данных -------- */
+async function loadUsers() { try { users.value = await getAllUsers(); } catch { toastRef.value?.show('Ошибка загрузки пользователей!'); } }
+async function loadTrips() { try { trips.value = await getAllTrips(); } catch { alert('Ошибка загрузки поездок'); } }
+async function loadStats() { try { stats.value = await getAdminStats(); } catch { toastRef.value?.show('Ошибка загрузки статистики!'); } }
+async function loadReviews() { try { reviews.value = await getAllReviews(); } catch { toastRef.value?.show('Ошибка загрузки отзывов!'); } }
+async function loadTariffs() { try { tariffs.value = (await getAdminTariffs()).slice(0, 3); } catch { toastRef.value?.show('Ошибка загрузки тарифов!'); } }
+async function saveTariff(tariff: any) {
   try {
-    customCities.value = await getCustomCities();
+    await updateTariff(tariff.id, { price: tariff.price, description: tariff.description });
+    toastRef.value?.show('Тариф обновлён');
+    await loadTariffs();
   } catch {
-    toastRef.value?.show('Ошибка загрузки городов');
+    toastRef.value?.show('Ошибка сохранения тарифа!');
   }
 }
 
+async function loadCustomCities() {
+  try { customCities.value = await getCustomCities(); }
+  catch { toastRef.value?.show('Ошибка загрузки городов'); }
+}
 async function deleteCity(city: string) {
   if (!confirm(`Удалить город "${city}"?`)) return;
   try {
@@ -327,102 +317,68 @@ async function deleteCity(city: string) {
   }
 }
 
+/* -------- поповер (позиционирование рядом с кнопкой) -------- */
+const containerRef = ref<HTMLElement | null>(null);
+const detailType = ref<null | 'user' | 'trip' | 'review'>(null);
+const detail = ref<any | null>(null);
+const popX = ref(0);
+const popY = ref(0);
+const placement = ref<'bottom' | 'top'>('bottom');
 
-async function loadReviews() {
-  try {
-    const allReviews = await getAllReviews(); // 0 вернёт ВСЕ отзывы
-    reviews.value = allReviews;
-  } catch {
-    toastRef.value?.show('Ошибка загрузки отзывов!');
-  }
-}
-watch(tab, (newTab) => {
-  if (newTab === 'cities') loadCustomCities();
-  if (newTab === 'users') loadUsers();
-  if (newTab === 'trips') loadTrips();
-  if (newTab === 'stats') loadStats();
-  if (newTab === 'reviews') loadReviews();
-});
+const detUser = computed(() => detailType.value === 'user' ? detail.value : null);
+const detTrip = computed(() => detailType.value === 'trip' ? detail.value : null);
+const detReview = computed(() => detailType.value === 'review' ? detail.value : null);
 
+function computePopoverPosition(evt: MouseEvent, prefer: 'bottom'|'top' = 'bottom') {
+  const container = containerRef.value;
+  if (!container) return;
+  const target = (evt.currentTarget as HTMLElement) || (evt.target as HTMLElement);
+  const btnRect = target.getBoundingClientRect();
+  const contRect = container.getBoundingClientRect();
 
+  // координаты центра кнопки относительно контейнера
+  const x = (btnRect.left - contRect.left) + btnRect.width / 2;
+  // базовая Y-координата (внутри прокручиваемого контейнера)
+  const baseY = container.scrollTop + (btnRect.top - contRect.top);
 
-function getDriverName(owner_id: number) {
-  const user = users.value.find(u => u.id === owner_id);
-  return user ? `${user.first_name} ${user.last_name || ''}` : null;
-}
+  // оценка высоты поповера (для простого «флипа»)
+  const estimatedHeight = 320; // эвристика
+  const spaceBelow = (contRect.height - (btnRect.bottom - contRect.top));
+  const openTop = spaceBelow < estimatedHeight;
 
-async function loadUsers() {
-  try {
-    users.value = await getAllUsers();
-  } catch {
-    toastRef.value?.show('Ошибка загрузки пользователей!');
-  }
-}
-async function loadTrips() {
-  try {
-    const res = await getAllTrips();
-    trips.value = res;
-  } catch (e) {
-    alert("Ошибка загрузки поездок");
-  }
+  placement.value = openTop ? 'top' : prefer;
+  popX.value = Math.max(16, Math.min(x, contRect.width - 16)); // немного ограничим по краям
+  popY.value = openTop
+    ? baseY - 8 // дальше в CSS смещаем на -100% по высоте
+    : baseY + btnRect.height + 8; // рендерим под кнопкой
 }
 
-async function loadStats() {
-  try {
-    stats.value = await getAdminStats();
-  } catch {
-    toastRef.value?.show('Ошибка загрузки статистики!');
-  }
+function showUser(user: any, evt: MouseEvent) {
+  detailType.value = 'user';
+  detail.value = { ...user };
+  computePopoverPosition(evt);
 }
-function getUserName(userId: number) {
-  const user = users.value.find(u => u.id === userId);
-  return user ? `${user.first_name} ${user.last_name || ''}` : `ID ${userId}`;
+function showTrip(trip: any, evt: MouseEvent) {
+  detailType.value = 'trip';
+  detail.value = { ...trip };
+  computePopoverPosition(evt);
 }
-async function deleteReview(id: number) {
-  if (!confirm('Удалить отзыв?')) return;
-  try {
-    await deleteReviewById(id);
-    await loadReviews(); // <--- вот ключ
-    closeModal();
-    toastRef.value?.show('Отзыв удалён');
-  } catch {
-    toastRef.value?.show('Ошибка при удалении отзыва!');
-  }
+function showReview(review: any, evt: MouseEvent) {
+  detailType.value = 'review';
+  detail.value = { ...review };
+  computePopoverPosition(evt);
 }
-async function loadTariffs() {
-  try {
-    const data = await getAdminTariffs();
-    // Подстрахуемся: берём только первые 3
-    tariffs.value = data.slice(0, 3);
-  } catch {
-    toastRef.value?.show("Ошибка загрузки тарифов!");
-  }
+function closePopover() {
+  detailType.value = null;
+  detail.value = null;
 }
 
-async function saveTariff(tariff: any) {
-  try {
-    await updateTariff(tariff.id, {
-      price: tariff.price,
-      description: tariff.description,
-    });
-    toastRef.value?.show("Тариф обновлён");
-    await loadTariffs();
-  } catch {
-    toastRef.value?.show("Ошибка сохранения тарифа!");
-  }
-}
-
-
-watch(tab, (newTab) => {
-  if (newTab === "tariffs") loadTariffs();
-});
-
-
+/* -------- действия из поповеров -------- */
 async function setRole(isDriver: boolean) {
-  if (!modalUser.value) return;
+  if (detailType.value !== 'user' || !detail.value) return;
   try {
-    modalUser.value.is_driver = isDriver;
-    await updateUserRole(modalUser.value.id, isDriver);
+    detail.value.is_driver = isDriver;
+    await updateUserRole(detail.value.id, isDriver);
     await loadUsers();
     toastRef.value?.show('Роль обновлена');
   } catch {
@@ -444,7 +400,7 @@ async function deleteUserById(telegram_id: number) {
   try {
     await deleteUserByTelegramId(telegram_id);
     users.value = users.value.filter(u => u.telegram_id !== telegram_id);
-    closeModal();
+    closePopover();
     toastRef.value?.show('Пользователь удалён');
   } catch (e) {
     toastRef.value?.show('Ошибка удаления пользователя!');
@@ -456,13 +412,25 @@ async function deleteTrip(tripId: number) {
   try {
     await deleteTripById(tripId);
     trips.value = trips.value.filter(t => t.id !== tripId);
-    closeModal();
+    closePopover();
     toastRef.value?.show('Поездка удалена');
   } catch {
     toastRef.value?.show('Ошибка при удалении поездки!');
   }
 }
+async function deleteReview(id: number) {
+  if (!confirm('Удалить отзыв?')) return;
+  try {
+    await deleteReviewById(id);
+    await loadReviews();
+    closePopover();
+    toastRef.value?.show('Отзыв удалён');
+  } catch {
+    toastRef.value?.show('Ошибка при удалении отзыва!');
+  }
+}
 
+/* -------- табы / загрузки -------- */
 onMounted(() => {
   if (tab.value === 'users') loadUsers();
   if (tab.value === 'trips') loadTrips();
@@ -472,54 +440,19 @@ watch(tab, (newTab) => {
   if (newTab === 'users') loadUsers();
   if (newTab === 'trips') loadTrips();
   if (newTab === 'stats') loadStats();
+  if (newTab === 'reviews') loadReviews();
+  if (newTab === 'tariffs') loadTariffs();
+  if (newTab === 'cities') loadCustomCities();
 });
 </script>
 
-
 <style scoped>
-.admin-wrap {
-  max-width: 900px;
-  margin: 36px auto 0 auto;
-  padding: 24px 8px 44px 8px;
-  background: #fff;
-  border-radius: 22px;
-  box-shadow: 0 2px 12px rgba(60,80,120,0.06);
-}
 .title {
-  font-size: 25px;
+  font-size: 20px;
   font-weight: bold;
-  margin-bottom: 20px;
-  color: #232323;
+  margin-bottom: 16px;
+  color: var(--color-text-primary);
   text-align: center;
-}
-
-
-
-/* Маленькие tabs, в строку и с прокруткой */
-.admin-tabs.small {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  gap: 7px;
-  justify-content: flex-start;
-  margin-bottom: 15px;
-}
-.admin-tabs.small button {
-  font-size: 13px;
-  padding: 7px 14px;
-  border-radius: 8px;
-  min-width: 92px;
-  background: #fff;
-  border: 1.5px solid #007bff;
-  color: #007bff;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.14s;
-  white-space: nowrap;
-}
-.admin-tabs.small button.active,
-.admin-tabs.small button:hover {
-  background: #e8f1ff;
 }
 
 /* Таблицы */
@@ -544,6 +477,7 @@ watch(tab, (newTab) => {
 .users-table td, .trips-table td {
   background: #fff;
 }
+
 .info-btn {
   background: #fff;
   color: #007bff;
@@ -555,64 +489,148 @@ watch(tab, (newTab) => {
   cursor: pointer;
   transition: background 0.14s;
 }
-.info-btn:hover {
-  background: #e8f1ff;
-}
+.info-btn:hover { background: #e8f1ff; }
+
 .stats-section {
   padding: 40px;
   text-align: center;
   font-size: 17px;
 }
-.modal-overlay {
+
+/* Страница и фон */
+.admin-page {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(30,30,30,0.14);
-  z-index: 99999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent;
 }
-.modal {
+.background-img {
+  position: fixed;
+  inset: 0;
+  background: url('@/assets/secondary.webp') center center / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: bg-fade-in 1s ease-in-out;
+}
+@keyframes bg-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Контентная карточка */
+.admin-content {
+  position: relative; /* важно для абсолютного позиционирования поповеров */
+  z-index: 2;
+  max-width: 360px;
+  margin: 32px auto;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 24px 20px;
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  max-height: calc(100vh - 64px);
+}
+
+/* Табы */
+.tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 4px;
+}
+.tab {
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid var(--color-primary);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 48%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.tab.active { background: var(--color-primary); color: #fff; }
+
+/* Кнопки */
+.btn {
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #007bff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  transition: background 0.18s;
+  cursor: pointer;
+  min-width: 90px;
+}
+.btn:hover { background: rgba(255, 255, 255, 0.8); }
+.btn:active { background: #e3eeff; }
+.btn-danger { background: rgba(229,57,53,0.85); color: #fff; }
+.btn-danger:hover { background: rgba(198,40,40,0.9); }
+
+/* Поповерный слой и окно */
+.admin-popover-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 90;
+  background: transparent; /* клики вне поповера закроют его */
+}
+.admin-popover {
+  position: absolute;
+  z-index: 91;
+  transform: translateX(-50%); /* центрируем по anchor X */
   background: #fff;
-  border-radius: 20px;
-  padding: 35px 26px 28px 26px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.09);
-  min-width: 280px;
-  max-width: 99vw;
+  border-radius: 16px;
+  padding: 16px 16px 14px 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  min-width: 260px;
+  max-width: min(92vw, 340px);
   text-align: left;
 }
-.delete-btn.small {
-  font-size: 13px;
-  padding: 6px 10px;
-  min-width: auto;
+.admin-popover.bottom::after,
+.admin-popover.top::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 0; height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  transform: translateX(-50%);
 }
-.modal-content p {
-  margin: 10px 0 10px 0;
-  font-size: 15px;
+.admin-popover.bottom::after {
+  top: -8px;
+  border-bottom: 8px solid #fff;
 }
+.admin-popover.top {
+  transform: translate(-50%, -100%); /* смещаем вверх от якоря */
+}
+.admin-popover.top::after {
+  bottom: -8px;
+  border-top: 8px solid #fff;
+}
+
+.modal-content p { margin: 10px 0; font-size: 15px; }
 .modal-actions {
   display: flex;
-  gap: 14px;
-  margin-top: 19px;
+  gap: 12px;
+  margin-top: 14px;
   justify-content: flex-end;
-}
-.btn, .close-btn {
-  background: #fff;
-  color: #007bff;
-  border: 1.5px solid #007bff;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 500;
-  padding: 9px 22px;
-  cursor: pointer;
-  transition: background 0.17s;
-}
-.btn:hover, .close-btn:hover {
-  background: #e8f1ff;
 }
 .delete-btn {
   background: #e53935;
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 7px;
   font-size: 15px;
@@ -621,9 +639,9 @@ watch(tab, (newTab) => {
   transition: background 0.13s;
   min-width: 80px;
 }
-.delete-btn:hover {
-  background: #c62828;
-}
+.delete-btn:hover { background: #c62828; }
+
+/* Переключатель роли */
 .role-select {
   display: inline-flex;
   border-radius: 11px;
@@ -643,178 +661,20 @@ watch(tab, (newTab) => {
   transition: background 0.17s, color 0.13s;
   outline: none;
 }
-.role-option.selected {
-  background: #007bff;
-  color: #fff;
-}
-.role-option:not(.selected):hover {
-  background: #e6f8ff;
-}
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 32px;
-  margin-left: 10px;
-  vertical-align: middle;
-}
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
+.role-option.selected { background: #007bff; color: #fff; }
+.role-option:not(.selected):hover { background: #e6f8ff; }
+
+/* Тумблер */
+.switch { position: relative; display: inline-block; width: 60px; height: 32px; margin-left: 10px; vertical-align: middle; }
+.switch input { opacity: 0; width: 0; height: 0; }
 .slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #EEE;
-  border-radius: 32px;
-  transition: .4s;
+  position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #EEE; border-radius: 32px; transition: .4s;
 }
 .slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 3px;
-  bottom: 3px;
-  background-color: #fff;
-  border-radius: 50%;
-  transition: .4s;
-  box-shadow: 0 1px 3px rgba(30,30,30,0.07);
+  position: absolute; content: ""; height: 26px; width: 26px; left: 3px; bottom: 3px;
+  background-color: #fff; border-radius: 50%; transition: .4s; box-shadow: 0 1px 3px rgba(30,30,30,0.07);
 }
-.switch input:checked + .slider {
-  background-color: #007bff;
-}
-.switch input:checked + .slider:before {
-  transform: translateX(28px);
-}
-.admin-page {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  background: transparent;
-}
-
-.background-img {
-  position: fixed;
-  inset: 0;
-  background: url('@/assets/secondary.webp') center center / cover no-repeat;
-  z-index: 0;
-  pointer-events: none;
-  user-select: none;
-  animation: bg-fade-in 1s ease-in-out;
-}
-
-.admin-content {
-  position: relative;
-  z-index: 2;
-  max-width: 360px;
-  margin: 32px auto;
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  padding: 24px 20px;
-  border-radius: 18px;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
-  max-height: calc(100vh - 64px);
-}
-
-.title {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 16px;
-  color: var(--color-text-primary);
-  text-align: center;
-}
-
-.admin-tabs {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  padding-bottom: 4px;
-}
-
-.tab {
-  padding: 6px 10px;
-  font-size: 13px;
-  border: 1px solid var(--color-primary);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-primary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
-  max-width: 48%;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.tab.active {
-  background: var(--color-primary);
-  color: white;
-}
-
-@keyframes bg-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-.btn {
-  padding: 11px;
-  font-size: 14px;
-  font-weight: 600;
-  border: none;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #007bff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  transition: background 0.18s;
-  cursor: pointer;
-  min-width: 90px;
-}
-.btn:hover {
-  background: rgba(255, 255, 255, 0.8);
-}
-.btn:active {
-  background: #e3eeff;
-}
-.btn-danger {
-  background: rgba(229, 57, 53, 0.85);
-  color: white;
-}
-.btn-danger:hover {
-  background: rgba(198, 40, 40, 0.9);
-}
-.trips-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.trips-table th, .trips-table td {
-  padding: 10px;
-  font-size: 15px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  color: #222;
-  background: transparent; /* убираем белую подложку */
-  text-align: center;
-}
-
-.trips-table th {
-  font-weight: bold;
-  background: rgba(255, 255, 255, 0.2);
-}
-
+.switch input:checked + .slider { background-color: #007bff; }
+.switch input:checked + .slider:before { transform: translateX(28px); }
 </style>

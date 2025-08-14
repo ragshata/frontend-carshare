@@ -8,61 +8,63 @@
       <form class="form" @submit.prevent="save">
         <!-- Откуда -->
         <label>Откуда</label>
-        <input
-          v-model="fromQuery"
-          @input="onFromInput"
-          type="text"
-          placeholder="Начните вводить город"
-          class="input"
-          required
-          maxlength="40"
-          @focus="showSuggestionsFrom = true"
-          autocomplete="off"
-        />
+        <div class="field">
+          <input
+            v-model="fromQuery"
+            @input="onFromInput"
+            type="text"
+            placeholder="Начните вводить город"
+            class="input"
+            required
+            maxlength="40"
+            @focus="showSuggestionsFrom = true"
+            autocomplete="off"
+          />
 
-        <!-- Список подсказок «Откуда» -->
-        <div
-          v-if="showSuggestionsFrom && filteredCitiesFrom.length"
-          class="suggestions"
-          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : undefined }"
-        >
+          <!-- Список подсказок «Откуда» -->
           <div
-            v-for="city in filteredCitiesFrom"
-            :key="city"
-            class="suggestion"
-            @click.prevent="selectFromCity(city)"
+            v-if="showSuggestionsFrom && filteredCitiesFrom.length"
+            class="suggestions"
           >
-            {{ city }}
+            <div
+              v-for="city in filteredCitiesFrom"
+              :key="city"
+              class="suggestion"
+              @click.prevent="selectFromCity(city)"
+            >
+              {{ city }}
+            </div>
           </div>
         </div>
 
         <!-- Куда -->
         <label>Куда</label>
-        <input
-          v-model="toQuery"
-          @input="onToInput"
-          type="text"
-          placeholder="Начните вводить город"
-          class="input"
-          required
-          maxlength="40"
-          @focus="showSuggestionsTo = true"
-          autocomplete="off"
-        />
+        <div class="field">
+          <input
+            v-model="toQuery"
+            @input="onToInput"
+            type="text"
+            placeholder="Начните вводить город"
+            class="input"
+            required
+            maxlength="40"
+            @focus="showSuggestionsTo = true"
+            autocomplete="off"
+          />
 
-        <!-- Список подсказок «Куда» -->
-        <div
-          v-if="showSuggestionsTo && filteredCitiesTo.length"
-          class="suggestions"
-          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : undefined }"
-        >
+          <!-- Список подсказок «Куда» -->
           <div
-            v-for="city in filteredCitiesTo"
-            :key="city"
-            class="suggestion"
-            @click.prevent="selectToCity(city)"
+            v-if="showSuggestionsTo && filteredCitiesTo.length"
+            class="suggestions"
           >
-            {{ city }}
+            <div
+              v-for="city in filteredCitiesTo"
+              :key="city"
+              class="suggestion"
+              @click.prevent="selectToCity(city)"
+            >
+              {{ city }}
+            </div>
           </div>
         </div>
 
@@ -105,7 +107,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { createTrip } from '@/api/trips';
@@ -123,7 +125,7 @@ const toastRef = ref<InstanceType<typeof Toast>>();
 
 const loading  = ref(false);
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-const kbOpenOffset = ref(0);
+const kbOpenOffset = ref(0); // оставим, если пригодится для будущих адаптаций
 const showProfileModal = ref(false);
 
 /* ---------- списки городов ---------- */
@@ -175,14 +177,19 @@ watch(fromQuery,v=>form.from_=v);
 watch(toQuery,  v=>form.to  =v);
 
 function onFromInput(e: Event){
-  const el=e.target as HTMLInputElement;
-  fromQuery.value=el.value;
-  showSuggestionsFrom.value=fromQuery.value.trim().length>0;
+  const el = e.target as HTMLInputElement;
+  fromQuery.value = el.value;
+  showSuggestionsFrom.value = fromQuery.value.trim().length > 0;
+
+  // мягко прокручиваем поле в видимую область (полезно при открытой клавиатуре)
+  if (isMobile) el.scrollIntoView({ block: 'nearest' });
 }
 function onToInput(e: Event){
-  const el=e.target as HTMLInputElement;
-  toQuery.value=el.value;
-  showSuggestionsTo.value=toQuery.value.trim().length>0;
+  const el = e.target as HTMLInputElement;
+  toQuery.value = el.value;
+  showSuggestionsTo.value = toQuery.value.trim().length > 0;
+
+  if (isMobile) el.scrollIntoView({ block: 'nearest' });
 }
 
 function selectFromCity(c:string){ form.from_=fromQuery.value=c; showSuggestionsFrom.value=false; }
@@ -230,10 +237,10 @@ async function save(){
     toastRef.value?.show('Поездка создана');
     await loadCities();
     setTimeout(()=>router.push('/manage-trips'),800);
-  }catch{ 
-    toastRef.value?.show('Ошибка создания'); 
-  } finally{ 
-    loading.value=false; 
+  }catch{
+    toastRef.value?.show('Ошибка создания');
+  } finally{
+    loading.value=false;
   }
 }
 </script>
@@ -291,6 +298,11 @@ async function save(){
   margin: 0 auto;
 }
 
+.field {
+  position: relative;
+}
+
+/* input / textarea */
 .input, .select, textarea.input {
   padding: 9px 12px;
   border-radius: 7px;
@@ -308,20 +320,21 @@ textarea.input {
   max-height: 130px;
 }
 
-/* Флоат-список подсказок — адаптив под мобильную клавиатуру */
+/* Выпадающий список — теперь строго под полем */
 .suggestions{
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;                 /* по умолчанию прижимаем к низу */
-  max-height: 200px;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
   overflow-y: auto;
   background: #fff;
   border: 1px solid #ccc;
-  border-radius: 12px 12px 8px 8px;
+  border-radius: 8px;
   box-shadow: 0 4px 18px rgba(0,0,0,.08);
-  z-index: 10000;
+  z-index: 10; /* поверх карточки */
 }
+
 .suggestion{
   padding: 10px 14px;
   font-size: 16px;
