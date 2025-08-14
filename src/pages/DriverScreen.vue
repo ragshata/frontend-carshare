@@ -3,15 +3,15 @@
     <div class="background-img"></div>
 
     <div class="driver-content">
-      <div class="actions">ton>
+      <div class="actions">
         <button class="btn" @click="go('/offer-trip')">
-          🚗 Создать поездку
+           Создать поездку
         </button>
         <button class="btn" @click="go('/manage-trips')">
-          📋 Мои поездки
+           Мои поездки
         </button>
         <button class="btn" @click="go('/help')">
-          🛟 Помощь
+           Центр помощи
         </button>
         <!-- Кнопка поддержки -->
         <a
@@ -20,10 +20,10 @@
           target="_blank"
           rel="noopener"
         >
-          🛠 Написать поддержке
+           Написать в поддержку
         </a>
         <button class="btn" @click="go('/profile')">
-          👤 Профиль
+           Профиль
         </button>
       </div>
     </div>

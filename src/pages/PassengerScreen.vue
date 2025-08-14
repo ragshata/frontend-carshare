@@ -5,13 +5,13 @@
     <div class="passenger-content">
       <div class="actions">
         <button class="btn" @click="go('/find-trip')">
-          🔍 Найти поездку
+           Найти поездку
         </button>
         <button class="btn" @click="go('/my-bookings')">
-          📋 Мои бронирования
+           Мои бронирования
         </button>
         <button class="btn" @click="go('/help')">
-          🛟 Помощь
+           Центр помощи
         </button>
         <a
           class="btn"
@@ -19,10 +19,10 @@
           target="_blank"
           rel="noopener"
         >
-          🛠 Написать поддержке
+           Написать в поддержку
         </a>
         <button class="btn" @click="go('/profile')">
-          👤 Мой профиль
+           Мой профиль
         </button>
       </div>
     </div>
