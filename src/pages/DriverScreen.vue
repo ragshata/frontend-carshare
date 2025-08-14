@@ -40,7 +40,7 @@ function go(path: string) {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&display=swap');
 
 .driver-screen {
   position: fixed;
@@ -90,7 +90,7 @@ function go(path: string) {
 .btn {
   padding: 14px;
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 800; /* чуть пожирнее */
   font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
   letter-spacing: 0.2px;
   border: none;

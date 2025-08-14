@@ -39,6 +39,8 @@ function go(path: string) {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&display=swap');
+
 .passenger-screen {
   position: fixed;
   inset: 0;
@@ -87,12 +89,14 @@ function go(path: string) {
 .btn {
   padding: 14px;
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 800; /* как на экране водителя */
+  font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+  letter-spacing: 0.2px;
   border: none;
   border-radius: 12px;
   width: 100%;
   background: rgba(255, 255, 255, 0.45);
-  color: #007bff;
+  color: #111; /* чёрный текст */
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
@@ -100,6 +104,8 @@ function go(path: string) {
   text-align: center;
   display: block;
   text-decoration: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 .btn:active {
   background: rgba(227, 238, 255, 0.6);
