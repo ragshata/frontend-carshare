@@ -5,55 +5,59 @@
     <div class="form-card">
       <h2 class="title">Поиск поездок</h2>
       <form class="form" @submit.prevent="goToResults">
+        <!-- Откуда -->
         <label>Откуда</label>
-        <input
-          v-model="fromQuery"
-          @input="onFromInput"
-          type="text"
-          placeholder="Начните вводить город"
-          class="input"
-          maxlength="40"
-          @focus="showSuggestionsFrom = true"
-          autocomplete="off"
-        />
-        <div
-          v-if="showSuggestionsFrom && filteredCitiesFrom.length"
-          class="suggestions"
-          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : undefined }"
-        >
+        <div class="field">
+          <input
+            v-model="fromQuery"
+            @input="onFromInput"
+            type="text"
+            placeholder="Начните вводить город"
+            class="input"
+            maxlength="40"
+            @focus="showSuggestionsFrom = true"
+            autocomplete="off"
+          />
           <div
-            v-for="city in filteredCitiesFrom"
-            :key="city"
-            class="suggestion"
-            @click.prevent="selectFromCity(city)"
+            v-if="showSuggestionsFrom && filteredCitiesFrom.length"
+            class="suggestions"
           >
-            {{ city }}
+            <div
+              v-for="city in filteredCitiesFrom"
+              :key="city"
+              class="suggestion"
+              @click.prevent="selectFromCity(city)"
+            >
+              {{ city }}
+            </div>
           </div>
         </div>
 
+        <!-- Куда -->
         <label>Куда</label>
-        <input
-          v-model="toQuery"
-          @input="onToInput"
-          type="text"
-          placeholder="Начните вводить город"
-          class="input"
-          maxlength="40"
-          @focus="showSuggestionsTo = true"
-          autocomplete="off"
-        />
-        <div
-          v-if="showSuggestionsTo && filteredCitiesTo.length"
-          class="suggestions"
-          :style="{ bottom: kbOpenOffset ? kbOpenOffset + 8 + 'px' : undefined }"
-        >
+        <div class="field">
+          <input
+            v-model="toQuery"
+            @input="onToInput"
+            type="text"
+            placeholder="Начните вводить город"
+            class="input"
+            maxlength="40"
+            @focus="showSuggestionsTo = true"
+            autocomplete="off"
+          />
           <div
-            v-for="city in filteredCitiesTo"
-            :key="city"
-            class="suggestion"
-            @click.prevent="selectToCity(city)"
+            v-if="showSuggestionsTo && filteredCitiesTo.length"
+            class="suggestions"
           >
-            {{ city }}
+            <div
+              v-for="city in filteredCitiesTo"
+              :key="city"
+              class="suggestion"
+              @click.prevent="selectToCity(city)"
+            >
+              {{ city }}
+            </div>
           </div>
         </div>
 
@@ -92,7 +96,6 @@ import { checkProfileComplete } from '@/composables/profileGate';
 const router = useRouter();
 
 const showProfileModal = ref(false);
-const kbOpenOffset = ref(0);
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 const defaultCities = [
@@ -151,11 +154,13 @@ function onFromInput(e: Event) {
   const el = e.target as HTMLInputElement;
   fromQuery.value = el.value;
   showSuggestionsFrom.value = fromQuery.value.trim().length > 0;
+  if (isMobile) el.scrollIntoView({ block: 'nearest' });
 }
 function onToInput(e: Event) {
   const el = e.target as HTMLInputElement;
   toQuery.value = el.value;
   showSuggestionsTo.value = toQuery.value.trim().length > 0;
+  if (isMobile) el.scrollIntoView({ block: 'nearest' });
 }
 function selectFromCity(city: string) {
   form.from_ = fromQuery.value = city;
@@ -176,13 +181,6 @@ onMounted(async () => {
   } catch (e) {
     console.error('Ошибка загрузки городов:', e);
   }
-
-  if (isMobile && 'visualViewport' in window) {
-    window.visualViewport!.addEventListener('resize', () => {
-      const diff = window.innerHeight - window.visualViewport!.height;
-      kbOpenOffset.value = diff > 80 ? diff : 0;
-    });
-  }
 });
 
 onBeforeUnmount(() => {
@@ -198,7 +196,6 @@ function resetFilters() {
 }
 
 function goToResults() {
-  // Проверяем профиль пассажира — если не заполнен, мягко просим дополнить
   const { ok } = checkProfileComplete('passenger');
   if (!ok) {
     showProfileModal.value = true;
@@ -260,8 +257,13 @@ function goToResults() {
 .form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
+
+/* обёртка для позиционирования выпадающего списка */
+.field { position: relative; }
+
+/* инпут */
 .input {
   padding: 9px 12px;
   border-radius: 7px;
@@ -269,21 +271,23 @@ function goToResults() {
   font-size: 16px;
   outline: none;
   margin-bottom: 6px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* Плавающий список подсказок — дружит с мобильной клавой */
-.suggestions {
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: 12px; /* по умолчанию, но сдвигаем через :style при открытой клавиатуре */
-  max-height: 200px;
+/* Выпадающий список — как в OfferTrip: под полем */
+.suggestions{
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
   overflow-y: auto;
   background: #fff;
   border: 1px solid #ccc;
-  border-radius: 12px 12px 8px 8px;
+  border-radius: 8px;
   box-shadow: 0 4px 18px rgba(0,0,0,.08);
-  z-index: 10000;
+  z-index: 10;
 }
 .suggestion {
   padding: 10px 14px;
